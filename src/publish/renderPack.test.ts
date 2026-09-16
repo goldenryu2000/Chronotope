@@ -103,6 +103,13 @@ describe('renderRegion', () => {
     expect(artifact.borderYears).toBeUndefined()
   })
 
+  it('lists no border changes when there are no boundaries', async () => {
+    // Before the tests below insert any: the boundaries they add are not
+    // cleared between tests in this block.
+    const artifact = await renderRegion(worldRegionId)
+    expect(artifact.borderChanges).toBeUndefined()
+  })
+
   it('reports the years its boundaries actually cover', async () => {
     // The timeline runs to 2026 and the corpus stops at 2010, so the region
     // has to say where its map ends or the client cannot tell an unmapped
@@ -115,6 +122,23 @@ describe('renderRegion', () => {
 
     const artifact = await renderRegion(worldRegionId)
     expect(artifact.borderYears).toEqual({ first: -800, last: -601 })
+  })
+
+  it('lists the years the borders redraw, once each, not counting where they start', async () => {
+    // The timeline jumps between these. Two polities changing in the same
+    // year is one redraw, and the first snapshot is where the map begins, not
+    // a change to it.
+    const square = 'SRID=4326;MULTIPOLYGON(((0 0,1 0,1 1,0 1,0 0)))'
+    await db.insert(boundaries).values([
+      { name: 'Testland', valid: [-800, -700], geom: square, source: 'test' },
+      { name: 'Testland', valid: [-700, -600], geom: square, source: 'test' },
+      { name: 'Otherland', valid: [-800, -700], geom: square, source: 'test' },
+      { name: 'Otherland', valid: [-700, -650], geom: square, source: 'test' },
+      { name: 'Otherland', valid: [-650, -600], geom: square, source: 'test' },
+    ])
+
+    const artifact = await renderRegion(worldRegionId)
+    expect(artifact.borderChanges).toEqual([-700, -650])
   })
 })
 

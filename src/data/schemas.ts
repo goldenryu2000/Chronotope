@@ -130,6 +130,13 @@ export const RegionSchema = z
      * rather than an empty one.
      */
     borderYears: z.object({ first: Year, last: Year }).optional(),
+    /**
+     * The years the borders redraw, ascending, not counting the first year of
+     * coverage. The timeline offers them as landmarks to jump between. Optional
+     * so an artifact published before this field existed still parses; the
+     * timeline simply has no border landmarks until it is republished.
+     */
+    borderChanges: z.array(Year).optional(),
     /** The region's default periodization. A pack may override it. */
     eras: z.array(EraSchema),
   })

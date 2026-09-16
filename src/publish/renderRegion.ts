@@ -52,6 +52,16 @@ export async function renderRegion(regionId: string): Promise<Region> {
     .from(boundaries)
     .where(sql`${boundaries.geom} && (select bbox from regions where id = ${regionId}::uuid)`)
 
+  // Every year an interval starts is a year the map redraws, except the first,
+  // which is where the map begins. Distinct, because a snapshot changes many
+  // polities at once and the reader cares about the redraw, not the count.
+  const changeRows = await db
+    .selectDistinct({ year: sql<number>`lower(${boundaries.valid})` })
+    .from(boundaries)
+    .where(sql`${boundaries.geom} && (select bbox from regions where id = ${regionId}::uuid)`)
+    .orderBy(sql`lower(${boundaries.valid})`)
+  const borderChanges = changeRows.slice(1).map((row) => row.year)
+
   const eraRows = await db
     .select()
     .from(eras)
@@ -72,6 +82,7 @@ export async function renderRegion(regionId: string): Promise<Region> {
     ...(coverage?.first !== null && coverage?.last !== null
       ? { borderYears: { first: coverage.first, last: coverage.last } }
       : {}),
+    ...(borderChanges.length > 0 ? { borderChanges } : {}),
     eras: eraRows.map((e) => ({
       id: e.slug, label: e.label, start: e.start, end: e.end,
       weight: e.weight, blurb: e.blurb,

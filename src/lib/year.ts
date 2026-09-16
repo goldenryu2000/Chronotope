@@ -11,6 +11,34 @@ export function formatYear(year: number): string {
 }
 
 /**
+ * What a reader typed, as a signed year, or null if it is not one.
+ *
+ * The inverse of `formatYear`, and forgiving about the forms people actually
+ * type: `1492`, `1492 CE`, `AD 1492`, `350 BCE`, `350 B.C.`, `-350`. A minus
+ * sign and an era word together (`-350 BCE`) are refused rather than guessed
+ * at, because the reader could have meant either. There is no year 0.
+ */
+export function parseYear(input: string): number | null {
+  // Dots are dropped only after a letter (B.C., A.D.), so `12.5` stays a
+  // decimal and is refused instead of becoming 125.
+  const text = input.trim().replace(/,/g, '').replace(/(?<=[A-Za-z])\./g, '').toUpperCase()
+  const match = /^(?:(AD|CE)\s*)?(-)?(\d+)(?:\s*(BCE|BC|CE|AD))?$/.exec(text)
+  if (!match) return null
+
+  const [, prefix, minus, digits, suffix] = match
+  if (prefix && suffix) return null
+
+  const magnitude = Number(digits)
+  if (magnitude === 0) return null
+
+  const era = prefix ?? suffix
+  const before = era === 'BCE' || era === 'BC'
+  if (minus && era) return null
+
+  return minus || before ? -magnitude : magnitude
+}
+
+/**
  * Elapsed years between two signed years, accounting for the absent year 0.
  *
  * Note that the span and timeline-scale code deliberately does *not* call
