@@ -519,7 +519,14 @@ export function Atlas({
           <EmptyState entities={entities} year={year} onGoTo={setYear} />
         )}
 
-        {scale && <Timeline scale={scale} entities={entities} spans={layerSpans} />}
+        {scale && (
+          <Timeline
+            scale={scale}
+            entities={entities}
+            spans={layerSpans}
+            borderChanges={region?.borderChanges}
+          />
+        )}
 
         {error && <p className="atlas__error">Could not open the atlas — {error}</p>}
       </div>

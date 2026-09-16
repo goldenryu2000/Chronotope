@@ -1,8 +1,10 @@
 /** @vitest-environment jsdom */
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { useAtlas } from '../state/store'
 import { buildScale } from './scale'
 import Timeline from './Timeline'
+import { IDLE_MS } from './useExpansion'
 
 // Two eras of equal weight, so each takes exactly half the track: antiquity at
 // offset 0 span 0.5, the middle ages at offset 0.5 span 0.5. That makes every
@@ -141,5 +143,101 @@ describe('Timeline spans', () => {
       />,
     )
     expect(screen.getByTitle(/^Silk Road:/).title).toBe('Silk Road: 130 BCE to 1450 CE')
+  })
+})
+
+describe('Timeline precision controls', () => {
+  const year = () => useAtlas.getState().year
+
+  beforeEach(() => {
+    useAtlas.setState({ year: 100 })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('starts compact, with no detail track', () => {
+    render(<Timeline scale={scale} entities={[]} spans={[]} />)
+    expect(screen.queryByTestId('detail-track')).toBeNull()
+  })
+
+  it('expands when the overview track is pressed, and folds away once left alone', () => {
+    vi.useFakeTimers()
+    render(<Timeline scale={scale} entities={[]} spans={[]} />)
+
+    fireEvent.pointerDown(screen.getByTestId('timeline-track'), { pointerId: 1, clientX: 0 })
+    expect(screen.getByTestId('detail-track')).toBeTruthy()
+
+    act(() => vi.advanceTimersByTime(IDLE_MS + 10))
+    expect(screen.queryByTestId('detail-track')).toBeNull()
+  })
+
+  it('stays open while pinned', () => {
+    vi.useFakeTimers()
+    render(<Timeline scale={scale} entities={[]} spans={[]} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /keep the precise timeline open/i }))
+    act(() => vi.advanceTimersByTime(IDLE_MS * 3))
+    expect(screen.getByTestId('detail-track')).toBeTruthy()
+  })
+
+  it('goes to a typed year, clamped to the scale', () => {
+    render(<Timeline scale={scale} entities={[]} spans={[]} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /type a year/i }))
+    const input = screen.getByTestId('year-input')
+    fireEvent.change(input, { target: { value: '350 BCE' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(year()).toBe(-350)
+
+    fireEvent.click(screen.getByRole('button', { name: /type a year/i }))
+    fireEvent.change(screen.getByTestId('year-input'), { target: { value: '3000' } })
+    fireEvent.keyDown(screen.getByTestId('year-input'), { key: 'Enter' })
+    expect(year()).toBe(1500)
+  })
+
+  it('keeps editing and says why when the year makes no sense', () => {
+    render(<Timeline scale={scale} entities={[]} spans={[]} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /type a year/i }))
+    const input = screen.getByTestId('year-input')
+    fireEvent.change(input, { target: { value: 'soon' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+
+    expect(year()).toBe(100)
+    expect(input.getAttribute('aria-invalid')).toBe('true')
+    expect(screen.getByRole('alert').textContent).toBe('Try 1492 or 350 BCE')
+
+    fireEvent.keyDown(input, { key: 'Escape' })
+    expect(screen.queryByTestId('year-input')).toBeNull()
+    expect(year()).toBe(100)
+  })
+
+  it('steps a year at a time, never landing on year 0', () => {
+    useAtlas.setState({ year: -1 })
+    render(<Timeline scale={scale} entities={[]} spans={[]} />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Forward one year' }))
+    expect(year()).toBe(1)
+    fireEvent.click(screen.getByRole('button', { name: 'Back one year' }))
+    expect(year()).toBe(-1)
+  })
+
+  it('jumps between landmarks with the buttons and the bracket keys', () => {
+    render(<Timeline scale={scale} entities={[]} spans={[]} borderChanges={[700, 1200]} />)
+
+    // From 100 the next landmark is the Middle Ages beginning at 500.
+    fireEvent.click(screen.getByRole('button', { name: /next landmark/i }))
+    expect(year()).toBe(500)
+
+    fireEvent.keyDown(screen.getByTestId('timeline-track'), { key: ']' })
+    expect(year()).toBe(700)
+
+    fireEvent.keyDown(screen.getByTestId('timeline-track'), { key: '[' })
+    expect(year()).toBe(500)
+
+    // Said out loud for screen readers, since the map change is visual.
+    expect(screen.getByTestId('timeline-announcement').textContent).toBe('500 CE: Middle Ages begins')
   })
 })
