@@ -213,6 +213,7 @@ export default async function Home() {
           (GPL-3.0). Jammu and Kashmir is drawn to the boundary the Survey of India requires, a
           deliberate divergence recorded rather than hidden. Chronotope is GPL-3.0-or-later.
         </p>
+        <p>Best viewed on a desktop or laptop screen.</p>
         <p>
           <Link href="/credits">Credits</Link> · <Link href="/privacy">Privacy</Link>
         </p>

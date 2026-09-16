@@ -48,3 +48,34 @@ a {
 [data-theme='rustic'] {
   color-scheme: light;
 }
+
+/*
+ * The site is laid out for desktop screens and has not been made to work on
+ * phones yet. On narrow screens a quiet strip says so, instead of letting the
+ * atlas look broken with no explanation.
+ *
+ * Fixed to the bottom and click-through, so it never shifts a layout or blocks
+ * a control, and it stays clear of the theme toggle in the top corner. At
+ * desktop widths it is `display: none`, which also hides it from screen readers.
+ */
+.screen-note {
+  display: none;
+}
+
+@media (width < 56rem) {
+  .screen-note {
+    display: block;
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 1000;
+    padding: 0.4rem 1rem calc(0.4rem + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--paper) 90%, transparent);
+    border-top: 1px solid var(--rule);
+    color: var(--ink-soft);
+    font-family: var(--font-ui);
+    font-size: 0.72rem;
+    line-height: 1.4;
+    text-align: center;
+    pointer-events: none;
+  }
+}

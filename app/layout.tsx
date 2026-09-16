@@ -57,7 +57,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {/* Shown only on narrow screens; see `.screen-note` in globals.css. */}
+        <p className="screen-note" role="note">
+          Chronotope is made for desktop screens. Phones are not supported yet.
+        </p>
+        {children}
+      </body>
     </html>
   );
 }

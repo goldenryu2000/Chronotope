@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!--
+    Chronotope's mark: a map pin inside an open timeline arc, with the arc's
+    scrubber knob at one end. The place, and the year you drag to find it.
+    Colours are the rustic theme's paper, ink and madder accent, switching to
+    slate's for a dark browser. Strokes are heavy on purpose so the arc, knob
+    and pin still read at 16px.
+  -->
+  <style>
+    .tile { fill: #faf4e6 }
+    .ink { stroke: #221b12 }
+    .accent { fill: #9c3a24 }
+    .cut { fill: #faf4e6; stroke: #faf4e6 }
+    @media (prefers-color-scheme: dark) {
+      .tile { fill: #12161c }
+      .ink { stroke: #e6ecf3 }
+      .accent { fill: #e0663f }
+      .cut { fill: #12161c; stroke: #12161c }
+    }
+  </style>
+  <rect class="tile" width="64" height="64" rx="14"/>
+  <path class="ink" d="M43 12.95 A22 22 0 1 1 21 12.95" fill="none" stroke-width="4.5" stroke-linecap="round"/>
+  <circle class="accent" cx="43" cy="12.95" r="5"/>
+  <path class="accent" d="M32 45 C27.2 39.2 23 34.6 23 29.5 A9 9 0 1 1 41 29.5 C41 34.6 36.8 39.2 32 45 Z"/>
+  <circle class="cut" cx="32" cy="29.5" r="3.2"/>
+</svg>
