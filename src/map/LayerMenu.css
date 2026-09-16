@@ -1,0 +1,174 @@
+/*
+ * The chrome is `pointer-events: none` where it overlays the map, so this
+ * turns them back on for itself, the same arrangement `.pack-switcher` and
+ * `.atlas__dock` use.
+ */
+.layers {
+  position: relative;
+  pointer-events: auto;
+}
+
+/*
+ * Bordered at rest, deliberately, for the reason `.pack-switcher__row` is: the
+ * menu this replaces only looked like a control once the pointer was already
+ * on it, which is no use to a reader who never suspected there was one.
+ */
+.layers__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.85rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
+  box-shadow: 0 1px 8px rgb(0 0 0 / 8%);
+  font-family: inherit;
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-indent: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition: color 140ms ease;
+}
+
+.layers__toggle:hover,
+.layers__toggle[aria-expanded='true'] {
+  color: var(--ink);
+}
+
+.layers__toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.layers__badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+  font-size: 0.6rem;
+  letter-spacing: 0;
+  text-indent: 0;
+}
+
+.layers__popover {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 2;
+  width: min(23rem, calc(100vw - 2rem));
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 0.9rem 1rem 1rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.6rem;
+  background: var(--surface-raised);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 18%);
+}
+
+.layers__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.layers__title {
+  margin: 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-indent: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.layers__clear {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 0.7rem;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.layers__help {
+  margin: 0.5rem 0 0.9rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--ink-faint);
+}
+
+.layers__group + .layers__group {
+  margin-top: 0.9rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--rule);
+}
+
+.layers__group-title {
+  margin: 0 0 0.45rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-indent: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.layers__item {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: start;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  cursor: pointer;
+}
+
+/*
+ * A layer outside the cursor's year stays in the list and dims, rather than
+ * disappearing or silently unchecking itself. Same instinct as `EmptyState`:
+ * say which it is. The period line below carries the words.
+ */
+.layers__item[data-drawing='false'] {
+  opacity: 0.55;
+}
+
+.layers__swatch {
+  width: 0.85rem;
+  height: 0.85rem;
+  margin-top: 0.15rem;
+  border-radius: 999px;
+}
+
+.layers__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.layers__name {
+  font-size: 0.82rem;
+  color: var(--ink);
+}
+
+.layers__note {
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
+.layers__period {
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layers__toggle {
+    transition: none;
+  }
+}

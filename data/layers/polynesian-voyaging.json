@@ -1,0 +1,77 @@
+{
+  "id": "polynesian-voyaging",
+  "name": "Polynesian Voyaging",
+  "kind": "migration",
+  "paletteSlot": 8,
+  "valid": {
+    "start": 900,
+    "end": 1300
+  },
+  "note": "Deliberate settlement of the last empty islands on Earth, navigating without instruments.",
+  "features": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "West to east"
+        },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              -172.1,
+              -13.76
+            ],
+            [
+              -160,
+              -21.2
+            ],
+            [
+              -149.42,
+              -17.65
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "To Hawaiʻi"
+        },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              -149.42,
+              -17.65
+            ],
+            [
+              -155.5,
+              19.6
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "To Rapa Nui"
+        },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              -149.42,
+              -17.65
+            ],
+            [
+              -109.35,
+              -27.12
+            ]
+          ]
+        }
+      }
+    ]
+  }
+}

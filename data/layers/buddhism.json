@@ -1,0 +1,113 @@
+{
+  "id": "buddhism",
+  "name": "Spread of Buddhism",
+  "kind": "idea",
+  "paletteSlot": 7,
+  "valid": {
+    "start": -250,
+    "end": 800
+  },
+  "note": "Out of Magadha along the caravan roads and the sea lanes, in both directions.",
+  "features": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Northern transmission"
+        },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              84.99,
+              24.7
+            ],
+            [
+              77.67,
+              27.49
+            ],
+            [
+              72.83,
+              33.74
+            ],
+            [
+              67.83,
+              34.82
+            ],
+            [
+              76,
+              39.4
+            ],
+            [
+              94.66,
+              40.14
+            ],
+            [
+              108.9,
+              34.27
+            ],
+            [
+              112.45,
+              34.62
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "To Korea and Japan"
+        },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              112.45,
+              34.62
+            ],
+            [
+              125.75,
+              39.03
+            ],
+            [
+              135.8,
+              34.68
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Southern transmission"
+        },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              84.99,
+              24.7
+            ],
+            [
+              80.36,
+              16.57
+            ],
+            [
+              80.4,
+              8.35
+            ],
+            [
+              95.29,
+              18.81
+            ],
+            [
+              103.87,
+              13.41
+            ]
+          ]
+        }
+      }
+    ]
+  }
+}

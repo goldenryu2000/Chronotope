@@ -1,0 +1,87 @@
+/*
+ * Rustic — aged parchment and iron-gall ink. The default Chronotope theme.
+ *
+ * Every value the map needs is exposed as a `--map-*` custom property so the
+ * MapLibre style can be built from computed styles rather than hardcoded hex.
+ * If you ever find a colour literal inside src/map/, the boundary has leaked.
+ *
+ * Built around value range, which is what the first version got wrong. Its
+ * colours all sat between 0.62 and 0.96 luminance, so land and sea differed by
+ * a ratio of 1.32:1 and the map read as one flat beige field. Slate gets away
+ * with a similar ratio because it sits near black, where the eye separates
+ * small differences easily; a bright theme has to work harder for the same
+ * legibility. Land and sea are now 2.11:1 apart and borders 4.21:1, and the
+ * grain and vignette are lighter — multiplying texture over pale colour is
+ * what turns parchment into mud.
+ */
+
+[data-theme='rustic'] {
+  color-scheme: light;
+
+  /* Surfaces */
+  --paper: #faf4e6;
+  --paper-aged: #e4d9bf;
+  --paper-edge: #cfc09c;
+  --surface: #fdf9ef;
+  --surface-raised: #fffcf5;
+
+  /* Ink */
+  --ink: #221b12;
+  --ink-soft: #4e412f;
+  --ink-faint: #86765d;
+  --rule: #cbb994;
+
+  /* Pigments */
+  --accent: #9c3a24; /* madder red */
+  --accent-soft: #bd6248;
+  --secondary: #55705f; /* verdigris */
+  --tertiary: #b0803a; /* ochre */
+
+  /* Type */
+  /* The Variable names are what @fontsource registers; the plain names let a
+     locally installed copy win before anything falls back. */
+  --font-display: 'EB Garamond Variable', 'EB Garamond', 'Iowan Old Style', Palatino,
+    'Palatino Linotype', Georgia, serif;
+  --font-ui: 'Inter Variable', 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --tracking-display: 0.14em;
+
+  /* Texture — light enough to read as paper rather than dirt. */
+  --grain-opacity: 0.28;
+  --vignette: rgba(72, 54, 30, 0.15);
+
+  /* Map — consumed by src/map/ via getComputedStyle */
+  --map-sea: #b3aa90;
+  --map-land: #faf4e6;
+  --map-land-stroke: #87724d;
+  --map-polity-fill: #b0803a;
+  --map-polity-fill-opacity: 0.22;
+  --map-polity-stroke: #6b543a;
+  --map-pin: #9c3a24;
+  --map-pin-ring: #221b12;
+  --map-pin-halo: #86765d;
+  --map-guess: #4a6d8c;
+  --map-truth: #a8443a;
+  --map-guess-line: #6b5a3e;
+  --map-label: #33281a;
+  --map-label-halo: #faf4e6;
+
+  /* MapLibre draws its own zoom/compass icons as near-black SVG data URIs, so
+     the theme cannot recolour them — it can only filter them. Rustic's control
+     surface is pale, which is what those icons already assume, so nothing to
+     do. Slate inverts them; see the note there. `MapCanvas.css` reads this. */
+  --map-ctrl-filter: none;
+
+  /* The layer palette. A layer picks a slot; see src/theme/layerSlots.ts.
+     Slots 1 to 5 are the trade routes, 6 and 7 the ideas, 8 and 9 the
+     migrations, so two lit layers of the same kind never sit adjacent in
+     hue. */
+  --map-layer-1: #8f6a10;
+  --map-layer-2: #10696b;
+  --map-layer-3: #9a5411;
+  --map-layer-4: #6b7012;
+  --map-layer-5: #24468c;
+  --map-layer-6: #663a8f;
+  --map-layer-7: #8c2f6a;
+  --map-layer-8: #10577a;
+  --map-layer-9: #2a6b34;
+}

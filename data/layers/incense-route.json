@@ -1,0 +1,55 @@
+{
+  "id": "incense-route",
+  "name": "Incense Route",
+  "kind": "trade",
+  "paletteSlot": 4,
+  "valid": {
+    "start": -700,
+    "end": 300
+  },
+  "note": "Frankincense and myrrh from south Arabia to the Mediterranean, by camel.",
+  "features": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Arabian caravan road"
+        },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              47.02,
+              15.37
+            ],
+            [
+              45.32,
+              15.42
+            ],
+            [
+              44.13,
+              17.49
+            ],
+            [
+              39.6,
+              24.47
+            ],
+            [
+              37.93,
+              26.62
+            ],
+            [
+              35.44,
+              30.32
+            ],
+            [
+              34.47,
+              31.5
+            ]
+          ]
+        }
+      }
+    ]
+  }
+}

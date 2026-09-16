@@ -1,0 +1,491 @@
+/*
+ * No z-index here on purpose: with `z-index: auto` this element does not create
+ * a stacking context, so the hover chip below can sit above the page's grain
+ * and vignette layers, which are siblings of the map rather than children.
+ */
+.map {
+  position: absolute;
+  inset: 0;
+}
+
+.map__canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* MapLibre paints its own background; let the page texture sit over it. */
+.map__canvas .maplibregl-canvas {
+  outline: none;
+}
+
+/* --- Entity pins ------------------------------------------------------ */
+
+/*
+ * The button is the hit area, the `.pin__dot` child is the mark.
+ *
+ * WCAG 2.5.8 asks for at least 24x24px of target; the 10px dot this used to be
+ * failed that badly, and on phones — where labels are hidden — it was the only
+ * thing to aim at. The button is transparent and circular so it stays out of
+ * the way visually while being comfortably hittable.
+ *
+ * Do NOT set `position` here. MapLibre positions markers through
+ * `.maplibregl-marker { position: absolute }` and then transforms them to the
+ * projected point. That rule has the same specificity as `.pin`, and this
+ * stylesheet loads after maplibre-gl.css, so declaring `position: relative`
+ * silently won — every marker dropped into normal flow and rendered one
+ * pin-height lower than the last. Longitudes looked perfect while latitudes
+ * were off by 32, 64, 96px in DOM order. The marker element is already
+ * absolutely positioned by that class, which is the containing block the
+ * label and leader line below need.
+ */
+.pin {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  transition: opacity 220ms ease;
+}
+
+/*
+ * Leader line back to the true coordinate, drawn only for pins the declutter
+ * pass moved. Several entities share exact coordinates — Socrates and Plato
+ * are both just "Athens" — so a displaced pin has to show what it was
+ * displaced from. Length and angle arrive as inline custom properties.
+ */
+.pin[data-offset='true']::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--leader, 0);
+  height: 1px;
+  transform-origin: 0 50%;
+  transform: rotate(var(--leader-angle, 0rad));
+  background: var(--map-land-stroke);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.pin__dot {
+  width: 0.62rem;
+  height: 0.62rem;
+  border: 1.5px solid var(--map-pin-ring);
+  border-radius: 50%;
+  background: var(--map-pin);
+  transition: transform 140ms ease;
+}
+
+.pin:hover .pin__dot,
+.pin[data-selected='true'] .pin__dot {
+  transform: scale(1.5);
+}
+
+/* Pins crowd together at world zoom. Whichever one the user is addressing
+   comes forward, along with its label. */
+.pin:hover,
+.pin:focus-visible,
+.pin[data-selected='true'] {
+  z-index: 2;
+}
+
+.pin:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -4px;
+}
+
+/* Uncertain dates get a softer edge — a great deal of what this atlas covers
+   is only datable to within a century, and the mark should not imply precision. */
+.pin[data-fuzzy='true'] .pin__dot {
+  border-style: dotted;
+  background: color-mix(in srgb, var(--map-pin) 62%, transparent);
+}
+
+/*
+ * Absolutely positioned so it does not enlarge the button's box — the marker is
+ * centre-anchored, and a label in flow would drag the dot off its coordinate.
+ * It is still a child of the button, so clicking the name selects the entity;
+ * this was once pointer-events: none and the text did nothing at all.
+ */
+.pin__label {
+  position: absolute;
+  left: calc(50% + 0.62rem);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.15rem 0.2rem;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--map-label);
+  text-shadow:
+    0 1px 0 var(--map-label-halo),
+    0 -1px 0 var(--map-label-halo),
+    1px 0 0 var(--map-label-halo),
+    -1px 0 0 var(--map-label-halo);
+}
+
+/* Suppressed when it would lie across another pin and steal its clicks.
+   Hover and selection bring it back, so the name is never unreachable. */
+.pin[data-label='hide'] .pin__label {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pin:hover .pin__label,
+.pin:focus-visible .pin__label,
+.pin[data-selected='true'] .pin__label {
+  opacity: 1;
+  pointer-events: auto;
+  color: var(--accent);
+}
+
+/* --- Clusters & Cluster Popover --------------------------------------- */
+
+.cluster {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  padding: 0 0.4rem;
+  border: 1.5px solid var(--map-pin-ring);
+  border-radius: 999px;
+  background: var(--map-pin);
+  color: var(--map-label-halo);
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 25%);
+  cursor: pointer;
+  transition: background-color 140ms ease, box-shadow 140ms ease;
+  z-index: 3;
+}
+
+.cluster__count {
+  display: inline-block;
+  transition: transform 140ms ease;
+}
+
+.cluster:hover .cluster__count,
+.cluster[data-active='true'] .cluster__count {
+  transform: scale(1.15);
+}
+
+.cluster:hover,
+.cluster[data-active='true'] {
+  background: var(--accent);
+}
+
+.cluster:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Cluster Popover Card */
+.cluster-popover {
+  position: absolute;
+  z-index: 10;
+  width: 18rem;
+  max-width: calc(100vw - 2rem);
+  max-height: 23rem;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--surface-raised);
+  box-shadow:
+    0 12px 32px rgb(0 0 0 / 22%),
+    0 2px 6px rgb(0 0 0 / 10%);
+  font-family: var(--font-ui);
+  animation: popoverFadeIn 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Pointer arrow pointing to map pin */
+.cluster-popover::after {
+  content: '';
+  position: absolute;
+  bottom: -7px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 12px;
+  height: 12px;
+  background: var(--surface-raised);
+  border-right: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  box-shadow: 2px 2px 4px rgb(0 0 0 / 8%);
+  pointer-events: none;
+}
+
+@keyframes popoverFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.cluster-popover__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.9rem;
+  background: color-mix(in srgb, var(--paper-aged) 45%, var(--surface-raised));
+  border-bottom: 1px solid var(--rule);
+  border-radius: 6px 6px 0 0;
+}
+
+.cluster-popover__title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cluster-popover__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+
+.cluster-popover__count {
+  padding: 0.12rem 0.45rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+
+.cluster-popover__close {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.cluster-popover__close:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+}
+
+.cluster-popover__list {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 0.35rem 0;
+  border-radius: 0 0 6px 6px;
+}
+
+.cluster-popover__list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.cluster-popover__list::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--rule) 80%, transparent);
+  border-radius: 2px;
+}
+
+.cluster-popover__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+  padding: 0.6rem 0.9rem;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--rule) 45%, transparent);
+  border-left: 3.5px solid transparent;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease, transform 100ms ease;
+}
+
+.cluster-popover__item:last-child {
+  border-bottom: 0;
+}
+
+.cluster-popover__item:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.cluster-popover__item[data-selected='true'] {
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-raised));
+  border-left-color: var(--accent);
+}
+
+.cluster-popover__item-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.cluster-popover__item-name {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+  transition: color 140ms ease;
+}
+
+.cluster-popover__item[data-selected='true'] .cluster-popover__item-name {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.cluster-popover__item-span {
+  font-size: 0.65rem;
+  color: var(--ink-faint);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.cluster-popover__item-blurb {
+  margin: 0;
+  font-size: 0.73rem;
+  line-height: 1.35;
+  color: var(--ink-soft);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* --- Hover chip and errors -------------------------------------------- */
+
+.map__polity {
+  position: absolute;
+  top: 4rem;
+  left: 1.25rem;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--surface-raised);
+  box-shadow: 0 1px 10px rgb(0 0 0 / 12%);
+  pointer-events: none;
+}
+
+.map__polity-name {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+
+.map__polity-subject {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
+/* Above the timeline dock — this was previously behind it, which hid the one
+   message that explains why the map is blank. */
+.map__error {
+  position: absolute;
+  top: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 7;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  background: var(--surface-raised);
+  color: var(--accent);
+  font-size: 0.8rem;
+}
+
+/* --- MapLibre's own chrome, folded into the theme --------------------- */
+
+.map .maplibregl-ctrl-group {
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--surface-raised);
+  box-shadow: none;
+}
+
+.map .maplibregl-ctrl-group button+button {
+  border-top: 1px solid var(--rule);
+}
+
+.map .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: var(--map-ctrl-filter, none);
+}
+
+.map .maplibregl-ctrl-attrib {
+  background: color-mix(in srgb, var(--surface-raised) 82%, transparent);
+  color: var(--ink-faint);
+  font-size: 0.68rem;
+}
+
+.map .maplibregl-ctrl-attrib a {
+  color: var(--ink-soft);
+}
+
+@media (width <=34rem) {
+
+  /* Labels collide badly at phone width, so the dot is the only target and
+     has to carry the full 44px touch guidance on its own. */
+  .pin__label {
+    display: none;
+  }
+
+  .pin {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .pin__dot {
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+
+  .cluster {
+    width: 2.1rem;
+    height: 2.1rem;
+    font-size: 0.75rem;
+  }
+
+  /* The timeline dock owns the bottom of a phone screen. Pinch already zooms,
+     so the buttons are redundant; the attribution is not, and moves clear. */
+  .map .maplibregl-ctrl-bottom-right {
+    display: none;
+  }
+
+  .map .maplibregl-ctrl-bottom-left {
+    bottom: 10.5rem;
+  }
+
+  .map__polity {
+    top: 3.2rem;
+    left: 0.6rem;
+  }
+}
+/* The ported build's `.game-pin` rules lived here. `src/game/` is not part of
+   this milestone, so they came out with it; the `--map-guess` and `--map-truth`
+   tokens stay in the themes, because the theme files are the contract. */

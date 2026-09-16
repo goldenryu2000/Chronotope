@@ -1,0 +1,310 @@
+/*
+ * Starts below the chrome cluster, not level with it.
+ *
+ * The panel and the share/theme controls both live in the top right, and the
+ * panel sits above them, so overlapping meant those buttons were painted over
+ * and unclickable for as long as anything was selected. Synthetic .click()
+ * still reached them in testing, which is exactly why it went unnoticed —
+ * hit-testing is what matters, not whether the handler fires.
+ */
+.panel {
+  position: absolute;
+  top: 4.2rem;
+  right: 1.25rem;
+  z-index: 6;
+  width: min(21rem, calc(100vw - 2.5rem));
+  /*
+   * The bottom reserve is not decoration: it is what stops the panel growing
+   * down over MapLibre's zoom buttons in the bottom-right corner. The same
+   * class of bug as the note above, at the other end of the same column —
+   * e2e/atlas.spec.ts hit-tests the zoom control with the panel open for
+   * exactly this reason.
+   */
+  max-height: calc(100vh - 15rem);
+  /*
+   * The shell does not scroll; `.panel__scroll` inside it does.
+   *
+   * The close button is absolutely positioned against this element, and an
+   * absolutely positioned child of a *scrolling* box scrolls away with the
+   * content — scroll a long entry and the button drifted up off the panel and
+   * came to rest over the map. Separating the shell from the scrolling region
+   * keeps it anchored.
+   */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  background: var(--surface-raised);
+  box-shadow: 0 4px 28px rgb(0 0 0 / 16%);
+  animation: panel-in 200ms ease;
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.panel:focus {
+  outline: none;
+}
+
+.panel__scroll {
+  overflow-y: auto;
+  padding: 1.4rem 1.5rem 1.5rem;
+  /* Still scrolls; the bar is just visual noise against the parchment. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.panel__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.panel__figure {
+  margin: 0 0 1rem;
+}
+
+.panel__image {
+  display: block;
+  width: 100%;
+  height: 11rem;
+  object-fit: cover;
+  /* Faces sit high in most busts and portraits; centring crops off the head. */
+  object-position: 50% 22%;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--paper-aged);
+  filter: saturate(0.82) contrast(0.96);
+}
+
+.panel__credit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.5rem;
+  margin-top: 0.35rem;
+  font-size: 0.6rem;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
+.panel__credit a {
+  color: var(--ink-faint);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.panel__credit a:hover {
+  color: var(--accent);
+}
+
+.panel__licence {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.panel__close {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  /* Sits over the depiction when there is one, so it needs its own ground to
+     stand on — against a dark painting the bare glyph disappeared. */
+  background: color-mix(in srgb, var(--surface-raised) 86%, transparent);
+  backdrop-filter: blur(3px);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.panel__close:hover {
+  color: var(--accent);
+}
+
+.panel__close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.panel__close svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.panel__name {
+  margin: 0 1.5rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.5rem;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.panel__dates {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+
+.panel__circa {
+  margin-right: 0.25rem;
+  font-style: italic;
+}
+
+.panel__span-label {
+  margin-left: 0.4rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.panel__place {
+  margin: 0.1rem 0 0;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+}
+
+.panel__traditions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.panel__traditions li {
+  padding: 0.12rem 0.45rem;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  font-size: 0.62rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.panel__blurb {
+  margin: 1rem 0 0;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.panel__heading {
+  margin: 1.3rem 0 0.5rem;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.panel__ideas {
+  margin: 0;
+  padding-left: 1rem;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+.panel__elsewhere {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--rule);
+}
+
+.panel__elsewhere li {
+  border-bottom: 1px solid var(--rule);
+}
+
+.panel__elsewhere button {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.panel__elsewhere button:hover .panel__elsewhere-name {
+  color: var(--accent);
+}
+
+.panel__elsewhere button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.panel__elsewhere-name {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.panel__elsewhere-place {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.68rem;
+  color: var(--ink-faint);
+}
+
+.panel__link {
+  display: inline-block;
+  margin-top: 1.3rem;
+  padding-bottom: 1px;
+  border-bottom: 1px solid var(--accent);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.panel__link:hover {
+  border-bottom-width: 2px;
+}
+
+.panel__note {
+  margin: 1.1rem 0 0;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+@media (width <= 34rem) {
+  /* A bottom sheet above the timeline dock, rather than a side panel. */
+  .panel {
+    top: auto;
+    right: 0.6rem;
+    left: 0.6rem;
+    bottom: 11rem;
+    width: auto;
+    max-height: 45vh;
+  }
+
+  .panel__scroll {
+    padding: 1.1rem 1.1rem 1.2rem;
+  }
+
+  .panel__name {
+    font-size: 1.25rem;
+  }
+
+  /* The sheet is only 45vh; a full-height depiction leaves no room to read. */
+  .panel__image {
+    height: 6.5rem;
+  }
+}

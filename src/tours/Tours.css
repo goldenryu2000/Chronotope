@@ -1,0 +1,165 @@
+/*
+ * The tour player, docked above the timeline.
+ *
+ * The shell does not scroll; `.tour__body` inside it does. The same split
+ * DetailPanel.css makes, for the same reason: the controls are anchored to
+ * this box, and a long narration must not carry them off it.
+ *
+ * Height is capped rather than natural. The dock sits over the map, and a
+ * thirteen-stop tour has stops whose prose would otherwise cover most of the
+ * thing being narrated.
+ */
+.tour {
+  display: flex;
+  flex-direction: column;
+  /*
+   * Width and right margin both reserve the detail panel's column.
+   *
+   * The panel is `min(21rem, ...)` at `right: 1.25rem`, and every tour stop
+   * opens it, so the two are on screen together for the whole tour. Centred at
+   * full width the player runs underneath it, and the panel's scroll region
+   * then swallows clicks on "Next stop" — the button is painted, enabled, and
+   * unclickable. That is the third time this stacking bug has appeared here:
+   * DetailPanel.css caps its own height to clear MapLibre's zoom buttons, and
+   * the dock passes pointer events through for the same reason. Hit-testing is
+   * what matters, not whether the handler fires.
+   *
+   * The margin shifts the centred player left by the panel's column; the width
+   * keeps it from growing back into it on a narrower viewport. `e2e/tour.spec.ts`
+   * is what holds this: it clicks the button rather than dispatching to it.
+   */
+  width: min(46rem, calc(100vw - 26rem));
+  margin-right: 22.5rem;
+  max-height: 40vh;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  background: var(--surface-raised);
+  box-shadow: 0 4px 28px rgb(0 0 0 / 16%);
+  font-family: var(--font-ui);
+}
+
+.tour__progress {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.7rem 1.2rem 0;
+}
+
+.tour__dot {
+  flex: 1;
+  height: 3px;
+  padding: 0;
+  border: none;
+  border-radius: 2px;
+  background: var(--rule);
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.tour__dot[data-passed='true'] {
+  background: var(--ink-faint);
+}
+
+.tour__dot[data-active='true'] {
+  background: var(--accent);
+}
+
+.tour__dot:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tour__meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+  padding: 0.8rem 1.2rem 0;
+  color: var(--ink-faint);
+  font-size: 0.72rem;
+  letter-spacing: var(--tracking-display);
+  text-transform: uppercase;
+}
+
+.tour__title {
+  color: var(--ink-soft);
+}
+
+.tour__place {
+  margin-left: auto;
+}
+
+.tour__exit {
+  color: var(--ink-faint);
+  text-decoration: none;
+}
+
+.tour__exit:hover {
+  color: var(--accent);
+}
+
+.tour__body {
+  overflow-y: auto;
+  padding: 0.8rem 1.2rem 1rem;
+  /* Still scrolls; the bar is visual noise against the parchment. */
+  scrollbar-width: none;
+}
+
+.tour__body::-webkit-scrollbar {
+  display: none;
+}
+
+.tour__stop-title {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.tour__narration {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.65;
+}
+
+.tour__controls {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.8rem 1.2rem;
+  border-top: 1px solid var(--rule);
+}
+
+.tour__button {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.82rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 160ms ease, color 160ms ease;
+}
+
+.tour__button:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tour__button:disabled {
+  color: var(--ink-faint);
+  cursor: default;
+}
+
+.tour__button--primary {
+  margin-left: auto;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tour__error {
+  margin: 0;
+  padding: 0.7rem 1.1rem;
+  color: var(--ink-soft);
+}

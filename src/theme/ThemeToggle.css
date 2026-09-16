@@ -1,0 +1,46 @@
+/*
+ * Rendered on the landing page and on the atlas, so these styles live beside
+ * the component rather than inside either screen's stylesheet.
+ */
+
+.theme-toggle {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--surface-raised);
+  cursor: pointer;
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.theme-toggle__dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  border: 1px solid var(--ink-faint);
+  transition: transform 160ms ease;
+}
+
+/*
+ * The one place a colour literal is correct: these two dots are swatches
+ * *of* the themes, so they cannot be drawn in the current theme's tokens
+ * without both showing the same colour. Rule 1 binds src/map/, and this is
+ * chrome, not map.
+ */
+.theme-toggle__dot[data-theme-id='rustic'] {
+  background: #c8a86a;
+}
+
+.theme-toggle__dot[data-theme-id='slate'] {
+  background: #2b3a4a;
+}
+
+.theme-toggle__dot[data-active='true'] {
+  transform: scale(1.25);
+  border-color: var(--ink);
+}

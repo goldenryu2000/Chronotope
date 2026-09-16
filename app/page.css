@@ -1,0 +1,386 @@
+/*
+ * The landing page. Its job is to land one idea, that the map is redrawn to
+ * match a year, and then hand the reader an atlas.
+ *
+ * Every colour is a theme token, the same ones the map reads. Nothing here is
+ * a literal, so the page follows a theme change for free if the toggle ever
+ * reaches it.
+ */
+
+.home {
+  position: relative;
+  min-height: 100%;
+  flex: 1;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+/*
+ * The same grain the atlas is printed on, so the two do not look like
+ * different products. `background-attachment: fixed` keeps it still while the
+ * page scrolls, which is what makes it read as paper rather than as a texture
+ * layer sliding over the content.
+ */
+.home::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='0.32'/%3E%3C/svg%3E");
+}
+
+/* Above the grain, so the texture sits on the paper and not on the words. */
+.hero,
+.home__main,
+.home__footer {
+  position: relative;
+  z-index: 2;
+}
+
+/* ---- the hero ------------------------------------------------------- */
+
+.home__chrome {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 4;
+}
+
+.hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: min(38rem, 82vh);
+  padding: clamp(2rem, 6vh, 4rem) 1.5rem;
+  overflow: hidden;
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface);
+}
+
+/*
+ * The cartouche: the panel a printed atlas puts its title in.
+ *
+ * Solid, not a scrim. A gradient strong enough to make the wordmark carry over
+ * line work was strong enough to wash the plate out behind it; a panel gives
+ * the type a clean ground and costs the map only what it covers.
+ */
+.cartouche {
+  position: relative;
+  width: min(38rem, 100%);
+  padding: clamp(1.75rem, 5vw, 2.75rem) clamp(1.5rem, 5vw, 3rem);
+  border: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--paper) 96%, transparent);
+  box-shadow: 0 6px 40px rgb(0 0 0 / 12%);
+  text-align: center;
+}
+
+/* The double rule of an engraved plate, drawn with one inset shadow. */
+.cartouche::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
+  pointer-events: none;
+}
+
+.cartouche__eyebrow {
+  margin: 0;
+  font-size: 0.64rem;
+  letter-spacing: 0.32em;
+  text-indent: 0.32em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.cartouche__title {
+  margin: 0.7rem 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 7vw, 3.75rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: var(--tracking-display);
+  text-indent: var(--tracking-display);
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.cartouche__lede {
+  max-width: 26rem;
+  margin: 1rem auto 0;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* ---- the numbers ---------------------------------------------------- */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin: 1.75rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
+}
+
+.stats__item {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.2rem;
+}
+
+.stats dt {
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.stats dd {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 3vw, 1.5rem);
+  color: var(--accent);
+}
+
+@media (width <= 30rem) {
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem 0.75rem;
+  }
+}
+
+/* ---- sections ------------------------------------------------------- */
+
+.home__main {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.section {
+  padding: clamp(2rem, 5vh, 3.25rem) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.section:last-of-type {
+  border-bottom: 0;
+}
+
+.section__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-display);
+  color: var(--ink);
+}
+
+.section__note {
+  max-width: 34rem;
+  margin: 0.5rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--ink-faint);
+}
+
+/* ---- a region and its packs ----------------------------------------- */
+
+.region {
+  margin-top: 1.75rem;
+}
+
+.region__head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--rule) 60%, transparent);
+}
+
+.region__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.region__subtitle {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+}
+
+/*
+ * A grid rather than a stack. Three packs in one column left two thirds of a
+ * wide screen empty and made the page read as a list of two things.
+ */
+.region__packs {
+  margin: 1rem 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.75rem;
+  list-style: none;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.1rem 1.2rem 1.25rem;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: var(--surface-raised);
+  transition: border-color 160ms ease, transform 160ms ease;
+}
+
+/* A hairline that fills from the left on hover, the same gesture as a
+   timeline being scrubbed, which is the one thing this site does. */
+.card::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 260ms ease;
+}
+
+.card:hover,
+.card:focus-visible {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--rule));
+  transform: translateY(-2px);
+}
+
+.card:hover::after,
+.card:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.card__title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--accent);
+}
+
+.card__subtitle {
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.card__count {
+  margin-top: auto;
+  padding-top: 0.8rem;
+  font-size: 0.64rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* ---- what is not built yet ------------------------------------------ */
+
+.coming {
+  margin: 1.5rem 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 0.6rem;
+  list-style: none;
+}
+
+/*
+ * Deliberately not card-shaped. These are not links and must not invite a
+ * click: a dashed rule and muted type say "sketched, not built" before the
+ * heading above them has to.
+ */
+.coming__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.8rem 1rem 0.9rem;
+  border: 1px dashed color-mix(in srgb, var(--rule) 80%, transparent);
+  border-radius: 2px;
+}
+
+.coming__title {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.coming__blurb {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
+/* ---- odds and ends -------------------------------------------------- */
+
+.home__empty {
+  margin-top: 1.5rem;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  font-size: 0.9rem;
+  line-height: 1.9;
+  color: var(--ink-soft);
+}
+
+.home__empty code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+  color: var(--ink);
+}
+
+.home__footer {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 3rem;
+  font-size: 0.76rem;
+  line-height: 1.65;
+  color: var(--ink-faint);
+}
+
+.home__footer a {
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Matches Atlas.css: the one setting that exists to prevent motion should
+   reach every page, not just the one with a camera. */
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card::after {
+    transition: none;
+  }
+}
+
+/*
+ * The link out of a region's tour heading, to that region's full index.
+ *
+ * It sits where a region's subtitle sits in the atlas list above, because the
+ * two sections are the same shape and the eye should not have to relearn it.
+ * A region heading in the atlas list is deliberately not a link; here there is
+ * a real `/<region>/tours` route to send anyone to, so this one is.
+ */
+.region__more {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.region__more:hover,
+.region__more:focus-visible {
+  text-decoration: underline;
+}

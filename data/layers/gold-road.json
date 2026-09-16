@@ -1,0 +1,97 @@
+{
+  "id": "gold-road",
+  "name": "Trans-Saharan Gold Road",
+  "kind": "trade",
+  "paletteSlot": 3,
+  "valid": {
+    "start": 700,
+    "end": 1600
+  },
+  "note": "West African gold north, Saharan salt south. Timbuktu grew rich on the exchange.",
+  "features": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Western caravan road"
+        },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              -5,
+              34.03
+            ],
+            [
+              -4.28,
+              31.28
+            ],
+            [
+              -5,
+              23.5
+            ],
+            [
+              -3.98,
+              22.68
+            ],
+            [
+              -3,
+              16.77
+            ],
+            [
+              0.04,
+              16.27
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Niger bend"
+        },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              -3,
+              16.77
+            ],
+            [
+              -4.55,
+              13.9
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Eastern caravan road"
+        },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              13.19,
+              32.89
+            ],
+            [
+              9.5,
+              30.13
+            ],
+            [
+              10.4,
+              24.55
+            ],
+            [
+              8.52,
+              12
+            ]
+          ]
+        }
+      }
+    ]
+  }
+}

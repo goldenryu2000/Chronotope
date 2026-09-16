@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_PASSWORD: chronotope
+      POSTGRES_DB: chronotope
+    ports: ['5432:5432']
+    volumes:
+      - 'pgdata:/var/lib/postgresql/data'
+      # Runs once, on an empty data directory, before Postgres accepts
+      # connections. Installing PostGIS and creating chronotope_test here
+      # rather than by hand keeps `docker compose down -v && docker compose
+      # up -d` a complete reset. Mounting this directory masks the image's own
+      # init scripts — see the file for why that is fine.
+      - './docker/initdb:/docker-entrypoint-initdb.d:ro'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d chronotope']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+volumes:
+  pgdata:

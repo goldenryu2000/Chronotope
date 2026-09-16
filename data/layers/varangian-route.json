@@ -1,0 +1,55 @@
+{
+  "id": "varangian-route",
+  "name": "Varangians to the Greeks",
+  "kind": "trade",
+  "paletteSlot": 5,
+  "valid": {
+    "start": 800,
+    "end": 1100
+  },
+  "note": "Norse traders rowing the Russian rivers to Constantinople, portaging between them.",
+  "features": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "River road"
+        },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              17.54,
+              59.33
+            ],
+            [
+              32.3,
+              59.99
+            ],
+            [
+              31.27,
+              58.52
+            ],
+            [
+              31.9,
+              54.78
+            ],
+            [
+              30.52,
+              50.45
+            ],
+            [
+              32,
+              46.63
+            ],
+            [
+              28.98,
+              41.01
+            ]
+          ]
+        }
+      }
+    ]
+  }
+}

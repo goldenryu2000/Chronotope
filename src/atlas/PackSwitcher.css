@@ -1,0 +1,114 @@
+/*
+ * The header is `pointer-events: none` so it never swallows a drag on the map
+ * behind it. The switcher is the one thing in there that must be clickable, so
+ * it turns them back on for itself — the same arrangement `.atlas__dock` uses,
+ * and for the same reason.
+ */
+.pack-switcher {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 0.4rem;
+  pointer-events: auto;
+}
+
+/*
+ * Bordered at rest, deliberately. The whole failure of the menu this replaced
+ * was that it only looked like a control once the pointer was already on it,
+ * which is no use to a reader who never suspected there was one.
+ *
+ * Shares its visual language with `.theme-toggle`: a hairline pill on raised
+ * surface. The two are the only chrome controls on the map, and they should
+ * read as siblings.
+ */
+.pack-switcher__row {
+  display: flex;
+  max-width: min(34rem, calc(100vw - 3rem));
+  padding: 0.2rem;
+  overflow-x: auto;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
+  box-shadow: 0 1px 8px rgb(0 0 0 / 8%);
+  scrollbar-width: none;
+}
+
+.pack-switcher__row::-webkit-scrollbar {
+  display: none;
+}
+
+.pack-switcher__option {
+  flex: 0 0 auto;
+  padding: 0.3rem 0.85rem;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  font-family: inherit;
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-indent: 0.22em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.pack-switcher__option:hover {
+  color: var(--ink);
+}
+
+.pack-switcher__option:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/*
+ * The chosen one carries the accent as a filled pill. Filled rather than
+ * underlined so it survives being read at a glance over a busy stretch of
+ * map — the header sits directly on the canvas with nothing behind it.
+ */
+.pack-switcher__option[data-active='true'] {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
+
+/* One pack is not a choice, so it is set as a label rather than a control. */
+.pack-switcher__solo {
+  margin: 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/*
+ * What the chosen pack is. The header carried this line before the switcher
+ * existed; it stays, now doing a job — a row of bare names would otherwise be
+ * the only thing explaining itself.
+ */
+.pack-switcher__caption {
+  margin: 0.4rem 0 0;
+  max-width: 22rem;
+  font-size: 0.72rem;
+  text-align: center;
+  color: var(--ink-faint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pack-switcher__option {
+    transition: none;
+  }
+}
+
+@media (width <= 34rem) {
+  .pack-switcher__option {
+    padding: 0.3rem 0.6rem;
+    letter-spacing: 0.14em;
+  }
+
+  .pack-switcher__caption {
+    display: none;
+  }
+}

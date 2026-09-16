@@ -1,0 +1,66 @@
+/*
+ * Slate — a cool, modern counter-theme.
+ *
+ * Its job is not to be pretty. It exists so that a theme swap is exercised on
+ * every build: if switching to Slate leaves any part of the map still looking
+ * rustic, something is reading a hardcoded colour instead of a token.
+ */
+
+[data-theme='slate'] {
+  color-scheme: dark;
+
+  --paper: #12161c;
+  --paper-aged: #171d25;
+  --paper-edge: #0c0f14;
+  --surface: #1b222c;
+  --surface-raised: #232c38;
+
+  --ink: #e6ecf3;
+  --ink-soft: #a8b5c4;
+  --ink-faint: #6d7c8c;
+  --rule: #33404f;
+
+  --accent: #e0663f;
+  --accent-soft: #f08a66;
+  --secondary: #4fb3a5;
+  --tertiary: #d8a94a;
+
+  --font-display: 'Inter Variable', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-ui: 'Inter Variable', 'Inter', system-ui, -apple-system, sans-serif;
+  --tracking-display: 0.06em;
+
+  --grain-opacity: 0;
+  --vignette: rgba(0, 0, 0, 0.45);
+
+  --map-sea: #0d1117;
+  --map-land: #1e2733;
+  --map-land-stroke: #3a4757;
+  --map-polity-fill: #4fb3a5;
+  --map-polity-fill-opacity: 0.2;
+  --map-polity-stroke: #6fd0c2;
+  --map-pin: #e0663f;
+  --map-pin-ring: #ffffff;
+  --map-pin-halo: #6d7c8c;
+  --map-guess: #7fb2d9;
+  --map-truth: #d97a6c;
+  --map-guess-line: #9fb0c2;
+  --map-label: #e6ecf3;
+  --map-label-halo: #0d1117;
+
+  /* MapLibre's zoom icons are near-black SVG data URIs it hardcodes, and
+     Slate's control surface is #232c38 — dark on dark, effectively invisible.
+     A filter is the only lever a stylesheet has over a data-URI background,
+     so invert them. This token had no definition in either theme until now,
+     which is why Slate shipped with unreadable zoom buttons. */
+  --map-ctrl-filter: invert(1);
+
+  --map-layer-1: #d8a93c;
+  --map-layer-2: #3fc0c0;
+  --map-layer-3: #e08a3c;
+  --map-layer-4: #b9c04a;
+  --map-layer-5: #6f8ef0;
+  --map-layer-6: #b98ae8;
+  --map-layer-7: #e670b0;
+  --map-layer-8: #46a8dd;
+  --map-layer-9: #5fc873;
+}

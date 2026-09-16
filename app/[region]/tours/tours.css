@@ -1,0 +1,109 @@
+/*
+ * The tour index. One card per tour, and nothing else: the point of this page
+ * is choosing, so it says what each walk is about and gets out of the way.
+ *
+ * Every colour is a theme token, the same ones the map reads. Nothing here is
+ * a literal.
+ */
+
+.tours-index {
+  min-height: 100%;
+  flex: 1;
+  padding: 4rem 1.5rem 6rem;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+.tours-index__header {
+  max-width: 44rem;
+  margin: 0 auto 3rem;
+}
+
+.tours-index__back {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  color: var(--ink-faint);
+  font-size: 0.78rem;
+  letter-spacing: var(--tracking-display);
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.tours-index__back:hover {
+  color: var(--accent);
+}
+
+.tours-index__title {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 2.9rem);
+  font-weight: 500;
+  letter-spacing: var(--tracking-display);
+}
+
+.tours-index__lede {
+  margin: 0;
+  max-width: 38rem;
+  color: var(--ink-soft);
+  line-height: 1.65;
+}
+
+.tours-index__list {
+  display: grid;
+  gap: 1rem;
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.tours-index__link {
+  display: block;
+  padding: 1.4rem 1.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.tours-index__link:hover,
+.tours-index__link:focus-visible {
+  border-color: var(--accent);
+  background: var(--surface-raised);
+}
+
+.tours-index__name {
+  margin: 0 0 0.3rem;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 500;
+}
+
+.tours-index__subtitle {
+  margin: 0 0 0.8rem;
+  color: var(--accent);
+  font-size: 0.9rem;
+}
+
+.tours-index__description {
+  margin: 0 0 1rem;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+.tours-index__meta {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 0.78rem;
+  letter-spacing: var(--tracking-display);
+  text-transform: uppercase;
+}
+
+.tours-index__empty {
+  max-width: 44rem;
+  margin: 0 auto;
+  color: var(--ink-faint);
+}

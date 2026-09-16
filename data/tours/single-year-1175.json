@@ -1,0 +1,138 @@
+{
+  "id": "single-year-1175",
+  "regionSlug": "world",
+  "title": "A Single Year: 1175",
+  "subtitle": "The year never moves. Only the camera does.",
+  "description": "Every other tour travels through time. This one refuses to. Hold the timeline still at 1175 and go around the world instead — two of the century’s great Aristotelians in one Spanish city, a Chinese scholar rebuilding Confucianism, Norse gods being written into books as their religion ends, and one civilisation none of the others knows exists.",
+  "estimatedMinutes": 6,
+  "stops": [
+    {
+      "pack": "philosophy",
+      "year": 1175,
+      "entityId": "ibn-rushd",
+      "camera": {
+        "center": [
+          -4.78,
+          37.88
+        ],
+        "zoom": 6
+      },
+      "layers": [],
+      "title": "Córdoba, in the Judge’s Study",
+      "locationLabel": "Córdoba, Almohad caliphate",
+      "narration": "Ibn Rushd holds the office of chief judge and writes his commentaries on Aristotle in whatever hours are left. His position is that scripture and demonstration cannot really conflict, and that where they appear to, the text was speaking figuratively. Within twenty years his books will be burned in this city and he will be sent away from it. In Paris, seventy years from now, they will be unavoidable."
+    },
+    {
+      "pack": "philosophy",
+      "year": 1175,
+      "entityId": "maimonides",
+      "camera": {
+        "center": [
+          -4.78,
+          37.89
+        ],
+        "zoom": 6
+      },
+      "layers": [],
+      "title": "The Man Who Had to Leave",
+      "locationLabel": "Córdoba — and Cairo",
+      "narration": "Born in this same city a few years before Ibn Rushd, Maimonides is not in it. The Almohads offered his family a choice of conversion or exile and they took the road. Right now he is physician to the sultan’s court in Cairo, writing the Guide of the Perplexed for one student who cannot square philosophy with his scripture. Two of the century’s great Aristotelians came out of these streets, and one of them had to run."
+    },
+    {
+      "pack": "philosophy",
+      "year": 1175,
+      "entityId": "zhu-xi",
+      "camera": {
+        "center": [
+          118.19,
+          26.17
+        ],
+        "zoom": 5
+      },
+      "layers": [],
+      "title": "The Same Work, Six Thousand Miles East",
+      "locationLabel": "Fujian, Southern Song",
+      "narration": "Zhu Xi is doing something structurally identical with no possibility of contact: taking a canonical tradition and rebuilding it as a system. He selects four texts out of the Confucian classics and writes commentaries that will be the basis of the imperial examinations for the next seven hundred years. Investigate things closely enough, he argues, and the pattern you find in them is the same pattern running through you."
+    },
+    {
+      "pack": "mythology",
+      "year": 1175,
+      "entityId": "odin",
+      "camera": {
+        "center": [
+          15,
+          60
+        ],
+        "zoom": 4
+      },
+      "layers": [],
+      "title": "Being Written Down",
+      "locationLabel": "Scandinavia",
+      "narration": "Scandinavia is officially Christian, and the old gods are moving into manuscripts. Within fifty years an Icelandic politician named Snorri Sturluson will set the myths out in order — partly to preserve the craft of poetry, partly because he finds them interesting — and nearly everything anyone knows about Odin will arrive through that book. A religion is ending and a literature is beginning, in the same handwriting."
+    },
+    {
+      "pack": "mythology",
+      "year": 1175,
+      "entityId": "kali",
+      "camera": {
+        "center": [
+          88.36,
+          22.57
+        ],
+        "zoom": 5
+      },
+      "layers": [],
+      "title": "The Goddess Who Is Not Safe",
+      "locationLabel": "Bengal",
+      "narration": "In Bengal, Kālī stands on the god who is her husband, wearing severed heads, tongue out, black as the space between stars. She is not a demon and not a danger to be bought off — she is worshipped as mother, by people who mean it literally. Time devours everything, and this is what time looks like once you decide to love it rather than negotiate with it."
+    },
+    {
+      "pack": "creatures",
+      "year": 1175,
+      "entityId": "kitsune",
+      "camera": {
+        "center": [
+          135.77,
+          34.97
+        ],
+        "zoom": 5
+      },
+      "layers": [],
+      "title": "The Fox at the Heian Court",
+      "locationLabel": "Japan",
+      "narration": "Around Kyoto, foxes gain tails as they age, and at nine of them they can take the shape of a woman. They serve the rice god at his shrines and they also deceive men who had it coming. Court diaries record fox possession as a diagnosis. This is a literate, bureaucratic, extremely refined society, and it takes seriously the possibility that the beautiful stranger is an animal."
+    },
+    {
+      "pack": "creatures",
+      "year": 1175,
+      "entityId": "roc",
+      "camera": {
+        "center": [
+          49,
+          -12
+        ],
+        "zoom": 3.8
+      },
+      "layers": [],
+      "title": "Out Where the Sailors Are",
+      "locationLabel": "The Indian Ocean",
+      "narration": "South of the Arabian trade routes, off Madagascar, sailors are telling each other about a bird large enough to lift an elephant and sink a ship with a dropped stone. This is the century in which the Indian Ocean is the busiest commercial water on Earth. The monster and the merchant occupy the same map, and it is the merchant who brings the monster home."
+    },
+    {
+      "pack": "mythology",
+      "year": 1175,
+      "entityId": "quetzalcoatl",
+      "camera": {
+        "center": [
+          -98.84,
+          19.69
+        ],
+        "zoom": 4.6
+      },
+      "layers": [],
+      "title": "A World the Other Seven Have Never Heard Of",
+      "locationLabel": "Central Mexico",
+      "narration": "At Cholula, pilgrims climb the largest pyramid ever built by volume, to the shrine of the feathered serpent — god of wind, of the morning star, of the calendar and of learning. Nothing on this map has reached him and he has reached nothing on it. Every other stop on this tour connects to at least one other by a road or a sea lane. This one is a separate human world, running its own experiment."
+    }
+  ]
+}

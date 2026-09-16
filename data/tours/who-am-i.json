@@ -1,0 +1,138 @@
+{
+  "id": "who-am-i",
+  "regionSlug": "world",
+  "title": "Who Am I?",
+  "subtitle": "Twenty-four centuries of looking inward and disagreeing",
+  "description": "Everyone on this tour went looking for the self. One found no owner behind the experience, one found a room he could get lost in, one found it identical with everything, and one suspended a man in midair with his senses switched off to see what was left. It ends more or less where it started.",
+  "estimatedMinutes": 6,
+  "stops": [
+    {
+      "pack": "philosophy",
+      "year": -500,
+      "entityId": "gautama-buddha",
+      "camera": {
+        "center": [
+          83.28,
+          27.47
+        ],
+        "zoom": 4.8
+      },
+      "layers": [],
+      "title": "Take the Chariot Apart",
+      "locationLabel": "Lumbinī, Shakya republic",
+      "narration": "Look for the self and you turn up a body, sensations, perceptions, impulses, awareness — and no owner standing behind them. The comparison offered is a chariot: take it apart and there is no chariot among the pieces, only a word for how they are arranged. This is not a claim that you do not exist. It is a claim that the thing you have spent your life defending is a process rather than a possession."
+    },
+    {
+      "pack": "philosophy",
+      "year": 200,
+      "entityId": "nagarjuna",
+      "camera": {
+        "center": [
+          80.36,
+          16.57
+        ],
+        "zoom": 5
+      },
+      "layers": [],
+      "title": "Empty All the Way Down",
+      "locationLabel": "Andhra, Sātavāhana empire",
+      "narration": "Nāgārjuna turns the knife on everything, the analysis included. Nothing carries its own independent being; things exist only in dependence on other things, and that applies to the parts as much as the whole. Emptiness is not a hidden substance underneath — it is the absence of any such substance. He argues by taking each opponent’s position and showing it collapses, and advances no thesis of his own to be attacked."
+    },
+    {
+      "pack": "philosophy",
+      "year": 400,
+      "entityId": "augustine",
+      "camera": {
+        "center": [
+          7.95,
+          36.29
+        ],
+        "zoom": 5
+      },
+      "layers": [],
+      "title": "The Room Inside",
+      "locationLabel": "Hippo Regius, Roman Africa",
+      "narration": "Augustine writes a book addressed to God about his own childhood, his mother, a pear he stole for no reason at all, and the years he spent putting off a decision — and in doing so invents a way of writing that did not previously exist. Searching his memory, he calls it a vast palace whose end he cannot find. The self stops being a topic and becomes a place you can go into and get lost."
+    },
+    {
+      "pack": "philosophy",
+      "year": 814,
+      "entityId": "adi-shankara",
+      "camera": {
+        "center": [
+          76.44,
+          10.17
+        ],
+        "zoom": 5.4
+      },
+      "layers": [],
+      "title": "You Are Already It",
+      "locationLabel": "Kalady, Chera country",
+      "narration": "Śaṅkara argues the reverse of the Buddhists and lands somewhere just as strange. There is a self — but it is not your body, your memories or your personality, and it is not other than the ground of everything else. A rope in the dusk looks like a snake; the world looks like many separate things. His life was short and the details are disputed, and he is said to have settled the matter by walking across India winning arguments."
+    },
+    {
+      "pack": "philosophy",
+      "year": 1020,
+      "entityId": "ibn-sina",
+      "camera": {
+        "center": [
+          64.42,
+          39.77
+        ],
+        "zoom": 5
+      },
+      "layers": [],
+      "title": "The Man Suspended in Air",
+      "locationLabel": "Near Bukhara",
+      "narration": "Imagine a person created this instant, fully formed, floating in still air. Sight veiled, limbs held apart, touching nothing — not even their own body. No memories, no sensation of any kind. Ibn Sīnā asks whether they would still affirm that they exist. He thinks obviously yes, and concludes that self-awareness owes nothing to the senses or the body. Six centuries before the cogito, and the timeline below shows you how far six centuries is."
+    },
+    {
+      "pack": "philosophy",
+      "year": 1637,
+      "entityId": "rene-descartes",
+      "camera": {
+        "center": [
+          0.71,
+          46.97
+        ],
+        "zoom": 5
+      },
+      "layers": [],
+      "title": "The One Thing Left Standing",
+      "locationLabel": "France, and the Dutch Republic",
+      "narration": "Descartes doubts whatever can be doubted: the senses deceive, the body might be dreamt, and perhaps a deceiver has arranged even arithmetic. What survives is that something is doing the doubting. He publishes it in French rather than Latin, deliberately, so that people without a scholarly education can follow. Then he uses it to prove God and win the world back — which persuaded far fewer readers than the doubting did."
+    },
+    {
+      "pack": "philosophy",
+      "year": 1750,
+      "entityId": "hume",
+      "camera": {
+        "center": [
+          -3.19,
+          55.95
+        ],
+        "zoom": 5.4
+      },
+      "layers": [],
+      "title": "Nobody Home",
+      "locationLabel": "Edinburgh, Kingdom of Scotland",
+      "narration": "Hume takes Descartes at his word and goes looking. Whenever he enters most intimately into what he calls himself, he says, he stumbles on some particular perception — heat or cold, light or shade, love or hatred — and never once catches himself without one. So the self is a bundle of perceptions in perpetual flux, held together by nothing. He later admits in an appendix that he cannot make the account work, and lets it stand."
+    },
+    {
+      "pack": "philosophy",
+      "year": 1920,
+      "entityId": "nishida-kitaro",
+      "camera": {
+        "center": [
+          136.71,
+          36.72
+        ],
+        "zoom": 5
+      },
+      "layers": [],
+      "title": "Before the Question Is Asked",
+      "locationLabel": "Kahoku, Ishikawa, Japan",
+      "narration": "Nishida reads all of it — Hume, Kant, Hegel — and sits zazen for years alongside. He proposes that the split between the one experiencing and the thing experienced is not where you begin but something added afterwards: in hearing a piece of music, before any thought of a listener arrives, there is only the music. Twenty-four centuries and five thousand miles from Lumbinī, the question has come back to roughly where it started."
+    }
+  ]
+}

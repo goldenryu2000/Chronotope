@@ -1,0 +1,220 @@
+{
+  "id": "gods-grew-quiet",
+  "regionSlug": "world",
+  "title": "When the Gods Grew Quiet",
+  "subtitle": "How explaining the world stopped being a story about someone",
+  "description": "For two thousand years the answer to why anything happens was a name and a fight. Then, within a few generations, people in four places that had never heard of each other started giving reasons instead. This is the turn, and the price someone paid for it.",
+  "estimatedMinutes": 10,
+  "stops": [
+    {
+      "pack": "mythology",
+      "year": -2000,
+      "entityId": "gilgamesh",
+      "camera": {
+        "center": [
+          45.64,
+          31.32
+        ],
+        "zoom": 4.6
+      },
+      "layers": [],
+      "title": "The First Question",
+      "locationLabel": "Uruk, Sumer",
+      "narration": "A king watches his friend die and refuses to accept it. He crosses the water at the edge of the world to find the one man who never died, and is told to go home. Gilgamesh returns with nothing — no herb, no secret, only the walls of Uruk and the knowledge that he built them. Four thousand years later, nobody has improved on that ending."
+    },
+    {
+      "pack": "mythology",
+      "year": -1800,
+      "entityId": "marduk",
+      "camera": {
+        "center": [
+          44.42,
+          32.54
+        ],
+        "zoom": 4.6
+      },
+      "layers": [],
+      "title": "The World as a Battlefield",
+      "locationLabel": "Babylon",
+      "narration": "Babylon explains the sky this way: Marduk kills Tiamat, splits her open like a shellfish, and props half of her overhead to hold back the waters. Order is not discovered here — it is imposed, by force, by whoever won. Every new year the story is recited aloud so the victory holds for another twelve months. The universe is a thing that had to be beaten into shape."
+    },
+    {
+      "pack": "mythology",
+      "year": -1400,
+      "entityId": "indra",
+      "camera": {
+        "center": [
+          77,
+          29
+        ],
+        "zoom": 4.2
+      },
+      "layers": [],
+      "title": "The Same Fight, Another River",
+      "locationLabel": "Sapta Sindhu, Vedic north India",
+      "narration": "Two thousand miles east, the same story with different names. Indra drinks the soma, takes up the thunderbolt and splits the serpent Vritra, who has been holding the rivers inside his coils. The waters break loose and run to the sea. Two peoples who never met have arrived at the same explanation: the world works because somebody strong enough killed the thing that was stopping it."
+    },
+    {
+      "pack": "mythology",
+      "year": -1000,
+      "entityId": "ahura-mazda",
+      "camera": {
+        "center": [
+          61.1,
+          37.55
+        ],
+        "zoom": 4.2
+      },
+      "layers": [],
+      "title": "The World as a Choice",
+      "locationLabel": "The Iranian plateau",
+      "narration": "On the Iranian plateau something shifts. Ahura Mazda does not win by being stronger. The struggle between truth and the lie runs through every person and turns on what each one decides to do — which makes an ordinary herdsman a participant rather than a spectator. The cosmos stops being a fight you watch from the stands. It becomes one you are already standing in."
+    },
+    {
+      "pack": "philosophy",
+      "year": -550,
+      "entityId": "laozi",
+      "camera": {
+        "center": [
+          112.17,
+          30.42
+        ],
+        "zoom": 4.4
+      },
+      "layers": [],
+      "title": "The Thing That Cannot Be Named",
+      "locationLabel": "State of Chu",
+      "narration": "In Chu, a text — whoever wrote it — opens by disqualifying itself: the way that can be spoken is not the constant way. No god is invoked, no myth retold. Instead: water wears down stone, the empty part of the cup is the part you use, the ruler who does least governs best. The explanation has stopped being a story about someone. It has become an observation anyone can go and check."
+    },
+    {
+      "pack": "philosophy",
+      "year": -550,
+      "entityId": "mahavira",
+      "camera": {
+        "center": [
+          85.13,
+          25.99
+        ],
+        "zoom": 4.8
+      },
+      "layers": [],
+      "title": "Consequence Without Favour",
+      "locationLabel": "Vaishali, Vajjika League",
+      "narration": "Near the Ganges, Mahāvīra teaches that nobody is taking requests, and that this is not bad news. What you do binds to you and works itself out; no priest can intercede and no sacrifice settles the account. He walks naked, sweeps the ground before each step and strains his drinking water. If the universe runs on consequence rather than favour, harm is never merely someone else’s problem."
+    },
+    {
+      "pack": "philosophy",
+      "year": -520,
+      "entityId": "gautama-buddha",
+      "camera": {
+        "center": [
+          83.28,
+          27.47
+        ],
+        "zoom": 4.8
+      },
+      "layers": [],
+      "title": "Beside the Point",
+      "locationLabel": "Lumbinī, Shakya republic",
+      "narration": "A hundred miles west, another man reaches a stranger conclusion: the self that is doing the suffering does not survive inspection. He declines to say whether the world is eternal — a man shot with an arrow, he points out, does not delay treatment to establish who fired it. The gods are never denied. They are simply made irrelevant, which is the more radical of the two moves."
+    },
+    {
+      "pack": "philosophy",
+      "year": -510,
+      "entityId": "confucius",
+      "camera": {
+        "center": [
+          116.99,
+          35.6
+        ],
+        "zoom": 4.6
+      },
+      "layers": [],
+      "title": "Serve the Living First",
+      "locationLabel": "Qufu, State of Lu",
+      "narration": "In Lu, a student asks Confucius how to serve the spirits. Not yet able to serve people, he answers, how could you serve spirits? Asked then about death: not yet understanding life, how could you understand death? He does not deny heaven. He redirects the whole conversation onto what a person owes a parent, a ruler, a friend — the part that can actually be worked on."
+    },
+    {
+      "pack": "philosophy",
+      "year": -500,
+      "entityId": "heraclitus",
+      "camera": {
+        "center": [
+          27.35,
+          37.94
+        ],
+        "zoom": 5
+      },
+      "layers": [
+        "alphabets"
+      ],
+      "title": "Made by No God and No Man",
+      "locationLabel": "Ephesus, Ionia",
+      "narration": "Heraclitus deposits his book in the great temple at Ephesus and writes that this order was made by no god and no man — it always was, and is, and will be, fire kindling by measure and going out by measure. The gods are still in the vocabulary, but the explanation has slipped out from under them. Something impersonal is now doing the work."
+    },
+    {
+      "pack": "philosophy",
+      "year": -483,
+      "entityId": "parmenides",
+      "camera": {
+        "center": [
+          15.15,
+          40.16
+        ],
+        "zoom": 5
+      },
+      "layers": [],
+      "title": "Trust the Argument, Not Your Eyes",
+      "locationLabel": "Elea, Magna Graecia",
+      "narration": "On the Italian coast, Parmenides makes the hardest move yet. A goddess narrates his poem, but what she delivers is a proof: what is, is; what is not cannot be thought or spoken. Change and plurality fail the argument, so much the worse for change and plurality. He is asking readers to trust a chain of reasoning over the evidence of their own eyes. Nothing before this had asked that."
+    },
+    {
+      "pack": "philosophy",
+      "year": -420,
+      "entityId": "democritus",
+      "camera": {
+        "center": [
+          24.97,
+          40.93
+        ],
+        "zoom": 5
+      },
+      "layers": [],
+      "title": "Atoms and Empty Space",
+      "locationLabel": "Abdera, Thrace",
+      "narration": "In Thrace, Democritus finishes the job. There are only atoms and void; sweet, bitter, hot, cold and colour are convention. Souls are made of atoms too, and they scatter. The gods are not argued out of existence so much as left with nothing to do. He was known as the laughing philosopher, which reads differently once you know what he thought remained of you afterwards."
+    },
+    {
+      "pack": "philosophy",
+      "year": -410,
+      "entityId": "socrates",
+      "camera": {
+        "center": [
+          23.73,
+          37.98
+        ],
+        "zoom": 5.2
+      },
+      "layers": [],
+      "title": "The Bill Arrives",
+      "locationLabel": "Athens",
+      "narration": "Athens has lost a war and is in no mood. Socrates works the agora demonstrating that men who claim to know what piety is cannot define it. He insists he introduces no new gods and teaches nothing, which persuades nobody. In eleven years a jury will convict him of impiety and corrupting the young, and he will drink the hemlock rather than take the exile on offer. The new habit turns out to have a price."
+    },
+    {
+      "pack": "philosophy",
+      "year": 400,
+      "entityId": "hypatia",
+      "camera": {
+        "center": [
+          29.89,
+          31.2
+        ],
+        "zoom": 5
+      },
+      "layers": [],
+      "title": "It Did Not Hold",
+      "locationLabel": "Alexandria, Eastern Roman Empire",
+      "narration": "Alexandria, eight centuries on. Hypatia teaches Plato and Ptolemy, advises the Roman prefect, and lives in a city where the prefect and the bishop are fighting for control of the streets. In 415 a mob will drag her from her carriage and kill her. The quarrel was civic before it was religious, and the popular version of this story is too tidy — but the lesson holds. Reasoning in public has never stayed safe for long."
+    }
+  ]
+}

@@ -1,0 +1,212 @@
+/*
+ * `fixed` rather than the ported build's `relative` + `height: 100%`: this app
+ * is one route inside a Next layout whose <body> is a flex column, and a
+ * percentage height inside that is a chain of assumptions about ancestors we
+ * do not own. The atlas is a viewport-filling surface; saying so directly is
+ * cheaper than making the ancestors agree.
+ */
+.atlas {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+/*
+ * Layering, bottom to top: map (1), paper grain (2), vignette (3),
+ * map's own hover chip (4), UI chrome (5). The texture sits over the map on
+ * purpose — that is what makes it read as a printed atlas rather than a canvas.
+ *
+ * Both texture layers are pointer-events: none, which is also what keeps
+ * MapLibre's controls reachable underneath them: `elementFromPoint` skips
+ * them, and so does the mouse.
+ */
+.atlas__grain,
+.atlas__vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.atlas__grain {
+  z-index: 2;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='0.32'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+.atlas__vignette {
+  z-index: 3;
+  background: radial-gradient(ellipse at center, transparent 55%, var(--vignette) 100%);
+}
+
+.atlas__header {
+  position: absolute;
+  top: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  text-align: center;
+  pointer-events: none;
+}
+
+.atlas__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.5rem;
+  letter-spacing: var(--tracking-display);
+  text-indent: var(--tracking-display);
+  color: var(--ink);
+}
+
+.atlas__subtitle {
+  margin: 0.15rem 0 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/*
+ * Sibling to `.theme-toggle` in look and in weight: a hairline pill on raised
+ * surface, quiet until wanted. The two are the only chrome on the map that is
+ * not the map, and they sit in opposite corners.
+ */
+.atlas__home {
+  position: absolute;
+  top: 1.25rem;
+  left: 1.25rem;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.8rem 0.4rem 0.65rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.atlas__home:hover {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--rule));
+  color: var(--ink);
+}
+
+.atlas__home:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Drawn, not typed, so it inherits colour and needs no glyph from the font. */
+.atlas__home-arrow {
+  width: 0.34em;
+  height: 0.34em;
+  border-left: 1px solid currentcolor;
+  border-bottom: 1px solid currentcolor;
+  transform: rotate(45deg);
+}
+
+.atlas__home-label {
+  text-indent: 0.2em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atlas__home {
+    transition: none;
+  }
+}
+
+.atlas__chrome {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 5;
+  display: flex;
+  gap: 0.5rem;
+}
+
+/*
+ * The tours link, in the same pill the home link is drawn as.
+ *
+ * Both are chrome sitting over a map, so they read as one family rather than
+ * as two controls that happen to share a screen. It cannot use `.atlas__home`
+ * itself: that class positions absolutely in the opposite corner, and this one
+ * is laid out by the chrome cluster's flex row.
+ */
+.atlas__tours {
+  display: flex;
+  align-items: center;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  text-decoration: none;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.atlas__tours:hover {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--rule));
+  color: var(--ink);
+}
+
+.atlas__tours:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.atlas__dock {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  /*
+   * The dock is a full-width centring rail, so its empty flanks would sit on
+   * top of MapLibre's zoom buttons in the bottom-right corner and swallow the
+   * clicks. Only the actual controls inside it should be hit-testable. This is
+   * the exact stacking bug e2e/atlas.spec.ts exists to catch.
+   */
+  pointer-events: none;
+}
+
+.atlas__dock > * {
+  pointer-events: auto;
+}
+
+.atlas__error {
+  margin: 0;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  background: var(--surface-raised);
+  color: var(--accent);
+  font-size: 0.8rem;
+}
+
+/* The map camera is animated in JavaScript and handled separately, in
+   src/lib/motion.ts; this covers everything the CSS above moves. */
+@media (prefers-reduced-motion: reduce) {
+  .atlas *,
+  .atlas *::before,
+  .atlas *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

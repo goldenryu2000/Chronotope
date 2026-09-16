@@ -1,0 +1,90 @@
+.curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--paper);
+  transition: opacity 520ms ease;
+}
+
+/*
+ * Faded, not unmounted, and `pointer-events: none` with it — the map behind is
+ * live the instant it is ready, and a transparent sheet that still swallowed
+ * clicks would be worse than no curtain at all.
+ */
+.curtain[data-done='true'] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.curtain__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 0 1.5rem;
+}
+
+.curtain__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 5vw, 2.25rem);
+  font-weight: 500;
+  letter-spacing: var(--tracking-display);
+  text-indent: var(--tracking-display);
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+/* The timeline, abstracted: a rule with something travelling along it. */
+.curtain__track {
+  position: relative;
+  width: min(18rem, 60vw);
+  height: 1px;
+  overflow: hidden;
+  background: var(--rule);
+}
+
+.curtain__runner {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 35%;
+  background: var(--accent);
+  animation: curtain-scrub 1.6s ease-in-out infinite;
+}
+
+@keyframes curtain-scrub {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(286%); }
+}
+
+.curtain__caption {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.28em;
+  text-indent: 0.28em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/*
+ * With motion off the runner would sit still at the left, which reads as a
+ * stalled progress bar. A pulse says "working" without travelling.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .curtain {
+    transition: none;
+  }
+
+  .curtain__runner {
+    width: 100%;
+    animation: curtain-hold 2s ease-in-out infinite;
+  }
+
+  @keyframes curtain-hold {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.7; }
+  }
+}

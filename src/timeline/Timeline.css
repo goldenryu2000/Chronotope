@@ -1,0 +1,299 @@
+.timeline {
+  width: min(58rem, calc(100% - 3rem));
+  padding: 0.9rem 1.3rem 1.1rem;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--surface-raised) 93%, transparent);
+  box-shadow: 0 2px 20px rgb(0 0 0 / 12%);
+}
+
+.timeline__readout {
+  text-align: center;
+  margin-bottom: 0.7rem;
+}
+
+.timeline__year {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.timeline__era {
+  margin: 0.15rem 0 0;
+  font-size: 0.66rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.timeline__blurb {
+  /* Height is reserved so that moving between eras does not shift the track. */
+  min-height: 2.4rem;
+  max-width: 44rem;
+  margin: 0.5rem auto 0;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.timeline__controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.85rem;
+}
+
+.timeline__play {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.timeline__play:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.timeline__play:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.timeline__play svg {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.timeline__stack {
+  flex: 1;
+  min-width: 0;
+}
+
+/* --- Era ribbon ------------------------------------------------------- */
+
+.timeline__bands {
+  display: flex;
+  width: 100%;
+  margin-bottom: 0.3rem;
+}
+
+.timeline__band {
+  min-width: 0;
+  padding: 0.2rem 0.1rem;
+  border: 0;
+  border-left: 1px solid var(--rule);
+  background: none;
+  color: var(--ink-faint);
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+  transition: color 140ms ease;
+}
+
+.timeline__band:first-child {
+  border-left: 0;
+}
+
+.timeline__band:hover {
+  color: var(--ink);
+}
+
+.timeline__band[data-current='true'] {
+  color: var(--accent);
+}
+
+.timeline__band:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.timeline__band-label {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding-left: 0.3rem;
+}
+
+/* --- Lit layers ------------------------------------------------------- */
+
+/*
+ * One bar per lit layer, across the years it draws.
+ *
+ * A sibling of the track rather than a child of it. Everything inside
+ * `.timeline__track` is `pointer-events: none` so a scrub lands on the slider;
+ * putting this outside means it never has to be, and `e2e/atlas.spec.ts`'s
+ * elementFromPoint check keeps passing unchanged.
+ */
+.timeline__layer-spans {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  margin-bottom: 0.25rem;
+}
+
+/*
+ * One lane per lit layer. The row grows upward as layers are lit, which moves
+ * the readout rather than the track: the track is the last element in the
+ * card and the dock is bottom-anchored, so the scrub target does not shift
+ * under the reader's pointer.
+ */
+.timeline__layer-lane {
+  position: relative;
+  height: 0.25rem;
+  /* Contains a band that the width floor pushes past the end of the row. */
+  overflow: hidden;
+}
+
+/*
+ * Fully opaque, so a band is exactly the colour of its swatch in the menu.
+ * At 0.8 it was a blend of the bar and the card behind it, which is a colour
+ * the menu never shows.
+ */
+.timeline__layer-span {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 999px;
+}
+
+/* --- Scrubber --------------------------------------------------------- */
+
+.timeline__track {
+  position: relative;
+  height: 1.6rem;
+  cursor: grab;
+  touch-action: none;
+}
+
+.timeline__track:active {
+  cursor: grabbing;
+}
+
+.timeline__track:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/*
+ * Everything drawn inside the track is pointer-events: none, so
+ * `elementFromPoint` over the track returns the track itself and a scrub
+ * lands on the slider rather than on a decoration sitting over it.
+ */
+
+/* Sits just above the rail: where the atlas has people, and how thickly. */
+.timeline__density {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 0.42rem;
+  margin-top: -0.55rem;
+  pointer-events: none;
+}
+
+.timeline__density-mark {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 1px;
+  background: var(--accent);
+  /* Low enough that overlapping lives accumulate into a visibly denser band. */
+  opacity: 0.22;
+}
+
+.timeline__rail,
+.timeline__fill {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 2px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.timeline__rail {
+  width: 100%;
+  background: var(--rule);
+}
+
+.timeline__fill {
+  background: var(--accent);
+}
+
+.timeline__tick {
+  position: absolute;
+  top: 50%;
+  width: 1px;
+  height: 0.5rem;
+  margin-top: -0.25rem;
+  background: var(--rule);
+  pointer-events: none;
+}
+
+.timeline__handle {
+  position: absolute;
+  top: 50%;
+  width: 0.85rem;
+  height: 0.85rem;
+  margin: -0.425rem 0 0 -0.425rem;
+  border: 1px solid var(--paper);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 25%);
+  pointer-events: none;
+}
+
+@media (width <= 48rem) {
+  .timeline__blurb {
+    display: none;
+  }
+
+  .timeline__band-label {
+    font-size: 0.5rem;
+  }
+}
+
+@media (width <= 34rem) {
+  .timeline {
+    padding: 0.7rem 0.9rem 0.85rem;
+  }
+
+  .timeline__year {
+    font-size: 1.2rem;
+  }
+
+  /* Labels are unreadable at this width; the ribbon still shows era extents. */
+  .timeline__band-label {
+    display: none;
+  }
+
+  .timeline__bands {
+    height: 0.5rem;
+  }
+
+  .timeline__band {
+    height: 100%;
+    padding: 0;
+  }
+
+  .timeline__band[data-current='true'] {
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+}

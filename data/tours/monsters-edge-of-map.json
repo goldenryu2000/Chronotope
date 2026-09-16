@@ -1,0 +1,140 @@
+{
+  "id": "monsters-edge-of-map",
+  "regionSlug": "world",
+  "title": "Monsters at the Edge of the Map",
+  "subtitle": "The beast always lives just past where you have been",
+  "description": "Watch the monsters retreat at exactly the speed the map fills in — out of the forest next door, onto the shipping lane, past the end of the trade route, into the deep water, and finally onto the last unclimbed ground on Earth.",
+  "estimatedMinutes": 6,
+  "stops": [
+    {
+      "pack": "creatures",
+      "year": -2000,
+      "entityId": "humbaba",
+      "camera": {
+        "center": [
+          44,
+          35.5
+        ],
+        "zoom": 4.8
+      },
+      "layers": [],
+      "title": "A Few Days Upriver",
+      "locationLabel": "Cedar Forest, Mesopotamia",
+      "narration": "The oldest monster in literature guards a cedar forest that Uruk wants timber from. Humbaba’s roar is the flood, his mouth is fire, and his face is a coil of intestines — which is precisely what Babylonian priests read the future in. He does not live at the end of the world. He is a few days upriver, standing between a city and something it intends to cut down."
+    },
+    {
+      "pack": "creatures",
+      "year": -700,
+      "entityId": "scylla",
+      "camera": {
+        "center": [
+          15.63,
+          38.23
+        ],
+        "zoom": 5.6
+      },
+      "layers": [],
+      "title": "The Route You Cannot Avoid",
+      "locationLabel": "Strait of Messina",
+      "narration": "As Greek ships start working the western Mediterranean, the strait between Italy and Sicily acquires two monsters and no good options: a whirlpool on one side, and on the other a cliff with six heads that takes six men from every passing crew. Odysseus is advised to lose six rather than lose everyone. The monster has moved out of the forest and onto the shipping lane, because that is where the sailors were."
+    },
+    {
+      "pack": "creatures",
+      "year": -350,
+      "entityId": "manticore",
+      "camera": {
+        "center": [
+          51.67,
+          32.65
+        ],
+        "zoom": 4.4
+      },
+      "layers": [],
+      "title": "News From Further East",
+      "locationLabel": "Persia, reporting on India",
+      "narration": "Ctesias is a Greek physician at the Persian court, and he sends home what he hears about India — including a beast with a man’s face, a lion’s body, three rows of teeth and a tail that fires spines. He is reporting in good faith on a country he has never visited, from informants who have not either. The monster now lives exactly where the reliable information stops."
+    },
+    {
+      "pack": "creatures",
+      "year": 1000,
+      "entityId": "roc",
+      "camera": {
+        "center": [
+          49,
+          -12
+        ],
+        "zoom": 3.8
+      },
+      "layers": [
+        "spice-route"
+      ],
+      "title": "Big Enough to Carry an Elephant",
+      "locationLabel": "The Indian Ocean",
+      "narration": "Sailors working the Indian Ocean bring back a bird large enough to lift an elephant and sink a ship with a dropped boulder. The stories cluster around Madagascar — where, as it happens, a flightless bird three metres tall was still alive, and its foot-long eggs still wash out of the dunes. The monster sits at the far end of a real trade route, assembled from real things imperfectly described."
+    },
+    {
+      "pack": "creatures",
+      "year": 1500,
+      "entityId": "kraken",
+      "camera": {
+        "center": [
+          0,
+          64
+        ],
+        "zoom": 3.8
+      },
+      "layers": [],
+      "title": "Straight Down",
+      "locationLabel": "The Norwegian Sea",
+      "narration": "Norwegian waters produce something the size of an island that pulls ships under, and Scandinavian naturalists later write it up soberly, with measurements. Fishermen reportedly said the best catches were found directly above it. Squid of genuinely alarming size do live down there and occasionally surface dying. The monster has relocated to the one direction a sixteenth-century sailor could not investigate."
+    },
+    {
+      "pack": "creatures",
+      "year": 1700,
+      "entityId": "wendigo",
+      "camera": {
+        "center": [
+          -90,
+          50
+        ],
+        "zoom": 3.6
+      },
+      "layers": [],
+      "title": "What a Winter Can Do",
+      "locationLabel": "Algonquian lands, subarctic North America",
+      "narration": "In Algonquian territory the danger is not a beast in the woods but what a hard winter can make of a person. The wendigo is someone who ate human flesh to survive and can never again be full, growing larger as it feeds. This one is not a gap in anybody’s map. It is a warning about famine, and about the one thing a community will not take you back for, told in the shape of a monster."
+    },
+    {
+      "pack": "creatures",
+      "year": 1850,
+      "entityId": "bunyip",
+      "camera": {
+        "center": [
+          142,
+          -34
+        ],
+        "zoom": 4.2
+      },
+      "layers": [],
+      "title": "In the Waterhole",
+      "locationLabel": "Southeastern Australia",
+      "narration": "Aboriginal accounts of something living in the swamps and billabongs reach colonists busy putting names on everything they see, and the bunyip enters English fast — as a joke, as a scare for children, and briefly as a serious zoological proposition after some large bones turned up. Colonial Australia has an interior it has not crossed, and something is in there."
+    },
+    {
+      "pack": "creatures",
+      "year": 1900,
+      "entityId": "yeti",
+      "camera": {
+        "center": [
+          86.9,
+          28
+        ],
+        "zoom": 5
+      },
+      "layers": [],
+      "title": "The Last Blank Space",
+      "locationLabel": "The Himalayas",
+      "narration": "Himalayan communities had described such beings for a very long time before any of it reached Europe. The naturalist Brian Hodgson passes on his Nepali porters’ accounts in 1832; by 1899 a British officer is describing tracks in Sikkim. Everest is unclimbed, the high interior unmapped, and the footprints run out where the snowfield begins. There is almost nowhere left on Earth to put a monster, so it goes to the highest ground remaining."
+    }
+  ]
+}

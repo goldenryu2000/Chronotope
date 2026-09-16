@@ -1,0 +1,290 @@
+[
+  {
+    "year": -3000,
+    "file": "-3000.topo.json",
+    "bytes": 59891,
+    "gzip": 16002
+  },
+  {
+    "year": -2000,
+    "file": "-2000.topo.json",
+    "bytes": 68978,
+    "gzip": 19115
+  },
+  {
+    "year": -1500,
+    "file": "-1500.topo.json",
+    "bytes": 75635,
+    "gzip": 20869
+  },
+  {
+    "year": -1000,
+    "file": "-1000.topo.json",
+    "bytes": 75461,
+    "gzip": 20827
+  },
+  {
+    "year": -700,
+    "file": "-700.topo.json",
+    "bytes": 77887,
+    "gzip": 21281
+  },
+  {
+    "year": -500,
+    "file": "-500.topo.json",
+    "bytes": 80953,
+    "gzip": 21827
+  },
+  {
+    "year": -400,
+    "file": "-400.topo.json",
+    "bytes": 80761,
+    "gzip": 21733
+  },
+  {
+    "year": -323,
+    "file": "-323.topo.json",
+    "bytes": 75545,
+    "gzip": 21283
+  },
+  {
+    "year": -300,
+    "file": "-300.topo.json",
+    "bytes": 76757,
+    "gzip": 21586
+  },
+  {
+    "year": -200,
+    "file": "-200.topo.json",
+    "bytes": 84064,
+    "gzip": 23450
+  },
+  {
+    "year": -100,
+    "file": "-100.topo.json",
+    "bytes": 89848,
+    "gzip": 23844
+  },
+  {
+    "year": -1,
+    "file": "-1.topo.json",
+    "bytes": 149741,
+    "gzip": 38085
+  },
+  {
+    "year": 100,
+    "file": "100.topo.json",
+    "bytes": 151717,
+    "gzip": 38383
+  },
+  {
+    "year": 200,
+    "file": "200.topo.json",
+    "bytes": 136376,
+    "gzip": 36235
+  },
+  {
+    "year": 300,
+    "file": "300.topo.json",
+    "bytes": 152101,
+    "gzip": 37609
+  },
+  {
+    "year": 400,
+    "file": "400.topo.json",
+    "bytes": 131609,
+    "gzip": 33904
+  },
+  {
+    "year": 500,
+    "file": "500.topo.json",
+    "bytes": 89691,
+    "gzip": 24752
+  },
+  {
+    "year": 600,
+    "file": "600.topo.json",
+    "bytes": 97831,
+    "gzip": 27484
+  },
+  {
+    "year": 700,
+    "file": "700.topo.json",
+    "bytes": 96783,
+    "gzip": 26046
+  },
+  {
+    "year": 800,
+    "file": "800.topo.json",
+    "bytes": 94415,
+    "gzip": 26020
+  },
+  {
+    "year": 900,
+    "file": "900.topo.json",
+    "bytes": 102099,
+    "gzip": 28303
+  },
+  {
+    "year": 1000,
+    "file": "1000.topo.json",
+    "bytes": 110673,
+    "gzip": 30279
+  },
+  {
+    "year": 1100,
+    "file": "1100.topo.json",
+    "bytes": 104333,
+    "gzip": 29467
+  },
+  {
+    "year": 1200,
+    "file": "1200.topo.json",
+    "bytes": 108133,
+    "gzip": 28852
+  },
+  {
+    "year": 1279,
+    "file": "1279.topo.json",
+    "bytes": 99356,
+    "gzip": 27084
+  },
+  {
+    "year": 1300,
+    "file": "1300.topo.json",
+    "bytes": 97459,
+    "gzip": 26881
+  },
+  {
+    "year": 1400,
+    "file": "1400.topo.json",
+    "bytes": 99244,
+    "gzip": 27557
+  },
+  {
+    "year": 1492,
+    "file": "1492.topo.json",
+    "bytes": 773556,
+    "gzip": 213791
+  },
+  {
+    "year": 1500,
+    "file": "1500.topo.json",
+    "bytes": 122641,
+    "gzip": 33748
+  },
+  {
+    "year": 1530,
+    "file": "1530.topo.json",
+    "bytes": 170643,
+    "gzip": 45620
+  },
+  {
+    "year": 1600,
+    "file": "1600.topo.json",
+    "bytes": 288285,
+    "gzip": 75527
+  },
+  {
+    "year": 1650,
+    "file": "1650.topo.json",
+    "bytes": 272723,
+    "gzip": 72507
+  },
+  {
+    "year": 1700,
+    "file": "1700.topo.json",
+    "bytes": 271847,
+    "gzip": 72167
+  },
+  {
+    "year": 1715,
+    "file": "1715.topo.json",
+    "bytes": 271684,
+    "gzip": 72824
+  },
+  {
+    "year": 1783,
+    "file": "1783.topo.json",
+    "bytes": 241583,
+    "gzip": 65715
+  },
+  {
+    "year": 1800,
+    "file": "1800.topo.json",
+    "bytes": 238239,
+    "gzip": 65211
+  },
+  {
+    "year": 1815,
+    "file": "1815.topo.json",
+    "bytes": 191282,
+    "gzip": 53830
+  },
+  {
+    "year": 1880,
+    "file": "1880.topo.json",
+    "bytes": 107148,
+    "gzip": 31081
+  },
+  {
+    "year": 1900,
+    "file": "1900.topo.json",
+    "bytes": 111408,
+    "gzip": 31025
+  },
+  {
+    "year": 1914,
+    "file": "1914.topo.json",
+    "bytes": 93721,
+    "gzip": 27623
+  },
+  {
+    "year": 1920,
+    "file": "1920.topo.json",
+    "bytes": 108718,
+    "gzip": 31441
+  },
+  {
+    "year": 1930,
+    "file": "1930.topo.json",
+    "bytes": 96118,
+    "gzip": 28233
+  },
+  {
+    "year": 1938,
+    "file": "1938.topo.json",
+    "bytes": 115987,
+    "gzip": 32336
+  },
+  {
+    "year": 1945,
+    "file": "1945.topo.json",
+    "bytes": 106288,
+    "gzip": 30422
+  },
+  {
+    "year": 1960,
+    "file": "1960.topo.json",
+    "bytes": 96598,
+    "gzip": 28181
+  },
+  {
+    "year": 1994,
+    "file": "1994.topo.json",
+    "bytes": 124494,
+    "gzip": 35895
+  },
+  {
+    "year": 2000,
+    "file": "2000.topo.json",
+    "bytes": 124277,
+    "gzip": 35578
+  },
+  {
+    "year": 2010,
+    "file": "2010.topo.json",
+    "bytes": 124268,
+    "gzip": 35577
+  }
+]

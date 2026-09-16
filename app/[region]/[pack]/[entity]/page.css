@@ -1,0 +1,153 @@
+.entity__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  transition: color 140ms ease;
+}
+
+.entity__back:hover {
+  color: var(--accent);
+}
+
+.entity__back:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Drawn, not typed, so it inherits colour and needs no glyph from the font. */
+.entity__back-arrow {
+  width: 0.34em;
+  height: 0.34em;
+  border-left: 1px solid currentcolor;
+  border-bottom: 1px solid currentcolor;
+  transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entity__back {
+    transition: none;
+  }
+}
+
+/*
+ * A plain server-rendered document, not a client island. The atlas panel this
+ * borrows structure from (src/panel/DetailPanel.tsx) reads its colours off
+ * theme tokens that a client effect writes to the document — there is no such
+ * effect here, so this page keeps its own small, self-contained palette
+ * instead of silently falling back to unset custom properties.
+ */
+.entity {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 4rem;
+  color: var(--ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  line-height: 1.6;
+}
+
+.entity__figure {
+  margin: 0 0 2rem;
+}
+
+.entity__image {
+  width: 100%;
+  max-width: 20rem;
+  height: auto;
+  border-radius: 4px;
+  display: block;
+}
+
+.entity__credit {
+  margin-top: 0.4rem;
+  font-family: system-ui, sans-serif;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.entity__credit a {
+  color: inherit;
+}
+
+.entity__licence {
+  margin-left: 0.5rem;
+}
+
+.entity__licence::before {
+  content: '· ';
+}
+
+.entity__name {
+  font-size: 2.25rem;
+  margin: 0 0 0.25rem;
+}
+
+.entity__dates {
+  font-family: system-ui, sans-serif;
+  font-size: 1rem;
+  color: var(--ink-soft);
+  margin: 0 0 0.25rem;
+}
+
+.entity__span-label {
+  margin-left: 0.5rem;
+}
+
+.entity__place {
+  font-family: system-ui, sans-serif;
+  font-size: 1rem;
+  margin: 0 0 1.5rem;
+}
+
+.entity__traditions {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0;
+  margin: 0 0 1.5rem;
+  font-family: system-ui, sans-serif;
+  font-size: 0.85rem;
+}
+
+.entity__traditions li {
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0.2rem 0.75rem;
+}
+
+.entity__blurb {
+  font-size: 1.1rem;
+  margin: 0 0 1.5rem;
+}
+
+.entity__heading {
+  font-family: system-ui, sans-serif;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  margin: 0 0 0.5rem;
+}
+
+.entity__ideas {
+  margin: 0 0 1.5rem;
+  padding-left: 1.25rem;
+}
+
+.entity__link {
+  display: inline-block;
+  font-family: system-ui, sans-serif;
+  margin-top: 0.5rem;
+}
+
+.entity__note {
+  margin-top: 1.5rem;
+  font-family: system-ui, sans-serif;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}

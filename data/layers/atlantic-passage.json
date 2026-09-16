@@ -1,0 +1,92 @@
+{
+  "id": "atlantic-passage",
+  "name": "The Transatlantic Slave Trade",
+  "kind": "migration",
+  "paletteSlot": 9,
+  "valid": {
+    "start": 1500,
+    "end": 1850
+  },
+  "note": "Roughly twelve million people shipped west against their will. Their gods travelled with them.",
+  "features": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Bight of Benin to Bahia"
+        },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              2.08,
+              6.36
+            ],
+            [
+              -38.5,
+              -12.97
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Bight of Biafra to Cuba"
+        },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              7.17,
+              4.45
+            ],
+            [
+              -82.36,
+              23.13
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Angola to Rio"
+        },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              13.23,
+              -8.83
+            ],
+            [
+              -43.17,
+              -22.9
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Senegambia to Carolina"
+        },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              -17.4,
+              14.67
+            ],
+            [
+              -79.93,
+              32.78
+            ]
+          ]
+        }
+      }
+    ]
+  }
+}

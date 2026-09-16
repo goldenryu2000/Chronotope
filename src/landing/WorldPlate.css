@@ -1,0 +1,81 @@
+.plate {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.plate__svg {
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * Stroked, not filled. Filled, three dissolving world maps are a grey smear;
+ * as line work they read as an engraved plate being replaced by another, which
+ * is both prettier and clearer. `vector-effect` keeps the line a hairline at
+ * any scale — the viewBox is in degrees, so a plain stroke-width would be
+ * hundreds of kilometres wide.
+ */
+.plate__frame {
+  fill: none;
+  stroke: color-mix(in srgb, var(--ink) 55%, transparent);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  opacity: 0;
+  animation-name: plate-cycle;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.plate__years {
+  position: absolute;
+  right: clamp(1rem, 4vw, 3rem);
+  bottom: clamp(1rem, 4vw, 2.5rem);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 4vw, 2.4rem);
+  letter-spacing: var(--tracking-display);
+  color: var(--ink-soft);
+}
+
+/* Stacked, so the widest year does not shift the others as they trade places. */
+.plate__year {
+  grid-area: 1 / 1;
+  opacity: 0;
+  animation-name: plate-cycle;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.plate__years {
+  display: grid;
+  justify-items: end;
+}
+
+/*
+ * One third visible, two thirds waiting. With each frame delayed by a third of
+ * the cycle, exactly one is up at a time and the hand-off is a cross-fade.
+ */
+@keyframes plate-cycle {
+  0% { opacity: 0; }
+  5% { opacity: 1; }
+  28% { opacity: 1; }
+  33% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+/*
+ * Motion is the whole point here, so switching it off has to leave something
+ * behind rather than an empty frame: the first plate, held.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .plate__frame,
+  .plate__year {
+    animation: none;
+  }
+
+  .plate__frame:first-of-type,
+  .plate__year:first-of-type {
+    opacity: 1;
+  }
+}

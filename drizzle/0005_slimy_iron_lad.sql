@@ -1,0 +1,1 @@
+CREATE INDEX "tour_stop_layers_layer_idx" ON "tour_stop_layers" USING btree ("layer_id");

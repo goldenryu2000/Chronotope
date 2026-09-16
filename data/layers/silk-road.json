@@ -1,0 +1,106 @@
+{
+  "id": "silk-road",
+  "name": "Silk Road",
+  "kind": "trade",
+  "paletteSlot": 1,
+  "valid": {
+    "start": -130,
+    "end": 1450
+  },
+  "note": "Han embassies west to the Mediterranean, until the sea routes undercut it.",
+  "features": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Northern route"
+        },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              108.9,
+              34.3
+            ],
+            [
+              103.8,
+              36
+            ],
+            [
+              94.6,
+              40.1
+            ],
+            [
+              89.1,
+              42.9
+            ],
+            [
+              76,
+              39.4
+            ],
+            [
+              69.2,
+              41.3
+            ],
+            [
+              66.9,
+              39.6
+            ],
+            [
+              61.8,
+              37.9
+            ],
+            [
+              51.4,
+              35.7
+            ],
+            [
+              44.3,
+              33.3
+            ],
+            [
+              36.2,
+              33.5
+            ],
+            [
+              36.1,
+              36.2
+            ],
+            [
+              28.9,
+              41
+            ]
+          ]
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Southern route"
+        },
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              94.6,
+              40.1
+            ],
+            [
+              87.9,
+              39
+            ],
+            [
+              79.9,
+              37.1
+            ],
+            [
+              76,
+              39.4
+            ]
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,57 @@
+/*
+ * Credits and privacy. Plain reading pages, set like the tour index so they
+ * look like the same site. Every colour is a theme token.
+ */
+
+.legal {
+  min-height: 100%;
+  flex: 1;
+  padding: 4rem 1.5rem 6rem;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+.legal__inner {
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+.legal__back {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  color: var(--ink-faint);
+  font-size: 0.78rem;
+  letter-spacing: var(--tracking-display);
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.legal__back:hover {
+  color: var(--accent);
+}
+
+.legal__title {
+  margin: 0 0 2rem;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 2.9rem);
+  font-weight: 500;
+  letter-spacing: var(--tracking-display);
+}
+
+.legal__heading {
+  margin: 2rem 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.legal p {
+  margin: 0 0 0.75rem;
+  color: var(--ink-soft);
+  line-height: 1.7;
+}
+
+.legal a {
+  color: var(--accent);
+}
