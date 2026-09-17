@@ -3,7 +3,7 @@
   "regionSlug": "world",
   "title": "Monsters at the Edge of the Map",
   "subtitle": "The beast always lives just past where you have been",
-  "description": "Watch the monsters retreat at exactly the speed the map fills in — out of the forest next door, onto the shipping lane, past the end of the trade route, into the deep water, and finally onto the last unclimbed ground on Earth.",
+  "description": "Watch the monsters retreat at exactly the speed the map fills in: out of the forest next door, onto the shipping lane, past the end of the trade route, into the deep water, and finally onto the last unclimbed ground on Earth.",
   "estimatedMinutes": 6,
   "stops": [
     {
@@ -20,7 +20,7 @@
       "layers": [],
       "title": "A Few Days Upriver",
       "locationLabel": "Cedar Forest, Mesopotamia",
-      "narration": "The oldest monster in literature guards a cedar forest that Uruk wants timber from. Humbaba’s roar is the flood, his mouth is fire, and his face is a coil of intestines — which is precisely what Babylonian priests read the future in. He does not live at the end of the world. He is a few days upriver, standing between a city and something it intends to cut down."
+      "narration": "The oldest monster in literature guards a cedar forest that Uruk wants timber from. Humbaba’s roar is the flood, his mouth is fire, and his face is a coil of intestines, which is precisely what Babylonian priests read the future in. He does not live at the end of the world. He is a few days upriver, standing between a city and something it intends to cut down."
     },
     {
       "pack": "creatures",
@@ -52,7 +52,7 @@
       "layers": [],
       "title": "News From Further East",
       "locationLabel": "Persia, reporting on India",
-      "narration": "Ctesias is a Greek physician at the Persian court, and he sends home what he hears about India — including a beast with a man’s face, a lion’s body, three rows of teeth and a tail that fires spines. He is reporting in good faith on a country he has never visited, from informants who have not either. The monster now lives exactly where the reliable information stops."
+      "narration": "Ctesias is a Greek physician at the Persian court, and he sends home what he hears about India, including a beast with a man’s face, a lion’s body, three rows of teeth and a tail that fires spines. He is reporting in good faith on a country he has never visited, from informants who have not either. The monster now lives exactly where the reliable information stops."
     },
     {
       "pack": "creatures",
@@ -70,7 +70,7 @@
       ],
       "title": "Big Enough to Carry an Elephant",
       "locationLabel": "The Indian Ocean",
-      "narration": "Sailors working the Indian Ocean bring back a bird large enough to lift an elephant and sink a ship with a dropped boulder. The stories cluster around Madagascar — where, as it happens, a flightless bird three metres tall was still alive, and its foot-long eggs still wash out of the dunes. The monster sits at the far end of a real trade route, assembled from real things imperfectly described."
+      "narration": "Sailors working the Indian Ocean bring back a bird large enough to lift an elephant and sink a ship with a dropped boulder. The stories cluster around Madagascar, where, as it happens, a flightless bird three metres tall was still alive, and its foot-long eggs still wash out of the dunes. The monster sits at the far end of a real trade route, assembled from real things imperfectly described."
     },
     {
       "pack": "creatures",
@@ -118,7 +118,7 @@
       "layers": [],
       "title": "In the Waterhole",
       "locationLabel": "Southeastern Australia",
-      "narration": "Aboriginal accounts of something living in the swamps and billabongs reach colonists busy putting names on everything they see, and the bunyip enters English fast — as a joke, as a scare for children, and briefly as a serious zoological proposition after some large bones turned up. Colonial Australia has an interior it has not crossed, and something is in there."
+      "narration": "Aboriginal accounts of something living in the swamps and billabongs reach colonists busy putting names on everything they see, and the bunyip enters English fast: as a joke, as a scare for children, and briefly as a serious zoological proposition after some large bones turned up. Colonial Australia has an interior it has not crossed, and something is in there."
     },
     {
       "pack": "creatures",

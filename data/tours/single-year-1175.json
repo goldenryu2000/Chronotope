@@ -3,7 +3,7 @@
   "regionSlug": "world",
   "title": "A Single Year: 1175",
   "subtitle": "The year never moves. Only the camera does.",
-  "description": "Every other tour travels through time. This one refuses to. Hold the timeline still at 1175 and go around the world instead — two of the century’s great Aristotelians in one Spanish city, a Chinese scholar rebuilding Confucianism, Norse gods being written into books as their religion ends, and one civilisation none of the others knows exists.",
+  "description": "Every other tour travels through time. This one refuses to. Hold the timeline still at 1175 and go around the world instead: two of the century’s great Aristotelians in one Spanish city, a Chinese scholar rebuilding Confucianism, Norse gods being written into books as their religion ends, and one civilisation none of the others knows exists.",
   "estimatedMinutes": 6,
   "stops": [
     {
@@ -35,7 +35,7 @@
       },
       "layers": [],
       "title": "The Man Who Had to Leave",
-      "locationLabel": "Córdoba — and Cairo",
+      "locationLabel": "Córdoba and Cairo",
       "narration": "Born in this same city a few years before Ibn Rushd, Maimonides is not in it. The Almohads offered his family a choice of conversion or exile and they took the road. Right now he is physician to the sultan’s court in Cairo, writing the Guide of the Perplexed for one student who cannot square philosophy with his scripture. Two of the century’s great Aristotelians came out of these streets, and one of them had to run."
     },
     {
@@ -68,7 +68,7 @@
       "layers": [],
       "title": "Being Written Down",
       "locationLabel": "Scandinavia",
-      "narration": "Scandinavia is officially Christian, and the old gods are moving into manuscripts. Within fifty years an Icelandic politician named Snorri Sturluson will set the myths out in order — partly to preserve the craft of poetry, partly because he finds them interesting — and nearly everything anyone knows about Odin will arrive through that book. A religion is ending and a literature is beginning, in the same handwriting."
+      "narration": "Scandinavia is officially Christian, and the old gods are moving into manuscripts. Within fifty years an Icelandic politician named Snorri Sturluson will set the myths out in order, partly to preserve the craft of poetry and partly because he finds them interesting, and nearly everything anyone knows about Odin will arrive through that book. A religion is ending and a literature is beginning, in the same handwriting."
     },
     {
       "pack": "mythology",
@@ -84,7 +84,7 @@
       "layers": [],
       "title": "The Goddess Who Is Not Safe",
       "locationLabel": "Bengal",
-      "narration": "In Bengal, Kālī stands on the god who is her husband, wearing severed heads, tongue out, black as the space between stars. She is not a demon and not a danger to be bought off — she is worshipped as mother, by people who mean it literally. Time devours everything, and this is what time looks like once you decide to love it rather than negotiate with it."
+      "narration": "In Bengal, Kālī stands on the god who is her husband, wearing severed heads, tongue out, black as the space between stars. She is not a demon and not a danger to be bought off. She is worshipped as mother, by people who mean it literally. Time devours everything, and this is what time looks like once you decide to love it rather than negotiate with it."
     },
     {
       "pack": "creatures",
@@ -132,7 +132,7 @@
       "layers": [],
       "title": "A World the Other Seven Have Never Heard Of",
       "locationLabel": "Central Mexico",
-      "narration": "At Cholula, pilgrims climb the largest pyramid ever built by volume, to the shrine of the feathered serpent — god of wind, of the morning star, of the calendar and of learning. Nothing on this map has reached him and he has reached nothing on it. Every other stop on this tour connects to at least one other by a road or a sea lane. This one is a separate human world, running its own experiment."
+      "narration": "At Cholula, pilgrims climb the largest pyramid ever built by volume, to the shrine of the feathered serpent, god of wind, of the morning star, of the calendar and of learning. Nothing on this map has reached him and he has reached nothing on it. Every other stop on this tour connects to at least one other by a road or a sea lane. This one is a separate human world, running its own experiment."
     }
   ]
 }

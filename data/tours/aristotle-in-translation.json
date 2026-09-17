@@ -3,7 +3,7 @@
   "regionSlug": "world",
   "title": "The Argument That Crossed Three Religions",
   "subtitle": "Athens to Baghdad to Córdoba to Paris, over sixteen centuries",
-  "description": "One body of lecture notes, copied and argued over by Greeks, Syriac Christians, Muslims, Jews and Latin Christians in turn. Follow the physical journey of Aristotle’s texts and the fight they started — attacked from Khorasan, defended from al-Andalus, and read in Latin a century later.",
+  "description": "One body of lecture notes, copied and argued over by Greeks, Syriac Christians, Muslims, Jews and Latin Christians in turn. Follow the physical journey of Aristotle’s texts and the fight they started: attacked from Khorasan, defended from al-Andalus, and read in Latin a century later.",
   "estimatedMinutes": 7,
   "stops": [
     {
@@ -20,7 +20,7 @@
       "layers": [],
       "title": "Notes Never Meant for Publication",
       "locationLabel": "Stagira, Kingdom of Macedon",
-      "narration": "What survives of Aristotle is not the polished writing — that is lost. These are lecture notes: dense, elliptical, sometimes repeating themselves, covering physics, animals, poetry, logic, the soul and the good life. He describes hundreds of species and cuts many of them open himself. The habit he leaves behind matters more than any conclusion: before arguing about a thing, go and look at it."
+      "narration": "What survives of Aristotle is not the polished writing. That is lost. These are lecture notes: dense, elliptical, sometimes repeating themselves, covering physics, animals, poetry, logic, the soul and the good life. He describes hundreds of species and cuts many of them open himself. The habit he leaves behind matters more than any conclusion: before arguing about a thing, go and look at it."
     },
     {
       "pack": "philosophy",
@@ -90,7 +90,7 @@
       ],
       "title": "The Physician Who Rebuilt It",
       "locationLabel": "Afshana, near Bukhara",
-      "narration": "Ibn Sīnā says he read the Metaphysics forty times without understanding it, then found a commentary in a bookstall and saw it whole. He is a working doctor and a vizier, writing at night, at times while under arrest. What he produces is not commentary but reconstruction — existence separated from essence, a chain of causes terminating in one necessary being. For centuries afterwards, Aristotle is read through him."
+      "narration": "Ibn Sīnā says he read the Metaphysics forty times without understanding it, then found a commentary in a bookstall and saw it whole. He is a working doctor and a vizier, writing at night, at times while under arrest. What he produces is not commentary but reconstruction: existence separated from essence, a chain of causes terminating in one necessary being. For centuries afterwards, Aristotle is read through him."
     },
     {
       "pack": "philosophy",
@@ -106,7 +106,7 @@
       "layers": [],
       "title": "The Incoherence of the Philosophers",
       "locationLabel": "Tus, Khorasan",
-      "narration": "At the height of his career in Baghdad, al-Ghazālī stops. He cannot speak, abandons his post, and disappears for years. Out of the crisis comes a precise demolition: twenty places where the philosophers claim demonstration and deliver assumption. Fire does not cause cotton to burn, he argues — the two merely always occur together, and habit supplies the rest. Hume will make that same move seven centuries later, by a road nobody has been able to trace."
+      "narration": "At the height of his career in Baghdad, al-Ghazālī stops. He cannot speak, abandons his post, and disappears for years. Out of the crisis comes a precise demolition: twenty places where the philosophers claim demonstration and deliver assumption. Fire does not cause cotton to burn, he argues. The two merely always occur together, and habit supplies the rest. Hume will make that same move seven centuries later, by a road nobody has been able to trace."
     },
     {
       "pack": "philosophy",
@@ -122,7 +122,7 @@
       "layers": [],
       "title": "The Incoherence of the Incoherence",
       "locationLabel": "Córdoba, Almohad caliphate",
-      "narration": "Ibn Rushd is a chief judge who answers al-Ghazālī line by line in a book titled, flatly, The Incoherence of the Incoherence. He writes commentaries on Aristotle at three depths — short, middle, long — because different readers need different amounts of help. Truth cannot contradict truth, he argues, so where scripture and demonstration appear to collide, the text was speaking figuratively."
+      "narration": "Ibn Rushd is a chief judge who answers al-Ghazālī line by line in a book titled, flatly, The Incoherence of the Incoherence. He writes commentaries on Aristotle at three depths (short, middle, long) because different readers need different amounts of help. Truth cannot contradict truth, he argues, so where scripture and demonstration appear to collide, the text was speaking figuratively."
     },
     {
       "pack": "philosophy",
@@ -138,7 +138,7 @@
       "layers": [],
       "title": "The Same City, and Gone From It",
       "locationLabel": "Córdoba, and Cairo",
-      "narration": "Maimonides was born in this city a few years before Ibn Rushd, and by now he is a thousand miles away — the Almohads offered his family a choice and they took the road instead. He is physician to the sultan’s court in Cairo, writing the Guide of the Perplexed for one student who cannot reconcile philosophy with scripture. His answer is severe: of God you may state only what is not the case."
+      "narration": "Maimonides was born in this city a few years before Ibn Rushd, and by now he is a thousand miles away. The Almohads offered his family a choice and they took the road instead. He is physician to the sultan’s court in Cairo, writing the Guide of the Perplexed for one student who cannot reconcile philosophy with scripture. His answer is severe: of God you may state only what is not the case."
     },
     {
       "pack": "philosophy",
@@ -154,7 +154,7 @@
       "layers": [],
       "title": "Arriving in Latin",
       "locationLabel": "Roccasecca, Kingdom of Sicily",
-      "narration": "Translators working in southern Italy turn Ibn Rushd’s commentaries into Latin, and the effect on Paris is like a window breaking. Aquinas — a large, silent Italian his classmates called the dumb ox — spends his life fitting the newly available Aristotle to Christian doctrine, objection by objection. He cites Ibn Rushd simply as the Commentator. The argument has crossed three religions and five languages to reach his desk."
+      "narration": "Translators working in southern Italy turn Ibn Rushd’s commentaries into Latin, and the effect on Paris is like a window breaking. Aquinas, a large, silent Italian his classmates called the dumb ox, spends his life fitting the newly available Aristotle to Christian doctrine, objection by objection. He cites Ibn Rushd simply as the Commentator. The argument has crossed three religions and five languages to reach his desk."
     }
   ]
 }

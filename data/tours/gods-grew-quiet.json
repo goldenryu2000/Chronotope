@@ -20,7 +20,7 @@
       "layers": [],
       "title": "The First Question",
       "locationLabel": "Uruk, Sumer",
-      "narration": "A king watches his friend die and refuses to accept it. He crosses the water at the edge of the world to find the one man who never died, and is told to go home. Gilgamesh returns with nothing — no herb, no secret, only the walls of Uruk and the knowledge that he built them. Four thousand years later, nobody has improved on that ending."
+      "narration": "A king watches his friend die and refuses to accept it. He crosses the water at the edge of the world to find the one man who never died, and is told to go home. Gilgamesh returns with nothing: no herb, no secret, only the walls of Uruk and the knowledge that he built them. Four thousand years later, nobody has improved on that ending."
     },
     {
       "pack": "mythology",
@@ -36,7 +36,7 @@
       "layers": [],
       "title": "The World as a Battlefield",
       "locationLabel": "Babylon",
-      "narration": "Babylon explains the sky this way: Marduk kills Tiamat, splits her open like a shellfish, and props half of her overhead to hold back the waters. Order is not discovered here — it is imposed, by force, by whoever won. Every new year the story is recited aloud so the victory holds for another twelve months. The universe is a thing that had to be beaten into shape."
+      "narration": "Babylon explains the sky this way: Marduk kills Tiamat, splits her open like a shellfish, and props half of her overhead to hold back the waters. Order is not discovered here. It is imposed, by force, by whoever won. Every new year the story is recited aloud so the victory holds for another twelve months. The universe is a thing that had to be beaten into shape."
     },
     {
       "pack": "mythology",
@@ -68,7 +68,7 @@
       "layers": [],
       "title": "The World as a Choice",
       "locationLabel": "The Iranian plateau",
-      "narration": "On the Iranian plateau something shifts. Ahura Mazda does not win by being stronger. The struggle between truth and the lie runs through every person and turns on what each one decides to do — which makes an ordinary herdsman a participant rather than a spectator. The cosmos stops being a fight you watch from the stands. It becomes one you are already standing in."
+      "narration": "On the Iranian plateau something shifts. Ahura Mazda does not win by being stronger. The struggle between truth and the lie runs through every person and turns on what each one decides to do, which makes an ordinary herdsman a participant rather than a spectator. The cosmos stops being a fight you watch from the stands. It becomes one you are already standing in."
     },
     {
       "pack": "philosophy",
@@ -84,7 +84,7 @@
       "layers": [],
       "title": "The Thing That Cannot Be Named",
       "locationLabel": "State of Chu",
-      "narration": "In Chu, a text — whoever wrote it — opens by disqualifying itself: the way that can be spoken is not the constant way. No god is invoked, no myth retold. Instead: water wears down stone, the empty part of the cup is the part you use, the ruler who does least governs best. The explanation has stopped being a story about someone. It has become an observation anyone can go and check."
+      "narration": "In Chu, a text (whoever wrote it) opens by disqualifying itself: the way that can be spoken is not the constant way. No god is invoked, no myth retold. Instead: water wears down stone, the empty part of the cup is the part you use, the ruler who does least governs best. The explanation has stopped being a story about someone. It has become an observation anyone can go and check."
     },
     {
       "pack": "philosophy",
@@ -116,7 +116,7 @@
       "layers": [],
       "title": "Beside the Point",
       "locationLabel": "Lumbinī, Shakya republic",
-      "narration": "A hundred miles west, another man reaches a stranger conclusion: the self that is doing the suffering does not survive inspection. He declines to say whether the world is eternal — a man shot with an arrow, he points out, does not delay treatment to establish who fired it. The gods are never denied. They are simply made irrelevant, which is the more radical of the two moves."
+      "narration": "A hundred miles west, another man reaches a stranger conclusion: the self that is doing the suffering does not survive inspection. He declines to say whether the world is eternal. A man shot with an arrow, he points out, does not delay treatment to establish who fired it. The gods are never denied. They are simply made irrelevant, which is the more radical of the two moves."
     },
     {
       "pack": "philosophy",
@@ -132,7 +132,7 @@
       "layers": [],
       "title": "Serve the Living First",
       "locationLabel": "Qufu, State of Lu",
-      "narration": "In Lu, a student asks Confucius how to serve the spirits. Not yet able to serve people, he answers, how could you serve spirits? Asked then about death: not yet understanding life, how could you understand death? He does not deny heaven. He redirects the whole conversation onto what a person owes a parent, a ruler, a friend — the part that can actually be worked on."
+      "narration": "In Lu, a student asks Confucius how to serve the spirits. Not yet able to serve people, he answers, how could you serve spirits? Asked then about death: not yet understanding life, how could you understand death? He does not deny heaven. He redirects the whole conversation onto what a person owes a parent, a ruler, a friend: the part that can actually be worked on."
     },
     {
       "pack": "philosophy",
@@ -150,7 +150,7 @@
       ],
       "title": "Made by No God and No Man",
       "locationLabel": "Ephesus, Ionia",
-      "narration": "Heraclitus deposits his book in the great temple at Ephesus and writes that this order was made by no god and no man — it always was, and is, and will be, fire kindling by measure and going out by measure. The gods are still in the vocabulary, but the explanation has slipped out from under them. Something impersonal is now doing the work."
+      "narration": "Heraclitus deposits his book in the great temple at Ephesus and writes that this order was made by no god and no man. It always was, and is, and will be, fire kindling by measure and going out by measure. The gods are still in the vocabulary, but the explanation has slipped out from under them. Something impersonal is now doing the work."
     },
     {
       "pack": "philosophy",
@@ -214,7 +214,7 @@
       "layers": [],
       "title": "It Did Not Hold",
       "locationLabel": "Alexandria, Eastern Roman Empire",
-      "narration": "Alexandria, eight centuries on. Hypatia teaches Plato and Ptolemy, advises the Roman prefect, and lives in a city where the prefect and the bishop are fighting for control of the streets. In 415 a mob will drag her from her carriage and kill her. The quarrel was civic before it was religious, and the popular version of this story is too tidy — but the lesson holds. Reasoning in public has never stayed safe for long."
+      "narration": "Alexandria, eight centuries on. Hypatia teaches Plato and Ptolemy, advises the Roman prefect, and lives in a city where the prefect and the bishop are fighting for control of the streets. In 415 a mob will drag her from her carriage and kill her. The quarrel was civic before it was religious, and the popular version of this story is too tidy, but the lesson holds. Reasoning in public has never stayed safe for long."
     }
   ]
 }
