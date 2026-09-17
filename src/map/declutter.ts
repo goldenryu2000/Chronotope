@@ -1,4 +1,5 @@
 import type { ActiveEntity } from '../data/entitySpan'
+import { project as mercator } from '../layout/safeArea'
 
 /** Screen distance under which two pins are treated as sitting on each other. */
 export const COLLIDE_PX = 30
@@ -11,9 +12,15 @@ export interface Placed {
   at: { x: number; y: number }
   /** True when the pin was moved and needs a line back to its anchor. */
   offset: boolean
-  /** False when showing the name would cover a different pin. */
+  /** False when no side has room for the name without covering another mark or name. */
   label: boolean
+  /** Which side of the mark the name is drawn on. */
+  side: LabelSide
 }
+
+/** Where a name sits around its mark, in the order they are tried. */
+export type LabelSide = 'right' | 'left' | 'above' | 'below'
+const SIDES: readonly LabelSide[] = ['right', 'left', 'above', 'below']
 
 /** Half the pin's hit area — the radius a label must stay clear of. */
 const PIN_RADIUS_PX = 16
@@ -25,6 +32,9 @@ const CLUSTER_RADIUS_PX = 14
 const LABEL_CHAR_PX = 6.2
 const LABEL_HEIGHT_PX = 15
 const LABEL_GAP_PX = 10
+/** How far above or below its mark a name starts. Matches MapCanvas.css. */
+const PIN_STACK_PX = 8
+const CLUSTER_STACK_PX = 15
 
 export interface Cluster {
   /** Stable across renders so React and the marker cache can track it. */
@@ -36,8 +46,9 @@ export interface Cluster {
   place: string
   /** What the badge's label says: who is in it, not only how many. */
   name: string
-  /** False when showing the name would cover a different pin or cluster. */
+  /** False when no side has room for the name without covering another mark or name. */
   label: boolean
+  side: LabelSide
 }
 
 export interface Layout {
@@ -95,6 +106,7 @@ export function layoutPins(
         at: group[0].point,
         offset: false,
         label: true,
+        side: 'right',
       })
       continue
     }
@@ -149,10 +161,11 @@ export function layoutPins(
       place: primaryPlace,
       name: clusterName(group.map((m) => m.entity), selectedId),
       label: true,
+      side: 'right',
     })
   }
 
-  hideCollidingLabels(placed, clusters)
+  placeLabels(placed, clusters, selectedId)
   return { placed, clusters }
 }
 
@@ -162,8 +175,9 @@ export function layoutPins(
  * A badge that only said "4" was the whole problem with zooming into a crowded
  * region: many figures share one coordinate (a pantheon at its cult centre), so
  * no zoom ever separates them, and the reader landed on a map of numbers with
- * one name among them. A pair is named in full; a bigger group by the figure
- * most worth leading with, and a count. Whoever is selected leads, so the mark
+ * one name among them. a bigger group by the figure
+ * most worth leading with, and a count. Up to three are named in full: a trio
+ * labelled "Lernaean Hydra +2" left Satyr with no name anywhere on the map. Whoever is selected leads, so the mark
  * says who the panel is showing; otherwise core figures lead halo ones.
  */
 export function clusterName(members: readonly ActiveEntity[], selectedId: string | null): string {
@@ -174,42 +188,123 @@ export function clusterName(members: readonly ActiveEntity[], selectedId: string
     .sort((a, b) => rank(a.entity) - rank(b.entity) || a.index - b.index)
     .map(({ entity }) => entity)
 
-  if (ordered.length === 2) return `${ordered[0].name}, ${ordered[1].name}`
+  if (ordered.length <= 3) return ordered.map((entity) => entity.name).join(', ')
   return `${ordered[0].name} +${ordered.length - 1}`
 }
 
 /**
- * Drops labels that would sit on top of another mark.
+ * Gives every mark's name a side to sit on, or hides it when none has room.
  *
- * Pins and clusters are both marks and both carry a label to their right, so
- * each label must stay clear of every other pin's dot and every other badge. A
- * label covering a mark would steal its clicks.
+ * A name used to go to the right or not at all. Two figures a few dozen pixels
+ * apart on a line (Satyr just west of the Lernaean Hydra) then showed two dots
+ * and one name, the other hidden because it would have covered its neighbour.
+ * Each name now tries right, left, above and below, and takes the first side
+ * that covers no other mark (it would steal that mark's clicks) and no name
+ * already placed (two names over each other read as neither).
+ *
+ * Whoever is selected is placed first, so their name gets first choice.
  */
-function hideCollidingLabels(placed: Placed[], clusters: Cluster[]): void {
+function placeLabels(placed: Placed[], clusters: Cluster[], selectedId: string | null): void {
+  type Box = { left: number; right: number; top: number; bottom: number }
   const marks = [
     ...placed.map((item) => ({ owner: item as object, at: item.at, radius: PIN_RADIUS_PX })),
     ...clusters.map((item) => ({ owner: item as object, at: item.at, radius: CLUSTER_RADIUS_PX })),
   ]
+  const names: Box[] = []
 
-  const clear = (owner: object, at: Point, start: number, text: string) => {
-    const box = {
-      left: at.x + start,
-      right: at.x + start + text.length * LABEL_CHAR_PX,
-      top: at.y - LABEL_HEIGHT_PX / 2,
-      bottom: at.y + LABEL_HEIGHT_PX / 2,
+  const boxFor = (at: Point, side: LabelSide, width: number, gap: number, stack: number): Box => {
+    const middle = { top: at.y - LABEL_HEIGHT_PX / 2, bottom: at.y + LABEL_HEIGHT_PX / 2 }
+    const centred = { left: at.x - width / 2, right: at.x + width / 2 }
+    switch (side) {
+      case 'right': return { left: at.x + gap, right: at.x + gap + width, ...middle }
+      case 'left': return { left: at.x - gap - width, right: at.x - gap, ...middle }
+      case 'above': return { ...centred, top: at.y - stack - LABEL_HEIGHT_PX, bottom: at.y - stack }
+      case 'below': return { ...centred, top: at.y + stack, bottom: at.y + stack + LABEL_HEIGHT_PX }
     }
-    return !marks.some(
+  }
+
+  const free = (owner: object, box: Box) =>
+    !marks.some(
       (mark) =>
         mark.owner !== owner &&
         mark.at.x + mark.radius > box.left &&
         mark.at.x - mark.radius < box.right &&
         mark.at.y + mark.radius > box.top &&
         mark.at.y - mark.radius < box.bottom,
+    ) &&
+    !names.some(
+      (other) =>
+        other.right > box.left && other.left < box.right && other.bottom > box.top && other.top < box.bottom,
     )
+
+  const place = (owner: Placed | Cluster, text: string, gap: number, stack: number) => {
+    const width = text.length * LABEL_CHAR_PX
+    for (const side of SIDES) {
+      const box = boxFor(owner.at, side, width, gap, stack)
+      if (free(owner, box)) {
+        owner.label = true
+        owner.side = side
+        names.push(box)
+        return
+      }
+    }
+    owner.label = false
+    owner.side = 'right'
   }
 
-  for (const item of placed) item.label = clear(item, item.at, LABEL_GAP_PX, item.entity.name)
-  for (const item of clusters) item.label = clear(item, item.at, CLUSTER_RADIUS_PX + LABEL_GAP_PX / 2, item.name)
+  const selectedFirst = [...placed].sort(
+    (a, b) => Number(b.entity.id === selectedId) - Number(a.entity.id === selectedId),
+  )
+  for (const item of selectedFirst) place(item, item.entity.name, LABEL_GAP_PX, PIN_STACK_PX)
+  for (const item of clusters) place(item, item.name, CLUSTER_RADIUS_PX + LABEL_GAP_PX / 2, CLUSTER_STACK_PX)
+}
+
+/** What clicking a cluster should do: zoom in far enough to part it, or list it. */
+export type ClusterMove = { kind: 'zoom'; zoom: number } | { kind: 'list' }
+
+/**
+ * Zoom when zooming can separate the members; list them when it cannot.
+ *
+ * This was a fixed rule: below zoom 4.2 fit the bounds (capped at 5.2),
+ * otherwise open the list. Figures a fraction of a degree apart (Satyr, the
+ * Hydra and Pegasus around Lerna) were still one "3" at 5.2, and clicking it
+ * then listed them instead of parting them, though zoom 6 would have.
+ *
+ * Members that stay within `COLLIDE_PX` even at the map's maximum zoom are one
+ * spot for this purpose: a pantheon at its cult centre never separates. If
+ * everything is one spot, or the map is already past the zoom that parts the
+ * spots, the list is the answer. Otherwise the target leaves twice the collision
+ * distance between the closest spots, so names have room, capped at the
+ * maximum zoom.
+ */
+export function clusterMove(members: readonly ActiveEntity[], zoom: number, maxZoom: number): ClusterMove {
+  // World pixels at zoom 0; every distance scales by 2^z from here.
+  const points = members.map((entity) => mercator([entity.lng, entity.lat], 0))
+  const scale = 2 ** maxZoom
+
+  // Single-link groups of members that stay together even at maxZoom.
+  const spot = points.map((_, index) => index)
+  const root = (i: number): number => (spot[i] === i ? i : (spot[i] = root(spot[i])))
+  for (let i = 0; i < points.length; i += 1) {
+    for (let j = i + 1; j < points.length; j += 1) {
+      const d = Math.hypot(points[i].x - points[j].x, points[i].y - points[j].y)
+      if (d * scale < COLLIDE_PX) spot[root(i)] = root(j)
+    }
+  }
+
+  let closest = Infinity
+  for (let i = 0; i < points.length; i += 1) {
+    for (let j = i + 1; j < points.length; j += 1) {
+      if (root(i) === root(j)) continue
+      closest = Math.min(closest, Math.hypot(points[i].x - points[j].x, points[i].y - points[j].y))
+    }
+  }
+  if (!Number.isFinite(closest)) return { kind: 'list' }
+
+  const parts = Math.log2(COLLIDE_PX / closest)
+  if (zoom >= parts) return { kind: 'list' }
+  const roomy = Math.log2((COLLIDE_PX * 2) / closest)
+  return { kind: 'zoom', zoom: Math.min(maxZoom, roomy) }
 }
 
 function centroid(points: Point[]): Point {

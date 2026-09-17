@@ -130,6 +130,31 @@
     -1px 0 0 var(--map-label-halo);
 }
 
+/*
+ * The other sides a name can take when its right is crowded. The offsets match
+ * `LABEL_GAP_PX` and `PIN_STACK_PX` in declutter.ts, which is what decided the
+ * side was clear.
+ */
+.pin[data-side='left'] .pin__label {
+  left: auto;
+  right: calc(50% + 0.62rem);
+}
+
+.pin[data-side='above'] .pin__label,
+.pin[data-side='below'] .pin__label {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.pin[data-side='above'] .pin__label {
+  top: auto;
+  bottom: calc(50% + 0.5rem);
+}
+
+.pin[data-side='below'] .pin__label {
+  top: calc(50% + 0.5rem);
+}
+
 /* Suppressed when it would lie across another pin and steal its clicks.
    Hover and selection bring it back, so the name is never unreachable. */
 .pin[data-label='hide'] .pin__label {
@@ -212,6 +237,26 @@
     0 -1px 0 var(--map-label-halo),
     1px 0 0 var(--map-label-halo),
     -1px 0 0 var(--map-label-halo);
+}
+
+.cluster[data-side='left'] .cluster__label {
+  left: auto;
+  right: calc(100% + 0.3rem);
+}
+
+.cluster[data-side='above'] .cluster__label,
+.cluster[data-side='below'] .cluster__label {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.cluster[data-side='above'] .cluster__label {
+  top: auto;
+  bottom: calc(100% + 0.1rem);
+}
+
+.cluster[data-side='below'] .cluster__label {
+  top: calc(100% + 0.1rem);
 }
 
 .cluster[data-label='hide'] .cluster__label {

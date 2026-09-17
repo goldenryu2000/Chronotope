@@ -4,7 +4,7 @@ import { measureInsets, type Occupancy } from '../layout/measure'
 import { GAP, reveal, type Rect } from '../layout/safeArea'
 import { cameraDuration } from '../lib/motion'
 import { formatYear } from '../lib/year'
-import { layoutPins, type Cluster, type Placed } from './declutter'
+import { clusterMove, layoutPins, type Cluster, type Placed } from './declutter'
 
 /** How far inside the clear area a revealed pin or popover comes to rest. */
 const REVEAL_MARGIN = GAP
@@ -154,6 +154,7 @@ export class EntityMarkers {
       entry.element.style.setProperty('--leader-angle', `${Math.atan2(dy, dx) + Math.PI}rad`)
       entry.element.dataset.offset = String(item.offset)
       entry.element.dataset.label = item.label ? 'show' : 'hide'
+      entry.element.dataset.side = item.side
 
       const selected = item.entity.id === this.selectedId
       entry.element.dataset.selected = String(selected)
@@ -187,14 +188,10 @@ export class EntityMarkers {
 
         element.addEventListener('click', (event) => {
           event.stopPropagation()
-          const zoom = this.map.getZoom()
-          const [minLng, minLat] = cluster.bounds[0]
-          const [maxLng, maxLat] = cluster.bounds[1]
-          const dLng = maxLng - minLng
-          const dLat = maxLat - minLat
-
-          // If members are spread out geographically and zoom is low, zoom into bounds
-          if (zoom < 4.2 && (dLng > 0.4 || dLat > 0.4)) {
+          // Zoom when more zoom parts the members, list them when nothing
+          // the map allows would. See `clusterMove` in declutter.ts.
+          const move = clusterMove(cluster.members, this.map.getZoom(), this.map.getMaxZoom())
+          if (move.kind === 'zoom') {
             // Framed inside the clear area, so the members it spreads out do
             // not land under the panel or behind the dock.
             const { insets } = measureInsets()
@@ -206,7 +203,7 @@ export class EntityMarkers {
                 bottom: insets.bottom + clearance,
                 left: insets.left + clearance,
               },
-              maxZoom: 5.2,
+              maxZoom: move.zoom,
               duration: cameraDuration(600),
             })
             this.closePopover()
@@ -236,6 +233,7 @@ export class EntityMarkers {
       const label = entry.element.querySelector('.cluster__label')
       if (label) label.textContent = cluster.name
       entry.element.dataset.label = cluster.label ? 'show' : 'hide'
+      entry.element.dataset.side = cluster.side
 
       entry.element.setAttribute(
         'aria-label',

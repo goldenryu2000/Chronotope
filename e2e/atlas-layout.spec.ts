@@ -315,3 +315,49 @@ test('the columns stay between the top bar and the dock, however tall the timeli
   expect(await onTop(page, await box(page.getByRole('button', { name: 'Next stop' })), '.tour')).toBe(true)
   expect(await onTop(page, await box(page.getByRole('button', { name: 'Collapse timeline' })), '.timeline')).toBe(true)
 })
+
+test('a cluster click parts figures a little apart, and each one shows its name', async ({ page }) => {
+  // The reported case: Satyr, 400 BCE. It shares a crowd with the Lernaean
+  // Hydra and Pegasus, a fraction of a degree apart. The click used to stop at
+  // zoom 5.2 with the three still one badge; then, zoomed in, Satyr's name was
+  // hidden because it would have covered the Hydra's dot to its right.
+  await opened(page, '/world/creatures')
+  await typeYear(page, '400 BC')
+  await page.mouse.click(700, 250)
+
+  // Click Satyr's crowd the way a reader would, until Satyr stands alone. A
+  // narrow window may need a second click, since the whole crowd has to fit the
+  // first; at every step Satyr's name is on the map, in a pin or a cluster.
+  const satyr = page.locator('.pin[aria-label^="Satyr,"]')
+  const named = () =>
+    page.locator('.pin__label, .cluster__label').evaluateAll((labels) =>
+      labels.some((label) => label.textContent?.includes('Satyr') && getComputedStyle(label).opacity === '1'),
+    )
+  for (let click = 0; click < 3 && (await satyr.count()) === 0; click += 1) {
+    const crowd = page.locator('.cluster[aria-label*="Satyr"]').first()
+    await expect(crowd).toBeVisible()
+    await crowd.click()
+    await page.mouse.move(5, 400)
+    await still(page)
+    expect(await named(), `Satyr named after click ${click + 1}`).toBe(true)
+  }
+  await expect(satyr).toBeVisible()
+  await expect(satyr.locator('.pin__label')).toHaveCSS('opacity', '1')
+
+  // Every name on screen is shown, and no two lie over each other.
+  const names = await page.locator('.pin__label, .cluster__label').evaluateAll((labels) =>
+    labels
+      .filter((label) => getComputedStyle(label).opacity === '1')
+      .map((label) => {
+        const r = label.getBoundingClientRect()
+        return { text: label.textContent, left: r.left, top: r.top, right: r.right, bottom: r.bottom }
+      })
+      .filter((r) => r.right > 0 && r.left < innerWidth && r.bottom > 0 && r.top < innerHeight),
+  )
+  expect(names.map((n) => n.text)).toEqual(expect.arrayContaining(['Satyr', 'Lernaean Hydra', 'Pegasus']))
+  for (let i = 0; i < names.length; i += 1) {
+    for (let j = i + 1; j < names.length; j += 1) {
+      expect(overlaps(names[i], names[j]), `${names[i].text} over ${names[j].text}`).toBe(false)
+    }
+  }
+})
