@@ -1,5 +1,12 @@
+/*
+ * No text selection anywhere in the timeline. A scrub is a press-and-sweep,
+ * and without this every decade label and era name the pointer crossed was
+ * left highlighted in blue. The year input opts back in below, so typed text
+ * can still be selected and edited.
+ */
 .timeline {
   position: relative;
+  user-select: none;
   width: min(58rem, calc(100% - 3rem));
   padding: 0.9rem 1.3rem 1.1rem;
   border: 1px solid var(--rule);
@@ -58,6 +65,7 @@
 }
 
 .timeline__year-input {
+  user-select: text;
   width: 7.5rem;
   padding: 0.05rem 0.4rem;
   border: 0;
@@ -126,10 +134,17 @@
   cursor: default;
 }
 
+/*
+ * Top-left, not top-right. The figure panel sits in the right-hand column
+ * down to about 11rem above the viewport's bottom, which overlaps the dock's
+ * top-right corner: a button there was painted but unclickable whenever a
+ * figure was open, which on a tour is every stop. e2e/timeline-precision.spec.ts
+ * hit-tests it.
+ */
 .timeline__pin {
   position: absolute;
   top: 0.55rem;
-  right: 0.6rem;
+  left: 0.6rem;
   display: grid;
   place-items: center;
   width: 1.5rem;

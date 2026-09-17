@@ -46,7 +46,7 @@ export default function Timeline({ scale, entities, spans, borderChanges = [] }:
   const setYear = useAtlas((state) => state.setYear)
   const [playing, setPlaying] = useState(false)
   const [announcement, setAnnouncement] = useState('')
-  const { expanded, pinned, touch, togglePinned, handlers } = useExpansion()
+  const { expanded, touch, keepAlive, toggle, handlers } = useExpansion()
 
   const position = scale.toPosition(year)
   const era = scale.eraAt(year)
@@ -136,19 +136,28 @@ export default function Timeline({ scale, entities, spans, borderChanges = [] }:
     [landmarks],
   )
 
+  /**
+   * Set the year. `expand` is for the precise interactions (a press on a track,
+   * a typed year, a landmark jump) that open the detail track. A one-year step
+   * or an era pick only keeps an already open timeline from folding mid-use:
+   * unfolding the whole panel for a nudge moved the very button being clicked.
+   */
   const goTo = useCallback(
-    (target: number) => {
+    (target: number, expand = false) => {
       setPlaying(false)
       setYear(clampYear(target, scale))
-      touch()
+      if (expand) touch()
+      else keepAlive()
     },
-    [scale, setYear, touch],
+    [scale, setYear, touch, keepAlive],
   )
+
+  const expandTo = useCallback((target: number) => goTo(target, true), [goTo])
 
   const jump = useCallback(
     (landmark: Landmark | null) => {
       if (!landmark) return
-      goTo(landmark.year)
+      goTo(landmark.year, true)
       setAnnouncement(describeLandmark(landmark))
     },
     [goTo],
@@ -165,8 +174,8 @@ export default function Timeline({ scale, entities, spans, borderChanges = [] }:
   )
 
   const scrubTo = useCallback(
-    (clientX: number) => goTo(yearAtClientX(clientX)),
-    [goTo, yearAtClientX],
+    (clientX: number) => expandTo(yearAtClientX(clientX)),
+    [expandTo, yearAtClientX],
   )
 
   /**
@@ -236,12 +245,12 @@ export default function Timeline({ scale, entities, spans, borderChanges = [] }:
       <button
         type="button"
         className="timeline__pin"
-        onClick={togglePinned}
-        aria-pressed={pinned}
-        aria-label="Keep the precise timeline open"
-        title={pinned ? 'Let the timeline fold away' : 'Keep the precise timeline open'}
+        onClick={toggle}
+        aria-expanded={expanded}
+        aria-label={expanded ? 'Collapse timeline' : 'Expand timeline'}
+        title={expanded ? 'Collapse timeline' : 'Expand timeline'}
       >
-        {pinned ? <CollapseIcon /> : <ExpandIcon />}
+        {expanded ? <CollapseIcon /> : <ExpandIcon />}
       </button>
 
       <div className="timeline__readout">
@@ -265,7 +274,7 @@ export default function Timeline({ scale, entities, spans, borderChanges = [] }:
             <StepIcon direction="back" />
           </button>
 
-          <YearField year={year} onCommit={goTo} onEdit={touch} />
+          <YearField year={year} onCommit={expandTo} onEdit={touch} />
 
           <button
             type="button"
@@ -311,7 +320,7 @@ export default function Timeline({ scale, entities, spans, borderChanges = [] }:
               start={scale.start}
               end={scale.end}
               landmarks={landmarks}
-              onScrub={goTo}
+              onScrub={expandTo}
               onJump={jump}
               onKeyDown={onKeyDown}
             />

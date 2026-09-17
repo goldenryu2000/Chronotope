@@ -59,7 +59,7 @@ test('next landmark goes to the moment it names', async ({ page }) => {
 test('the detail track lands within a year of where it is clicked', async ({ page }) => {
   await opened(page)
   await typeYear(page, '1500')
-  await page.getByRole('button', { name: /keep the precise timeline open/i }).click()
+  // Typing a year opens the precise timeline, centred on it.
 
   const detail = page.getByTestId('detail-track')
   await expect(detail).toBeVisible()
@@ -80,4 +80,79 @@ test('the expanded timeline folds away once left alone', async ({ page }) => {
   await page.mouse.move(700, 200)
   await page.locator('body').click({ position: { x: 700, y: 200 } })
   await expect(page.getByTestId('detail-track')).toBeHidden({ timeout: 6000 })
+})
+
+/*
+ * Each of these was a real defect found by driving the live site with a mouse:
+ * the unit tests passed while the button, the steppers and a drag misbehaved.
+ */
+
+test('collapse works with the pointer still resting on the button', async ({ page }) => {
+  await opened(page)
+  await page.getByRole('button', { name: 'Expand timeline' }).click()
+  await expect(page.getByTestId('detail-track')).toBeVisible()
+
+  // Same pointer, same spot, no movement away.
+  await page.getByRole('button', { name: 'Collapse timeline' }).click()
+  await expect(page.getByTestId('detail-track')).toBeHidden()
+})
+
+test('a one-year step does not unfold the timeline or move the stepper', async ({ page }) => {
+  await opened(page)
+  const forward = page.getByRole('button', { name: 'Forward one year' })
+  const before = (await forward.boundingBox())!
+
+  await forward.click()
+  await forward.click()
+
+  await expect(page.getByTestId('detail-track')).toBeHidden()
+  const after = (await forward.boundingBox())!
+  expect(after.y).toBe(before.y)
+})
+
+test('the detail handle stays where the pointer lets go', async ({ page }) => {
+  await opened(page)
+  await typeYear(page, '1500')
+  // Typing a year opens the precise timeline, centred on it.
+
+  const detail = page.getByTestId('detail-track')
+  const box = (await detail.boundingBox())!
+  const x = box.x + box.width * 0.85
+  await page.mouse.move(box.x + box.width * 0.8, box.y + 10)
+  await page.mouse.down()
+  await page.mouse.move(x, box.y + 10, { steps: 4 })
+  await page.mouse.up()
+
+  const handle = (await page.locator('.timeline__detail-handle').boundingBox())!
+  expect(Math.abs(handle.x + handle.width / 2 - x)).toBeLessThanOrEqual(8)
+})
+
+test('dragging across a track, even past its edge, selects no text', async ({ page }) => {
+  await opened(page)
+  await typeYear(page, '1500')
+
+  // Starts on the overview's era labels and sweeps over the detail ruler's
+  // decade labels and out past its edge: the path a real scrub takes.
+  const detail = (await page.getByTestId('detail-track').boundingBox())!
+  await page.mouse.move(detail.x + detail.width * 0.2, detail.y + 10)
+  await page.mouse.down()
+  await page.mouse.move(detail.x + detail.width + 80, detail.y + 30, { steps: 10 })
+  await page.mouse.up()
+
+  expect(await page.evaluate(() => window.getSelection()?.toString() ?? '')).toBe('')
+})
+
+test('the expand button is not buried under an open figure panel', async ({ page }) => {
+  await opened(page)
+  // Every tour stop opens this panel, and it overlaps the dock's top-right corner.
+  await page.locator('.pin').first().click()
+  await expect(page.locator('.panel')).toBeVisible()
+
+  const button = page.getByRole('button', { name: 'Expand timeline' })
+  const box = (await button.boundingBox())!
+  const topmost = await page.evaluate(
+    ([x, y]) => document.elementFromPoint(x, y)?.closest('.timeline__pin') !== null,
+    [box.x + box.width / 2, box.y + box.height / 2],
+  )
+  expect(topmost).toBe(true)
 })

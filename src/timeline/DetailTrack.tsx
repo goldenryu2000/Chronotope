@@ -34,20 +34,38 @@ const tickLabel = (year: number) => (year < 0 ? formatYear(year) : String(year))
  * The zoomed track: 120 years, one tick each, so a reader can land on the year
  * they point at.
  *
- * While a drag is in progress the window is held still. Re-centring it on
- * every pointer move would slide the years under the pointer, and a year you
- * are aiming at should not move away from you. Holding the pointer past either
- * edge pans the window instead, faster the further past it is, and the window
- * re-centres when the drag ends.
+ * The window is a ruler that holds still. Stepping, dragging and letting go
+ * move the handle along it; the ruler itself moves only when the year leaves
+ * it (a typed year, a landmark far away, a step off the end), and then it
+ * re-centres once. Re-centring on every change, as it first did, scrolled all
+ * 120 ticks under a one-year nudge and yanked the handle out from under the
+ * pointer on release. While dragging, holding the pointer past either edge
+ * pans the ruler, faster the further past it is.
  */
 export default function DetailTrack({ year, start, end, landmarks, onScrub, onJump, onKeyDown }: Props) {
   const track = useRef<HTMLDivElement>(null)
-  const [held, setHeld] = useState<DetailWindow | null>(null)
-  const heldRef = useRef<DetailWindow | null>(null)
+  const [view, setView] = useState<DetailWindow>(() => windowAround(year, start, end))
+  // State for the render-time ruler check, a ref for the pointer handlers,
+  // which run before the render that would carry the new state.
+  const [dragging, setDragging] = useState(false)
+  const draggingRef = useRef(false)
+  const viewRef = useRef(view)
   const lastX = useRef(0)
   const frame = useRef(0)
 
-  const view = held ?? windowAround(year, start, end)
+  // Adjusted during render rather than in an effect, so a year that has left
+  // the ruler never paints a frame with the handle pinned to its edge. Also
+  // catches a pack switch that changes the scale's ends under an open ruler.
+  const outside = year < view.from || year > view.to || view.from < start || view.to > end
+  if (outside && !dragging) {
+    const wanted = windowAround(year, start, end)
+    if (wanted.from !== view.from || wanted.to !== view.to) setView(wanted)
+  }
+
+  useEffect(() => {
+    viewRef.current = view
+  }, [view])
+
   const ticks = detailTicks(view)
   const marks = landmarks.filter((landmark) => landmark.year >= view.from && landmark.year <= view.to)
 
@@ -57,11 +75,6 @@ export default function DetailTrack({ year, start, end, landmarks, onScrub, onJu
     const rect = track.current?.getBoundingClientRect()
     if (!rect || rect.width === 0) return null
     return (clientX - rect.left) / rect.width
-  }
-
-  const hold = (next: DetailWindow | null) => {
-    heldRef.current = next
-    setHeld(next)
   }
 
   const stopPan = () => {
@@ -75,8 +88,8 @@ export default function DetailTrack({ year, start, end, landmarks, onScrub, onJu
     let owed = 0
     const step = (now: number) => {
       const fraction = fractionAt(lastX.current)
-      const current = heldRef.current
-      if (fraction === null || !current || (fraction >= 0 && fraction <= 1)) {
+      const current = viewRef.current
+      if (fraction === null || (fraction >= 0 && fraction <= 1)) {
         frame.current = 0
         return
       }
@@ -88,7 +101,8 @@ export default function DetailTrack({ year, start, end, landmarks, onScrub, onJu
       if (years > 0) {
         owed -= years
         const next = shiftWindow(current, fraction < 0 ? -years : years, start, end)
-        hold(next)
+        viewRef.current = next
+        setView(next)
         onScrub(yearInWindow(next, fraction))
       }
       frame.current = requestAnimationFrame(step)
@@ -99,16 +113,16 @@ export default function DetailTrack({ year, start, end, landmarks, onScrub, onJu
   const scrub = (clientX: number) => {
     lastX.current = clientX
     const fraction = fractionAt(clientX)
-    const current = heldRef.current
-    if (fraction === null || !current) return
-    onScrub(yearInWindow(current, fraction))
+    if (fraction === null) return
+    onScrub(yearInWindow(viewRef.current, fraction))
     if (fraction < 0 || fraction > 1) startPan()
     else stopPan()
   }
 
   const release = () => {
     stopPan()
-    hold(null)
+    draggingRef.current = false
+    setDragging(false)
   }
 
   return (
@@ -142,11 +156,12 @@ export default function DetailTrack({ year, start, end, landmarks, onScrub, onJu
         onKeyDown={onKeyDown}
         onPointerDown={(event) => {
           event.currentTarget.setPointerCapture?.(event.pointerId)
-          hold(windowAround(year, start, end))
+          draggingRef.current = true
+          setDragging(true)
           scrub(event.clientX)
         }}
         onPointerMove={(event) => {
-          if (heldRef.current) scrub(event.clientX)
+          if (draggingRef.current) scrub(event.clientX)
         }}
         onPointerUp={(event) => {
           event.currentTarget.releasePointerCapture?.(event.pointerId)

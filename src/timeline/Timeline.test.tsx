@@ -173,15 +173,6 @@ describe('Timeline precision controls', () => {
     expect(screen.queryByTestId('detail-track')).toBeNull()
   })
 
-  it('stays open while pinned', () => {
-    vi.useFakeTimers()
-    render(<Timeline scale={scale} entities={[]} spans={[]} />)
-
-    fireEvent.click(screen.getByRole('button', { name: /keep the precise timeline open/i }))
-    act(() => vi.advanceTimersByTime(IDLE_MS * 3))
-    expect(screen.getByTestId('detail-track')).toBeTruthy()
-  })
-
   it('goes to a typed year, clamped to the scale', () => {
     render(<Timeline scale={scale} entities={[]} spans={[]} />)
 
@@ -239,5 +230,94 @@ describe('Timeline precision controls', () => {
 
     // Said out loud for screen readers, since the map change is visual.
     expect(screen.getByTestId('timeline-announcement').textContent).toBe('500 CE: Middle Ages begins')
+  })
+})
+
+describe('Timeline expand button and a steady ruler', () => {
+  const year = () => useAtlas.getState().year
+  const detail = () => screen.queryByTestId('detail-track')
+
+  beforeEach(() => {
+    useAtlas.setState({ year: 100 })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+  })
+
+  it('collapses at once when collapse is pressed, even with the pointer resting on it', () => {
+    render(<Timeline scale={scale} entities={[]} spans={[]} />)
+    fireEvent.pointerEnter(document.querySelector('.timeline')!)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand timeline' }))
+    expect(detail()).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse timeline' }))
+    expect(detail()).toBeNull()
+  })
+
+  it('offers collapse whenever it is expanded, however it opened', () => {
+    render(<Timeline scale={scale} entities={[]} spans={[]} />)
+    fireEvent.pointerDown(screen.getByTestId('timeline-track'), { pointerId: 1, clientX: 0 })
+    expect(detail()).toBeTruthy()
+
+    const button = screen.getByRole('button', { name: 'Collapse timeline' })
+    expect(button.getAttribute('aria-expanded')).toBe('true')
+    fireEvent.click(button)
+    expect(detail()).toBeNull()
+  })
+
+  it('stays open after expand until collapse is pressed', () => {
+    vi.useFakeTimers()
+    render(<Timeline scale={scale} entities={[]} spans={[]} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Expand timeline' }))
+    act(() => vi.advanceTimersByTime(IDLE_MS * 3))
+    expect(detail()).toBeTruthy()
+  })
+
+  it('does not open the precise timeline for a one-year step or an era pick', () => {
+    render(<Timeline scale={scale} entities={[]} spans={[]} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Forward one year' }))
+    fireEvent.click(screen.getByRole('button', { name: /^Middle Ages$/ }))
+    expect(year()).toBe(1000)
+    expect(detail()).toBeNull()
+  })
+
+  it('keeps the ruler still while stepping within it', () => {
+    render(<Timeline scale={scale} entities={[]} spans={[]} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Expand timeline' }))
+    const tickLeft = () => (screen.getByText('110').parentElement as HTMLElement).style.left
+
+    const before = tickLeft()
+    fireEvent.click(screen.getByRole('button', { name: 'Forward one year' }))
+    expect(year()).toBe(101)
+    expect(tickLeft()).toBe(before)
+  })
+
+  it('moves the ruler once the year leaves it', () => {
+    render(<Timeline scale={scale} entities={[]} spans={[]} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Expand timeline' }))
+    fireEvent.click(screen.getByRole('button', { name: /type a year/i }))
+    fireEvent.change(screen.getByTestId('year-input'), { target: { value: '400' } })
+    fireEvent.keyDown(screen.getByTestId('year-input'), { key: 'Enter' })
+    expect(screen.getByText('400')).toBeTruthy()
+  })
+
+  it('leaves the handle where the pointer let go', () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      left: 0, top: 0, right: 1000, bottom: 20, width: 1000, height: 20, x: 0, y: 0, toJSON: () => ({}),
+    })
+    render(<Timeline scale={scale} entities={[]} spans={[]} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Expand timeline' }))
+
+    const track = screen.getByTestId('detail-track')
+    fireEvent.pointerDown(track, { pointerId: 1, clientX: 850 })
+    fireEvent.pointerUp(track, { pointerId: 1, clientX: 850 })
+
+    // The window is 40 to 160, so 85% of the way along is 142.
+    expect(year()).toBe(142)
+    const handle = document.querySelector('.timeline__detail-handle') as HTMLElement
+    expect(Number.parseFloat(handle.style.left)).toBeCloseTo(85, 0)
   })
 })

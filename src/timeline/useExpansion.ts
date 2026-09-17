@@ -28,8 +28,8 @@ function isKeyboardFocus(element: EventTarget | null): boolean {
  *
  * An interaction (a press on a track, typing a year, a landmark jump) opens it
  * and restarts the idle clock. The pointer resting over it, or keyboard focus
- * inside it, holds it open past the clock. `pinned` holds it open regardless,
- * for a reader who wants the precise controls all the time.
+ * inside it, holds it open past the clock. Opening it with the expand button
+ * pins it open until the reader collapses it.
  */
 export function useExpansion(idleMs = IDLE_MS) {
   const [active, setActive] = useState(false)
@@ -60,13 +60,36 @@ export function useExpansion(idleMs = IDLE_MS) {
     schedule()
   }, [schedule])
 
-  const togglePinned = useCallback(() => {
-    // Unpinning starts the idle clock rather than snapping shut under the
-    // pointer that just clicked.
-    if (pinned) schedule()
-    setPinned(!pinned)
-    setActive(true)
-  }, [pinned, schedule])
+  /**
+   * Restart the idle clock if the timeline is open because of an interaction,
+   * without opening it. For small actions (a one-year step, an era pick) that
+   * should not unfold the precise controls but should not fold them away
+   * mid-use either.
+   */
+  const keepAlive = useCallback(() => {
+    if (timer.current) schedule()
+  }, [schedule])
+
+  /**
+   * The expand/collapse button. It always does what its icon says: collapse
+   * whenever the timeline is expanded, however it got that way, and expand
+   * (and stay expanded) when it is not.
+   *
+   * Collapsing used to clear only the pin while leaving the interaction flag
+   * set, so the timeline stayed open under the pointer that had just clicked
+   * collapse. Both flags and the idle clock are cleared here, at once.
+   */
+  const toggle = useCallback(() => {
+    if (active || pinned) {
+      if (timer.current) clearTimeout(timer.current)
+      timer.current = null
+      setPinned(false)
+      setActive(false)
+    } else {
+      setPinned(true)
+      setActive(true)
+    }
+  }, [active, pinned])
 
   const handlers = {
     onPointerEnter: () => {
@@ -86,5 +109,5 @@ export function useExpansion(idleMs = IDLE_MS) {
     },
   }
 
-  return { expanded: active || pinned, pinned, touch, togglePinned, handlers }
+  return { expanded: active || pinned, touch, keepAlive, toggle, handlers }
 }
