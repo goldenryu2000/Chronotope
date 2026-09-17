@@ -16,6 +16,8 @@ import { activeAt, type ActiveEntity } from '../data/entitySpan'
 import { LayerSchema } from '../data/schemas'
 import { configureMaplibreWorker } from '../lib/maplibre-worker'
 import { cameraDuration } from '../lib/motion'
+import { measureInsets } from '../layout/measure'
+import { frame, GAP } from '../layout/safeArea'
 import { EntityMarkers } from './entityMarkers'
 import { addLayerLine, layerLineId } from './layerPaint'
 import type { RegionLayer } from '../read/regionLayers'
@@ -66,6 +68,9 @@ function isDrawn(layer: RegionLayer, year: number, lit: readonly string[]): bool
   return lit.includes(layer.slug) && year >= layer.valid.start && year <= layer.valid.end
 }
 
+/** How far inside the clear area a framed pin sits, so its label fits too. */
+const PIN_CLEARANCE = GAP * 2
+
 interface Hovered {
   name: string
   subjectTo: string
@@ -114,6 +119,8 @@ export default function MapCanvas({
   const markers = useRef<EntityMarkers | null>(null)
 
   const hoveredFeature = useRef<string | number | null>(null)
+  /** Whether the map has drawn once, which is when the curtain lifts. */
+  const painted = useRef(false)
 
   // Read once, at construction: MapLibre takes these as initial options, and
   // re-creating the map because a prop object changed identity would throw the
@@ -189,7 +196,10 @@ export default function MapCanvas({
     map.current = instance
 
     instance.on('load', () => setReady(true))
-    instance.once('idle', () => onReadyRef.current?.())
+    instance.once('idle', () => {
+      painted.current = true
+      onReadyRef.current?.()
+    })
 
     // MapLibre reports style and source failures through this event rather than
     // by throwing, so without a handler a broken style is silently a blank map.
@@ -405,13 +415,22 @@ export default function MapCanvas({
     if (!instance || !ready || !focusPair) return
 
     const [a, b] = focusPair
+    // The panel stays open on the contemporary, so its column is reserved.
+    // This was a hard-coded guess of every overlay's size, which the tour card
+    // and a taller timeline had both outgrown.
+    const { insets } = measureInsets({ right: true })
     instance.fitBounds(
       [
         [Math.min(a[0], b[0]), Math.min(a[1], b[1])],
         [Math.max(a[0], b[0]), Math.max(a[1], b[1])],
       ],
       {
-        padding: { top: 90, bottom: 260, left: 90, right: 380 },
+        padding: {
+          top: insets.top + PIN_CLEARANCE,
+          bottom: insets.bottom + PIN_CLEARANCE,
+          left: insets.left + PIN_CLEARANCE,
+          right: insets.right + PIN_CLEARANCE,
+        },
         maxZoom: 5,
         duration: cameraDuration(900),
       },
@@ -428,15 +447,32 @@ export default function MapCanvas({
     const instance = map.current
     if (!instance || !ready || !cameraTarget) return
 
-    instance.flyTo({
-      center: cameraTarget.center,
-      zoom: cameraTarget.zoom,
-      duration: cameraDuration(1100),
-      // essential: this move carries meaning — it is how a tour stop, a search
-      // result or a contemporary arrives — so it happens either way. The
-      // preference shortens the journey rather than cancelling the destination.
-      essential: true,
-    })
+    // A view that selects someone opens the panel, which has not rendered yet.
+    const { viewport, insets } = measureInsets({ right: Boolean(cameraTarget.subject) })
+    const center = frame(
+      cameraTarget.center,
+      cameraTarget.zoom,
+      cameraTarget.subject ?? null,
+      viewport,
+      insets,
+      PIN_CLEARANCE,
+    )
+
+    if (!painted.current) {
+      // Behind the curtain nobody sees a flight, and it only delays the lift:
+      // `idle` waits for the camera to stop. A link to a stop opens on it.
+      instance.jumpTo({ center, zoom: cameraTarget.zoom })
+    } else {
+      instance.flyTo({
+        center,
+        zoom: cameraTarget.zoom,
+        duration: cameraDuration(1100),
+        // essential: this move carries meaning — it is how a tour stop, a search
+        // result or a contemporary arrives — so it happens either way. The
+        // preference shortens the journey rather than cancelling the destination.
+        essential: true,
+      })
+    }
 
     flyToTarget(null)
   }, [cameraTarget, ready, flyToTarget])

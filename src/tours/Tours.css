@@ -1,36 +1,21 @@
 /*
- * The tour player, docked above the timeline.
+ * The tour player, in the left column.
+ *
+ * It used to be docked above the timeline, centred, 46rem wide: right where
+ * the camera put the figure being narrated, so every stop of every tour talked
+ * about something the card was covering. The column keeps it beside the map
+ * rather than on it, and bounds it between the top corner and the dock, so a
+ * taller timeline shortens the card instead of pushing it up into the map.
  *
  * The shell does not scroll; `.tour__body` inside it does. The same split
  * DetailPanel.css makes, for the same reason: the controls are anchored to
  * this box, and a long narration must not carry them off it.
- *
- * Height is capped rather than natural. The dock sits over the map, and a
- * thirteen-stop tour has stops whose prose would otherwise cover most of the
- * thing being narrated.
  */
 .tour {
   display: flex;
   flex-direction: column;
-  /*
-   * Width and right margin both reserve the detail panel's column.
-   *
-   * The panel is `min(21rem, ...)` at `right: 1.25rem`, and every tour stop
-   * opens it, so the two are on screen together for the whole tour. Centred at
-   * full width the player runs underneath it, and the panel's scroll region
-   * then swallows clicks on "Next stop" — the button is painted, enabled, and
-   * unclickable. That is the third time this stacking bug has appeared here:
-   * DetailPanel.css caps its own height to clear MapLibre's zoom buttons, and
-   * the dock passes pointer events through for the same reason. Hit-testing is
-   * what matters, not whether the handler fires.
-   *
-   * The margin shifts the centred player left by the panel's column; the width
-   * keeps it from growing back into it on a narrower viewport. `e2e/tour.spec.ts`
-   * is what holds this: it clicks the button rather than dispatching to it.
-   */
-  width: min(46rem, calc(100vw - 26rem));
-  margin-right: 22.5rem;
-  max-height: 40vh;
+  width: 100%;
+  max-height: 100%;
   overflow: hidden;
   border: 1px solid var(--rule);
   border-radius: 3px;
@@ -70,13 +55,14 @@
 }
 
 .tour__meta {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.3rem 0.8rem;
   align-items: baseline;
-  gap: 0.8rem;
   padding: 0.8rem 1.2rem 0;
   color: var(--ink-faint);
-  font-size: 0.72rem;
-  letter-spacing: var(--tracking-display);
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
@@ -84,22 +70,39 @@
   color: var(--ink-soft);
 }
 
-.tour__place {
-  margin-left: auto;
+.tour__where {
+  grid-column: 1 / -1;
 }
 
 .tour__exit {
-  color: var(--ink-faint);
-  text-decoration: none;
+  display: grid;
+  place-items: center;
+  align-self: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  margin: -0.3rem -0.4rem -0.3rem 0;
+  border-radius: 50%;
+  color: var(--ink-soft);
 }
 
 .tour__exit:hover {
   color: var(--accent);
 }
 
+.tour__exit:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.tour__exit svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
 .tour__body {
+  min-height: 0;
   overflow-y: auto;
-  padding: 0.8rem 1.2rem 1rem;
+  padding: 0.7rem 1.2rem 1rem;
   /* Still scrolls; the bar is visual noise against the parchment. */
   scrollbar-width: none;
 }
@@ -119,7 +122,8 @@
 .tour__narration {
   margin: 0;
   color: var(--ink-soft);
-  line-height: 1.65;
+  font-size: 0.92rem;
+  line-height: 1.6;
 }
 
 .tour__controls {

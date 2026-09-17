@@ -52,6 +52,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       data-theme={DEFAULT_THEME}
+      // The script below rewrites `data-theme` before hydration, on purpose,
+      // so the server's default and the reader's theme differ by design.
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable}`}
     >
       <head>

@@ -1,26 +1,13 @@
 /*
- * Starts below the chrome cluster, not level with it.
- *
- * The panel and the share/theme controls both live in the top right, and the
- * panel sits above them, so overlapping meant those buttons were painted over
- * and unclickable for as long as anything was selected. Synthetic .click()
- * still reached them in testing, which is exactly why it went unnoticed —
- * hit-testing is what matters, not whether the handler fires.
+ * Sized by the column it sits in (`.atlas__column--right` in Atlas.css), not by
+ * itself. It used to position itself below the chrome cluster and cap its own
+ * height to clear the zoom buttons, which were both guesses about neighbours;
+ * the column is measured, so the panel only fills it and scrolls inside.
  */
 .panel {
-  position: absolute;
-  top: 4.2rem;
-  right: 1.25rem;
-  z-index: 6;
-  width: min(21rem, calc(100vw - 2.5rem));
-  /*
-   * The bottom reserve is not decoration: it is what stops the panel growing
-   * down over MapLibre's zoom buttons in the bottom-right corner. The same
-   * class of bug as the note above, at the other end of the same column —
-   * e2e/atlas.spec.ts hit-tests the zoom control with the panel open for
-   * exactly this reason.
-   */
-  max-height: calc(100vh - 15rem);
+  position: relative;
+  width: 100%;
+  max-height: 100%;
   /*
    * The shell does not scroll; `.panel__scroll` inside it does.
    *
@@ -285,16 +272,6 @@
 }
 
 @media (width <= 34rem) {
-  /* A bottom sheet above the timeline dock, rather than a side panel. */
-  .panel {
-    top: auto;
-    right: 0.6rem;
-    left: 0.6rem;
-    bottom: 11rem;
-    width: auto;
-    max-height: 45vh;
-  }
-
   .panel__scroll {
     padding: 1.1rem 1.1rem 1.2rem;
   }

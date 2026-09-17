@@ -19,6 +19,7 @@ import ThemeToggle from '../theme/ThemeToggle'
 import { resolveEras, resolveRange } from '../timeline/resolveEras'
 import { buildScale } from '../timeline/scale'
 import Timeline from '../timeline/Timeline'
+import { useLayoutVars } from '../layout/useLayoutVars'
 import './Atlas.css'
 
 interface Props {
@@ -48,7 +49,7 @@ interface Props {
    * followed by a visible jump.
    */
   initialView?: AtlasView
-  /** Rendered into the dock, above the timeline. A tour player goes here. */
+  /** Rendered into the left column. A tour player goes here. */
   children?: React.ReactNode
   /**
    * Whether switching packs rewrites the address.
@@ -92,6 +93,16 @@ export function Atlas({
   // derived from the pair rather than fetched as one.
   const [region, setRegion] = useState<Region | null>(null)
   const [pack, setPack] = useState<Pack | null>(null)
+  /**
+   * Which slug `pack` was fetched for.
+   *
+   * `active` changes the moment a switch is asked for and `pack` only when the
+   * artifact lands, so for one fetch the two disagree. A parked view that
+   * checked `active` alone landed on the pack being left: its figure was not in
+   * it, so the panel closed, and when the right pack arrived the switch
+   * deselected them for good. Every cross-pack tour stop opened with no panel.
+   */
+  const [packSlug, setPackSlug] = useState<string | null>(null)
   const [active, setActive] = useState(activePack)
   const [theme, setTheme] = useState<ThemeId>('rustic')
   /** Set once the map has drawn its first frame, tiles and all. */
@@ -172,6 +183,7 @@ export function Atlas({
         // deselecting would undo the thing the switch was for.
         if (useAtlas.getState().pendingView?.pack !== active) select(null)
         setPack(parsed)
+        setPackSlug(active)
         setError(null)
       } catch (cause) {
         if (!cancelled) setError((cause as Error).message)
@@ -266,6 +278,13 @@ export function Atlas({
     setActive(pendingView.pack)
   }
 
+  /** The pack's spans, offset into the years the map actually shows them. */
+  const entities = useMemo(
+    () =>
+      pack ? pack.entities.map((entity) => withActiveSpan(entity, pack.activeOffset)) : [],
+    [pack],
+  )
+
   /*
    * A parked view lands once its pack is on screen.
    *
@@ -278,12 +297,20 @@ export function Atlas({
    */
   useEffect(() => {
     if (!region || !pack || !pendingView) return
-    if (pendingView.pack !== active) return
+    if (pendingView.pack !== active || packSlug !== active) return
 
     const range = resolveRange(region, pack)
     setYear(clamp(pendingView.year, range.start, range.end))
     select(pendingView.entityId)
-    if (pendingView.camera) flyToTarget(pendingView.camera)
+    if (pendingView.camera) {
+      // The figure rides along so the camera can keep it clear of the panel
+      // and the tour card, not just point at the authored centre.
+      const subject = entities.find((entity) => entity.id === pendingView.entityId)
+      flyToTarget({
+        ...pendingView.camera,
+        subject: subject ? [subject.lng, subject.lat] : undefined,
+      })
+    }
     // A view describes the atlas completely, so this replaces rather than
     // merges: a stop naming two layers means those two and no others. A reader
     // who lit a third by hand loses it at the next stop, exactly as they lose
@@ -291,7 +318,7 @@ export function Atlas({
     setLayers(pendingView.layers)
     applyView(null)
     opened.current = true
-  }, [region, pack, active, pendingView, setYear, select, flyToTarget, setLayers, applyView])
+  }, [region, pack, packSlug, active, entities, pendingView, setYear, select, flyToTarget, setLayers, applyView])
 
   /*
    * The url follows the switch, without a navigation.
@@ -342,13 +369,6 @@ export function Atlas({
   const scale = useMemo(
     () => (region && pack ? buildScale(resolveEras(region, pack)) : null),
     [region, pack],
-  )
-
-  /** The pack's spans, offset into the years the map actually shows them. */
-  const entities = useMemo(
-    () =>
-      pack ? pack.entities.map((entity) => withActiveSpan(entity, pack.activeOffset)) : [],
-    [pack],
   )
 
   /**
@@ -422,8 +442,11 @@ export function Atlas({
     [region],
   )
 
+  const root = useRef<HTMLDivElement>(null)
+  useLayoutVars(root)
+
   return (
-    <div className="atlas">
+    <div className="atlas" ref={root}>
       {region && camera && tilesetUrl && (
         <MapCanvas
           theme={theme}
@@ -439,7 +462,13 @@ export function Atlas({
       <div className="atlas__grain" aria-hidden="true" />
       <div className="atlas__vignette" aria-hidden="true" />
 
-      <header className="atlas__header">
+      {/*
+        * Every overlay below is tagged with the region of the screen it owns.
+        * `src/layout` reads the tags twice: once to size the columns between
+        * the top bar and the dock, and once per camera move, so whatever the
+        * map is showing lands in the part of it nothing covers.
+        */}
+      <header className="atlas__header" data-layout="top">
         <h1 className="atlas__title">{region?.title ?? 'Chronotope'}</h1>
 
         {/* The packs on this region, and which one is showing. Until the
@@ -467,12 +496,12 @@ export function Atlas({
         * It doubles as the only place this screen says what it is: the header
         * names the region and the pack, and never the atlas they belong to.
         */}
-      <Link className="atlas__home" href="/">
+      <Link className="atlas__home" href="/" data-layout="top" data-layout-corner="">
         <span className="atlas__home-arrow" aria-hidden="true" />
         <span className="atlas__home-label">Chronotope</span>
       </Link>
 
-      <div className="atlas__chrome">
+      <div className="atlas__chrome" data-layout="top" data-layout-corner="">
         <LayerMenu layers={layers} />
 
         {/*
@@ -495,22 +524,34 @@ export function Atlas({
         <ThemeToggle onChange={setTheme} />
       </div>
 
-      {selected && pack && (
-        <DetailPanel
-          entity={selected}
-          pack={pack.id}
-          entities={entities}
-          traditions={pack.traditions}
-          spanLabel={pack.spanLabel}
-          year={year}
-          onSelect={select}
-          onFocusPair={focusOn}
-          onClose={() => select(null)}
-        />
-      )}
-
-      <div className="atlas__dock">
+      {/*
+        * The two columns. Fixed slots rather than free-floating cards, so the
+        * tour card and the panel can never grow into each other or into the
+        * dock, and a camera move can reserve a column before its content has
+        * rendered. Each holds one thing: the left the tour, the right the
+        * figure (or the layer menu, which the panel steps aside for).
+        */}
+      <div className="atlas__column atlas__column--left" data-layout="left">
         {children}
+      </div>
+
+      <div className="atlas__column atlas__column--right" data-layout="right">
+        {selected && pack && (
+          <DetailPanel
+            entity={selected}
+            pack={pack.id}
+            entities={entities}
+            traditions={pack.traditions}
+            spanLabel={pack.spanLabel}
+            year={year}
+            onSelect={select}
+            onFocusPair={focusOn}
+            onClose={() => select(null)}
+          />
+        )}
+      </div>
+
+      <div className="atlas__dock" data-layout="bottom">
 
         {/* An empty map and a broken map look identical, so say which it is —
             but only once there is a pack to be empty of. A tour is already
@@ -528,7 +569,7 @@ export function Atlas({
           />
         )}
 
-        {error && <p className="atlas__error">Could not open the atlas — {error}</p>}
+        {error && <p className="atlas__error">Could not open the atlas: {error}</p>}
       </div>
 
       {/*

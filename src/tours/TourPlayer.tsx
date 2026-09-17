@@ -165,7 +165,7 @@ export default function TourPlayer({ tourUrl, slug, regionSlug, stop, stops }: P
   if (error) {
     return (
       <div className="tour" role="status">
-        <p className="tour__error">Could not open this tour — {error}</p>
+        <p className="tour__error">Could not open this tour: {error}</p>
       </div>
     )
   }
@@ -194,9 +194,18 @@ export default function TourPlayer({ tourUrl, slug, regionSlug, stop, stops }: P
 
       <header className="tour__meta">
         <span className="tour__title">{tour.title}</span>
-        <span className="tour__counter">Stop {index + 1} of {total}</span>
-        <span className="tour__place">{current.locationLabel}</span>
-        <a className="tour__exit" href={exitHref}>Leave the tour</a>
+        {/* Drawn as the panel's close button is, so the two columns close the
+            same way. Named in words for anyone who cannot see the glyph. */}
+        <a className="tour__exit" href={exitHref} aria-label="Leave the tour" title="Leave the tour">
+          <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </a>
+        <span className="tour__where">
+          <span className="tour__counter">Stop {index + 1} of {total}</span>
+          {' · '}
+          <span className="tour__place">{current.locationLabel}</span>
+        </span>
       </header>
 
       <div className="tour__body">

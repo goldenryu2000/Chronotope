@@ -6,6 +6,17 @@
  * cheaper than making the ancestors agree.
  */
 .atlas {
+  /*
+   * The layout system's constants. The measured values below them are written
+   * by `useLayoutVars` and only defaulted here, for the first frame.
+   */
+  --edge: 1.25rem;
+  --gutter: 0.75rem;
+  --column-w: min(21rem, calc((100vw - 2 * var(--edge)) * 0.3));
+  --chrome-bottom: 3.1rem;
+  --top-inset: 6.7rem;
+  --dock-inset: 13rem;
+
   position: fixed;
   inset: 0;
   overflow: hidden;
@@ -127,7 +138,8 @@
   position: absolute;
   top: 1.25rem;
   right: 1.25rem;
-  z-index: 5;
+  /* Above the columns: the layer menu opens from here into the right one. */
+  z-index: 7;
   display: flex;
   gap: 0.5rem;
 }
@@ -167,7 +179,9 @@
 
 .atlas__dock {
   position: absolute;
-  bottom: 1.5rem;
+  /* High enough that the timeline clears MapLibre's attribution line, which
+     sits in the bottom-left corner under the dock's left end. */
+  bottom: 2.4rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 5;
@@ -197,6 +211,88 @@
   background: var(--surface-raised);
   color: var(--accent);
   font-size: 0.8rem;
+}
+
+/*
+ * The columns: fixed slots between the top corners and the dock.
+ *
+ * Nothing in them positions itself. The panel used to sit at a hand-tuned
+ * `top: 4.2rem` with a `max-height` that reserved room for the zoom buttons,
+ * and the tour player reserved the panel's column with a right margin. Both
+ * guessed the others' sizes, and when the timeline grew taller the guesses
+ * overlapped. Here the column is bounded by measured edges, and its content
+ * takes at most its height and scrolls inside itself.
+ *
+ * The slot is `pointer-events: none` for the reason the dock is: an empty
+ * column is map, and must pass clicks to the pins under it.
+ */
+.atlas__column {
+  position: absolute;
+  top: calc(var(--chrome-bottom) + var(--gutter));
+  bottom: calc(var(--dock-inset) + var(--gutter));
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  width: var(--column-w);
+  pointer-events: none;
+  transition: opacity 160ms ease, visibility 160ms;
+}
+
+.atlas__column > * {
+  min-height: 0;
+  max-height: 100%;
+  pointer-events: auto;
+}
+
+.atlas__column--left {
+  left: var(--edge);
+}
+
+.atlas__column--right {
+  right: var(--edge);
+}
+
+/*
+ * The right column holds one thing at a time.
+ *
+ * The layer menu opens from the chrome straight down into it, the same width,
+ * so while it is open the panel steps aside instead of being painted over half
+ * way. Closing the menu brings the panel back as it was, scroll and all, because
+ * it was only hidden.
+ */
+.atlas:has(.layers__popover) .atlas__column--right {
+  visibility: hidden;
+  opacity: 0;
+}
+
+/*
+ * The hover chip and the error line live in the map's clear area rather than a
+ * fixed corner. At `top: 4rem; left: 1.25rem` the chip sat inside the left
+ * column, over the tour card, and the error sat over the title.
+ */
+.atlas .map__polity {
+  top: calc(var(--top-inset) + var(--gutter));
+  left: var(--edge);
+}
+
+.atlas:has(.atlas__column--left > *) .map__polity {
+  left: calc(var(--edge) + var(--column-w) + var(--gutter));
+}
+
+.atlas .map__error {
+  top: calc(var(--top-inset) + var(--gutter));
+}
+
+@media (width <= 34rem) {
+  /* A bottom sheet above the timeline dock, rather than a side column. */
+  .atlas__column {
+    top: auto;
+    left: 0.6rem;
+    right: 0.6rem;
+    bottom: calc(var(--dock-inset) + 0.5rem);
+    width: auto;
+    max-height: 45vh;
+  }
 }
 
 /* The map camera is animated in JavaScript and handled separately, in

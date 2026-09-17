@@ -1,7 +1,28 @@
 import { Marker, type Map as MapLibreMap } from 'maplibre-gl'
 import { presence, type ActiveEntity } from '../data/entitySpan'
+import { measureInsets, type Occupancy } from '../layout/measure'
+import { GAP, reveal, type Rect } from '../layout/safeArea'
+import { cameraDuration } from '../lib/motion'
 import { formatYear } from '../lib/year'
 import { layoutPins, type Cluster, type Placed } from './declutter'
+
+/** How far inside the clear area a revealed pin or popover comes to rest. */
+const REVEAL_MARGIN = GAP
+
+/** The union of the boxes an element and its visible parts paint. */
+function paintedBox(elements: (Element | null)[]): Rect | null {
+  const boxes = elements
+    .filter((element): element is Element => element !== null)
+    .map((element) => element.getBoundingClientRect())
+    .filter((box) => box.width > 0 && box.height > 0)
+  if (boxes.length === 0) return null
+  return {
+    left: Math.min(...boxes.map((b) => b.left)),
+    top: Math.min(...boxes.map((b) => b.top)),
+    right: Math.max(...boxes.map((b) => b.right)),
+    bottom: Math.max(...boxes.map((b) => b.bottom)),
+  }
+}
 
 // The ported build inlined its own BCE/CE formatter here; src/lib/year.ts now
 // owns that, along with the reasoning about why years are plain signed integers.
@@ -156,10 +177,19 @@ export class EntityMarkers {
 
           // If members are spread out geographically and zoom is low, zoom into bounds
           if (zoom < 4.2 && (dLng > 0.4 || dLat > 0.4)) {
+            // Framed inside the clear area, so the members it spreads out do
+            // not land under the panel or behind the dock.
+            const { insets } = measureInsets()
+            const clearance = REVEAL_MARGIN * 2
             this.map.fitBounds(cluster.bounds, {
-              padding: 90,
+              padding: {
+                top: insets.top + clearance,
+                right: insets.right + clearance,
+                bottom: insets.bottom + clearance,
+                left: insets.left + clearance,
+              },
               maxZoom: 5.2,
-              duration: 600,
+              duration: cameraDuration(600),
             })
             this.closePopover()
             return
@@ -193,7 +223,12 @@ export class EntityMarkers {
         'title',
         `${cluster.place} (${cluster.members.length} entities)`,
       )
-      entry.element.dataset.active = String(this.activePopoverClusterId === cluster.id)
+      // Lit while its list is open, and while it holds whoever the panel shows:
+      // the cluster is the only mark on the map for a figure picked from it.
+      entry.element.dataset.active = String(
+        this.activePopoverClusterId === cluster.id ||
+          cluster.members.some((member) => member.id === this.selectedId),
+      )
     }
   }
 
@@ -317,6 +352,41 @@ export class EntityMarkers {
     this.activePopoverClusterId = cluster.id
     this.activePopoverEntityIds = new Set(cluster.members.map((m) => m.id))
     this.relayout()
+
+    // A cluster near an edge would open its list under the top bar, the panel
+    // or the dock. The map moves, not the popover: it stays attached to the
+    // cluster it belongs to, arrow and all.
+    this.reveal(cluster.lngLat, paintedBox([container]))
+  }
+
+  /**
+   * Moves the camera just far enough to bring what a coordinate paints into
+   * the map's clear area: a pan when a pan can, a small zoom when the world's
+   * edge will not allow one. See `reveal` in src/layout/safeArea.ts.
+   */
+  private reveal(lngLat: [number, number], box: Rect | null, occupancy: Occupancy = {}): void {
+    if (!box) return
+    const anchor = this.map.project(lngLat)
+    const relative = {
+      left: box.left - anchor.x,
+      top: box.top - anchor.y,
+      right: box.right - anchor.x,
+      bottom: box.bottom - anchor.y,
+    }
+    const { viewport, insets } = measureInsets(occupancy)
+    const center = this.map.getCenter()
+    const move = reveal(
+      lngLat,
+      [center.lng, center.lat],
+      this.map.getZoom(),
+      viewport,
+      insets,
+      relative,
+      REVEAL_MARGIN,
+      this.map.getMaxZoom(),
+    )
+    if (!move) return
+    this.map.easeTo({ ...move, duration: cameraDuration(450) })
   }
 
   private createPopoverItem(entity: ActiveEntity): HTMLButtonElement {
@@ -348,13 +418,19 @@ export class EntityMarkers {
     item.append(itemHeader, itemBlurb)
 
     item.addEventListener('click', () => {
+      const cluster = this.activePopoverClusterId
+        ? this.clusters.get(this.activePopoverClusterId) ?? null
+        : null
       this.onSelect(entity.id)
-      if (this.popoverElement) {
-        const items = this.popoverElement.querySelectorAll('.cluster-popover__item')
-        for (const el of items) {
-          const htmlEl = el as HTMLElement
-          htmlEl.dataset.selected = String(htmlEl.dataset.entityId === entity.id)
-        }
+      // The choice is made, and the panel now tells the story, so the list
+      // closes rather than sitting beside it. The cluster stays lit as the mark
+      // for who is open, and is kept clear of the panel that just took the
+      // right column.
+      this.closePopover()
+      this.relayout()
+      if (cluster) {
+        const { lng, lat } = cluster.marker.getLngLat()
+        this.reveal([lng, lat], paintedBox([cluster.element]), { right: true })
       }
     })
 
@@ -380,6 +456,9 @@ export class EntityMarkers {
     element.addEventListener('click', (event) => {
       event.stopPropagation()
       this.onSelect(entity.id)
+      // The panel this opens takes the right column, and the pin clicked may be
+      // in it. Nudge rather than recentre: the reader chose where to look.
+      this.reveal([entity.lng, entity.lat], paintedBox([dot, label]), { right: true })
     })
 
     return element

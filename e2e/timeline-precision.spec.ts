@@ -144,7 +144,8 @@ test('dragging across a track, even past its edge, selects no text', async ({ pa
 
 test('the expand button is not buried under an open figure panel', async ({ page }) => {
   await opened(page)
-  // Every tour stop opens this panel, and it overlaps the dock's top-right corner.
+  // Every tour stop opens this panel. It used to overlap the dock's top-right
+  // corner; the columns now end above the dock, and this keeps it that way.
   await page.locator('.pin').first().click()
   await expect(page.locator('.panel')).toBeVisible()
 

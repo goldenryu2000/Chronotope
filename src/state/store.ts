@@ -3,6 +3,20 @@
 import { create } from 'zustand'
 import type { AtlasView } from '../data/schemas'
 
+/**
+ * Where a view points the camera.
+ *
+ * `subject` is the figure the view is about, when it is about one. The camera
+ * frames the centre it was given, but keeps the subject out from under the
+ * panel and the tour card, which the centre alone cannot promise: a stop's
+ * camera may sit several degrees off the figure it narrates.
+ */
+export interface CameraTarget {
+  center: [number, number]
+  zoom: number
+  subject?: [number, number]
+}
+
 interface AtlasState {
   /**
    * Cursor position on the timeline.
@@ -39,8 +53,8 @@ interface AtlasState {
   focusPair: [[number, number], [number, number]] | null
   focusOn: (pair: [[number, number], [number, number]] | null) => void
 
-  cameraTarget: { center: [number, number]; zoom: number } | null
-  flyToTarget: (target: { center: [number, number]; zoom: number } | null) => void
+  cameraTarget: CameraTarget | null
+  flyToTarget: (target: CameraTarget | null) => void
 
   /**
    * A view waiting for its pack to arrive.

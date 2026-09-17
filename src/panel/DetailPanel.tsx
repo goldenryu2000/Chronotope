@@ -60,7 +60,7 @@ export default function DetailPanel({
 
   // Move focus into the panel so keyboard users are not left on the map.
   useEffect(() => {
-    panel.current?.focus()
+    panel.current?.focus({ preventScroll: true })
   }, [entity.id])
 
   /**

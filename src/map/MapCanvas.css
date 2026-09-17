@@ -222,15 +222,27 @@
   pointer-events: none;
 }
 
+/*
+ * Opacity and `translate` only. Never `transform`, and never `scale`.
+ *
+ * This element is a MapLibre marker, and MapLibre places a marker by writing
+ * `transform` inline. A running animation outranks an inline style, so a
+ * `transform` keyframe replaced the placement for the whole 180ms: the list
+ * opened in the map's top-left corner and then jumped to its cluster. The
+ * individual `scale` property is no better, only subtler: it applies on top of
+ * the inline transform, so it scales the marker's pixel offset too, and a
+ * popover at x=1000 opened 40px left of its cluster and slid back. `translate`
+ * adds a constant offset, so the first frame is already where it belongs.
+ */
 @keyframes popoverFadeIn {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.96);
+    translate: 0 6px;
   }
 
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    translate: 0 0;
   }
 }
 
