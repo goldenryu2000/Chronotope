@@ -178,6 +178,27 @@ test('nothing in the unbuilt section pretends to be a link', async ({ page }) =>
   await expect(coming.locator('.coming__item')).not.toHaveCount(0)
 })
 
+/**
+ * The roadmap is a promise, so it says how far along each item is: what is
+ * already underway apart from what is only planned.
+ */
+test('the roadmap separates what is in the works from what is planned', async ({ page }) => {
+  await page.goto('/')
+
+  const section = page.getByRole('region', { name: 'Coming to Chronotope' })
+  await expect(section.getByRole('heading', { name: 'In the works' })).toBeVisible()
+  await expect(section.getByRole('heading', { name: 'Planned' })).toBeVisible()
+  await expect(section.locator('.coming__item')).toHaveCount(6)
+
+  await expect(section.locator('.coming__item[data-status="in-works"]')).toHaveText(/India, up close/)
+  await expect(section.locator('.coming__item[data-status="planned"]')).toHaveCount(5)
+
+  // Dropped from the roadmap: not exciting enough to promise.
+  for (const gone of ['Accounts', 'Search']) {
+    await expect(section.getByText(gone, { exact: true })).toHaveCount(0)
+  }
+})
+
 const themeOf = (page: import('@playwright/test').Page) =>
   page.evaluate(() => document.documentElement.dataset.theme ?? '')
 

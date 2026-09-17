@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 import { publishedAtlases } from '@/src/read/atlasIndex'
 import { publishedTours } from '@/src/read/currentTour'
 import { borderSpan, heroFrames } from '@/src/read/heroFrames'
@@ -23,11 +24,92 @@ export const revalidate = 300
 /**
  * What is coming, said plainly enough that nobody mistakes it for what is here.
  *
- * One quiet line near the foot of the page, and nothing in it is a link.
- * Anything that leaves this list has to arrive somewhere clickable in the same
- * change, or the page has quietly stopped mentioning a feature it now has.
+ * A reason to come back, so each item gets a line that makes it worth waiting
+ * for. It is still a promise: every item is something that is really going to
+ * be built, nothing in it is a link, and `status` says honestly how far along
+ * it is. Anything that ships has to leave this list in the same change and
+ * arrive somewhere clickable, or the page describes a real feature as unbuilt.
  */
-const COMING = ['Daily puzzle', 'Search', 'Your own packs', 'More regions', 'Accounts']
+type ComingIcon = 'region' | 'puzzle' | 'tour' | 'compare' | 'life' | 'atlases'
+
+const COMING: { title: string; hook: string; status: 'in-works' | 'planned'; icon: ComingIcon }[] = [
+  {
+    title: 'India, up close',
+    hook: 'Kingdoms, trade towns and dynasties drawn at a finer scale. More regions to follow.',
+    status: 'in-works',
+    icon: 'region',
+  },
+  { title: 'Daily puzzle', hook: 'One figure, one map. Guess where and when they lived.', status: 'planned', icon: 'puzzle' },
+  { title: 'Build your own tour', hook: 'Pick the stops, write the story, share the link.', status: 'planned', icon: 'tour' },
+  { title: 'Compare two years', hook: 'Split the map and see 1914 beside 1920.', status: 'planned', icon: 'compare' },
+  { title: 'Follow a life', hook: "Trace one person's journey across the map, city by city.", status: 'planned', icon: 'life' },
+  { title: 'New atlases', hook: 'Explorers, empires, inventions and languages.', status: 'planned', icon: 'atlases' },
+]
+
+const COMING_GROUPS = [
+  { status: 'in-works', label: 'In the works' },
+  { status: 'planned', label: 'Planned' },
+] as const
+
+/** Line icons for the roadmap, drawn in the current text colour. */
+function ComingGlyph({ icon }: { icon: ComingIcon }) {
+  const paths: Record<ComingIcon, ReactNode> = {
+    region: (
+      <>
+        <path d="M4 6.5 9.5 4l5 2.5L20 4v13.5L14.5 20l-5-2.5L4 20z" />
+        <path d="M9.5 4v13.5M14.5 6.5V20" />
+      </>
+    ),
+    puzzle: (
+      <>
+        <rect x="4" y="4" width="16" height="16" rx="2" />
+        <path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.4v.3M12 16.5v.01" />
+      </>
+    ),
+    tour: (
+      <>
+        <circle cx="6" cy="18" r="1.8" />
+        <circle cx="18" cy="6" r="1.8" />
+        <path d="M7.5 17c3-1 2-5 5-6s3.5-3 4-3.5" strokeDasharray="2 2" />
+      </>
+    ),
+    compare: (
+      <>
+        <rect x="3.5" y="5" width="17" height="14" rx="1.5" />
+        <path d="M12 3v18" />
+      </>
+    ),
+    life: (
+      <>
+        <path d="M5 19c2-6 5-2 7-7s5-3 7-8" />
+        <circle cx="5" cy="19" r="1.4" />
+        <circle cx="12" cy="12" r="1.4" />
+        <circle cx="19" cy="4" r="1.4" />
+      </>
+    ),
+    atlases: (
+      <>
+        <path d="M12 4 3.5 8.5 12 13l8.5-4.5z" />
+        <path d="m3.5 12.5 8.5 4.5 8.5-4.5M3.5 16.5 12 21l8.5-4.5" />
+      </>
+    ),
+  }
+  return (
+    <svg
+      className="coming__icon"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      focusable="false"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {paths[icon]}
+    </svg>
+  )
+}
 
 /** Portraits on each pack card. */
 const STRIP = 4
@@ -271,13 +353,26 @@ export default async function Home() {
           </section>
         )}
 
-        <section className="later" aria-labelledby="later-title">
-          <h2 className="later__title" id="later-title">Not built yet</h2>
-          <ul className="coming">
-            {COMING.map((item) => (
-              <li className="coming__item" key={item}>{item}</li>
-            ))}
-          </ul>
+        <section className="section section--coming" aria-labelledby="coming-title">
+          <div className="section__head">
+            <h2 className="section__title" id="coming-title">Coming to Chronotope</h2>
+            <p className="section__note">What we are building next. None of it is here yet.</p>
+          </div>
+
+          {COMING_GROUPS.map((group) => (
+            <div className={`coming-group coming-group--${group.status}`} key={group.status}>
+              <h3 className="coming-group__title">{group.label}</h3>
+              <ul className="coming">
+                {COMING.filter((item) => item.status === group.status).map((item) => (
+                  <li className="coming__item" data-status={item.status} key={item.title}>
+                    <ComingGlyph icon={item.icon} />
+                    <span className="coming__name">{item.title}</span>
+                    <span className="coming__hook">{item.hook}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </section>
       </main>
 
