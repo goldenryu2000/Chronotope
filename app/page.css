@@ -1,10 +1,8 @@
 /*
  * The landing page. Its job is to land one idea, that the map is redrawn to
- * match a year, and then hand the reader an atlas.
+ * match a year, and then hand the reader an atlas or a tour.
  *
- * Every colour is a theme token, the same ones the map reads. Nothing here is
- * a literal, so the page follows a theme change for free if the toggle ever
- * reaches it.
+ * Every colour is a theme token, the same ones the map reads.
  */
 
 .home {
@@ -14,13 +12,16 @@
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-ui);
+  scroll-behavior: smooth;
+
+  /* Accent text on a raised card. Mixed toward the ink, which darkens it on
+     paper and lightens it on slate, so small type keeps its contrast in both. */
+  --link-on-card: color-mix(in srgb, var(--accent) 78%, var(--ink));
 }
 
 /*
  * The same grain the atlas is printed on, so the two do not look like
- * different products. `background-attachment: fixed` keeps it still while the
- * page scrolls, which is what makes it read as paper rather than as a texture
- * layer sliding over the content.
+ * different products. Fixed, so it reads as paper rather than a sliding layer.
  */
 .home::before {
   content: '';
@@ -33,166 +34,203 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='0.32'/%3E%3C/svg%3E");
 }
 
-/* Above the grain, so the texture sits on the paper and not on the words. */
-.hero,
+.masthead,
 .home__main,
 .home__footer {
   position: relative;
   z-index: 2;
+  width: 100%;
+  max-width: 76rem;
+  margin: 0 auto;
+  padding-inline: clamp(1rem, 3vw, 2rem);
 }
 
-/* ---- the hero ------------------------------------------------------- */
-
-.home__chrome {
-  position: absolute;
-  top: 1.25rem;
-  right: 1.25rem;
-  z-index: 4;
+.home :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
-.hero {
-  position: relative;
+html:has(.home) {
+  scroll-behavior: smooth;
+}
+
+/* ---- masthead ------------------------------------------------------- */
+
+.masthead {
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-height: min(38rem, 82vh);
-  padding: clamp(2rem, 6vh, 4rem) 1.5rem;
-  overflow: hidden;
-  border-bottom: 1px solid var(--rule);
-  background: var(--surface);
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 1rem;
 }
 
-/*
- * The cartouche: the panel a printed atlas puts its title in.
- *
- * Solid, not a scrim. A gradient strong enough to make the wordmark carry over
- * line work was strong enough to wash the plate out behind it; a panel gives
- * the type a clean ground and costs the map only what it covers.
- */
-.cartouche {
-  position: relative;
-  width: min(38rem, 100%);
-  padding: clamp(1.75rem, 5vw, 2.75rem) clamp(1.5rem, 5vw, 3rem);
-  border: 1px solid var(--rule);
-  background: color-mix(in srgb, var(--paper) 96%, transparent);
-  box-shadow: 0 6px 40px rgb(0 0 0 / 12%);
-  text-align: center;
-}
-
-/* The double rule of an engraved plate, drawn with one inset shadow. */
-.cartouche::before {
-  content: '';
-  position: absolute;
-  inset: 5px;
-  border: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
-  pointer-events: none;
-}
-
-.cartouche__eyebrow {
-  margin: 0;
-  font-size: 0.64rem;
-  letter-spacing: 0.32em;
-  text-indent: 0.32em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
-.cartouche__title {
-  margin: 0.7rem 0 0;
+.masthead__brand {
   font-family: var(--font-display);
-  font-size: clamp(2.25rem, 7vw, 3.75rem);
+  font-size: 1.05rem;
   font-weight: 500;
-  line-height: 1;
   letter-spacing: var(--tracking-display);
-  text-indent: var(--tracking-display);
   text-transform: uppercase;
   color: var(--ink);
 }
 
-.cartouche__lede {
-  max-width: 26rem;
-  margin: 1rem auto 0;
-  font-size: 0.98rem;
-  line-height: 1.6;
+.masthead__nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.75rem, 2vw, 1.75rem);
+  font-size: 0.85rem;
+}
+
+.masthead__nav a {
   color: var(--ink-soft);
 }
 
-/* ---- the numbers ---------------------------------------------------- */
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.75rem;
-  margin: 1.75rem 0 0;
-  padding-top: 1.25rem;
-  border-top: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
-}
-
-.stats__item {
-  display: flex;
-  flex-direction: column-reverse;
-  gap: 0.2rem;
-}
-
-.stats dt {
-  font-size: 0.6rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
-.stats dd {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.1rem, 3vw, 1.5rem);
+.masthead__nav a:hover {
   color: var(--accent);
 }
 
-@media (width <= 30rem) {
-  .stats {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem 0.75rem;
-  }
+/* ---- hero ----------------------------------------------------------- */
+
+.hero {
+  padding-block: clamp(0.75rem, 3vh, 2.25rem) clamp(2.5rem, 6vh, 4rem);
+}
+
+.hero__text {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 1.25rem clamp(2rem, 5vw, 4.5rem);
+  align-items: end;
+  margin-bottom: clamp(1.25rem, 3.5vh, 2.25rem);
+}
+
+.hero__eyebrow {
+  margin: 0 0 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.hero__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 3.9vw, 3.5rem);
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.hero__title-line {
+  display: block;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+.hero__lede {
+  max-width: 32rem;
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.hero__hint {
+  margin: 0.7rem 0 0;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.75rem 1.3rem;
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1;
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.button--primary {
+  background: var(--accent);
+  color: var(--paper);
+}
+
+/* An arrow drawn with borders, so no glyph can be misread as punctuation. */
+.button--primary::after {
+  content: '';
+  width: 0.45rem;
+  height: 0.45rem;
+  border-top: 2px solid currentcolor;
+  border-right: 2px solid currentcolor;
+  transform: rotate(45deg);
+  transition: transform 160ms ease;
+}
+
+.button--primary:hover {
+  background: color-mix(in srgb, var(--accent) 86%, var(--ink));
+}
+
+.button--primary:hover::after {
+  transform: translateX(3px) rotate(45deg);
+}
+
+.button--secondary {
+  border-color: var(--rule);
+  background: var(--surface-raised);
+  color: var(--ink);
+}
+
+.button--secondary:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 /* ---- sections ------------------------------------------------------- */
 
-.home__main {
-  max-width: 60rem;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
-
 .section {
-  padding: clamp(2rem, 5vh, 3.25rem) 0;
-  border-bottom: 1px solid var(--rule);
+  padding-block: clamp(2.5rem, 6vh, 4rem);
+  border-top: 1px solid var(--rule);
+  scroll-margin-top: 1rem;
 }
 
-.section:last-of-type {
-  border-bottom: 0;
+.section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 2rem;
 }
 
 .section__title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: clamp(1.7rem, 2.6vw, 2.2rem);
   font-weight: 500;
-  letter-spacing: var(--tracking-display);
   color: var(--ink);
 }
 
 .section__note {
-  max-width: 34rem;
-  margin: 0.5rem 0 0;
-  font-size: 0.88rem;
+  max-width: 36rem;
+  margin: 0;
+  font-size: 0.92rem;
   line-height: 1.55;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
-/* ---- a region and its packs ----------------------------------------- */
-
 .region {
-  margin-top: 1.75rem;
+  margin-top: 1.5rem;
 }
 
 .region__head {
@@ -205,10 +243,9 @@
 
 .region__title {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 500;
-  letter-spacing: 0.1em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--ink-soft);
 }
@@ -216,36 +253,32 @@
 .region__subtitle {
   margin: 0;
   font-size: 0.8rem;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
 }
 
-/*
- * A grid rather than a stack. Three packs in one column left two thirds of a
- * wide screen empty and made the page read as a list of two things.
- */
-.region__packs {
-  margin: 1rem 0 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  gap: 0.75rem;
-  list-style: none;
+.region__more {
+  color: var(--link-on-card);
+  font-weight: 500;
 }
+
+.region__more:hover {
+  text-decoration: underline;
+}
+
+/* ---- cards ---------------------------------------------------------- */
 
 .card {
   position: relative;
   display: flex;
-  flex-direction: column;
   height: 100%;
-  padding: 1.1rem 1.2rem 1.25rem;
   overflow: hidden;
   border: 1px solid var(--rule);
-  border-radius: 2px;
+  border-radius: 3px;
   background: var(--surface-raised);
-  transition: border-color 160ms ease, transform 160ms ease;
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 }
 
-/* A hairline that fills from the left on hover, the same gesture as a
-   timeline being scrubbed, which is the one thing this site does. */
+/* A hairline that fills from the left on hover, like a timeline being scrubbed. */
 .card::after {
   content: '';
   position: absolute;
@@ -260,6 +293,7 @@
 .card:hover,
 .card:focus-visible {
   border-color: color-mix(in srgb, var(--accent) 55%, var(--rule));
+  box-shadow: 0 14px 30px -20px color-mix(in srgb, var(--ink) 55%, transparent);
   transform: translateY(-2px);
 }
 
@@ -270,65 +304,197 @@
 
 .card__title {
   font-family: var(--font-display);
-  font-size: 1.25rem;
-  color: var(--accent);
+  font-size: 1.35rem;
+  line-height: 1.2;
+  color: var(--ink);
 }
 
 .card__subtitle {
-  margin-top: 0.25rem;
-  font-size: 0.85rem;
+  font-size: 0.86rem;
   line-height: 1.45;
   color: var(--ink-soft);
 }
 
 .card__count {
   margin-top: auto;
-  padding-top: 0.8rem;
-  font-size: 0.64rem;
-  letter-spacing: 0.16em;
+  padding-top: 0.6rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ink-faint);
-}
-
-/* ---- what is not built yet ------------------------------------------ */
-
-.coming {
-  margin: 1.5rem 0 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-  gap: 0.6rem;
-  list-style: none;
-}
-
-/*
- * Deliberately not card-shaped. These are not links and must not invite a
- * click: a dashed rule and muted type say "sketched, not built" before the
- * heading above them has to.
- */
-.coming__item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.8rem 1rem 0.9rem;
-  border: 1px dashed color-mix(in srgb, var(--rule) 80%, transparent);
-  border-radius: 2px;
-}
-
-.coming__title {
-  font-size: 0.9rem;
   color: var(--ink-soft);
 }
 
-.coming__blurb {
+/* ---- packs ---------------------------------------------------------- */
+
+.packs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 1.1rem;
+  margin: 1.1rem 0 0;
+  list-style: none;
+}
+
+.pack {
+  flex-direction: column;
+}
+
+.pack__faces {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  background: var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.pack__face {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  object-position: 50% 25%;
+  background: var(--paper-aged);
+  filter: saturate(0.85);
+  transition: filter 200ms ease;
+}
+
+.pack:hover .pack__face {
+  filter: none;
+}
+
+.pack__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 1rem 1.2rem 1.15rem;
+}
+
+.pack__heading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.pack__tag {
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--link-on-card);
+}
+
+.pack__names {
+  margin-top: 0.35rem;
   font-size: 0.8rem;
-  line-height: 1.4;
-  color: var(--ink-faint);
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.pack__open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: auto;
+  padding-top: 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--link-on-card);
+}
+
+.pack__open::after {
+  content: '';
+  width: 0.4rem;
+  height: 0.4rem;
+  border-top: 2px solid currentcolor;
+  border-right: 2px solid currentcolor;
+  transform: rotate(45deg);
+  transition: transform 160ms ease;
+}
+
+.pack:hover .pack__open::after {
+  transform: translateX(3px) rotate(45deg);
+}
+
+/* ---- tours ---------------------------------------------------------- */
+
+.tours {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  gap: 0.8rem;
+  margin: 1.1rem 0 0;
+  list-style: none;
+}
+
+.tour {
+  align-items: stretch;
+  gap: 1rem;
+  padding: 0.85rem 1rem 0.85rem 0.85rem;
+}
+
+.tour__cover {
+  flex: none;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 2px;
+  object-fit: cover;
+  object-position: 50% 25%;
+  background: var(--paper-aged);
+}
+
+.tour__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.tour .card__title {
+  font-size: 1.15rem;
+}
+
+/* ---- not built yet -------------------------------------------------- */
+
+.later {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 1rem;
+  padding-block: 1.25rem;
+  border-block: 1px solid var(--rule);
+}
+
+.later__title {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.coming {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0;
+  margin: 0;
+  list-style: none;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.coming__item + .coming__item::before {
+  content: '·';
+  padding-inline: 0.55rem;
 }
 
 /* ---- odds and ends -------------------------------------------------- */
 
 .home__empty {
-  margin-top: 1.5rem;
+  margin-block: 2rem;
   padding: 1.1rem 1.25rem;
   border: 1px solid var(--accent);
   border-radius: 2px;
@@ -344,12 +510,23 @@
 }
 
 .home__footer {
-  max-width: 60rem;
-  margin: 0 auto;
-  padding: 1.5rem 1.5rem 3rem;
-  font-size: 0.76rem;
-  line-height: 1.65;
-  color: var(--ink-faint);
+  padding-block: 1.25rem 2.5rem;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.home__footer-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  color: var(--ink-soft);
+}
+
+.home__footer-links {
+  display: flex;
+  gap: 1.25rem;
 }
 
 .home__footer a {
@@ -358,29 +535,47 @@
   text-underline-offset: 2px;
 }
 
-/* Matches Atlas.css: the one setting that exists to prevent motion should
-   reach every page, not just the one with a camera. */
-@media (prefers-reduced-motion: reduce) {
-  .card,
-  .card::after {
-    transition: none;
+.home__footer a:hover {
+  color: var(--accent);
+}
+
+.home__fineprint {
+  max-width: 52rem;
+  margin-top: 0.5rem;
+  font-size: 0.72rem;
+}
+
+/* ---- narrower screens ----------------------------------------------- */
+
+@media (width < 70rem) {
+  .hero__text {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
   }
 }
 
-/*
- * The link out of a region's tour heading, to that region's full index.
- *
- * It sits where a region's subtitle sits in the atlas list above, because the
- * two sections are the same shape and the eye should not have to relearn it.
- * A region heading in the atlas list is deliberately not a link; here there is
- * a real `/<region>/tours` route to send anyone to, so this one is.
- */
-.region__more {
-  color: var(--accent);
-  text-decoration: none;
+@media (width < 40rem) {
+  .masthead__nav a {
+    display: none;
+  }
+
+  .tours {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
-.region__more:hover,
-.region__more:focus-visible {
-  text-decoration: underline;
+@media (prefers-reduced-motion: reduce) {
+  html:has(.home),
+  .home {
+    scroll-behavior: auto;
+  }
+
+  .card,
+  .card::after,
+  .button,
+  .button--primary::after,
+  .pack__face,
+  .pack__open::after {
+    transition: none;
+  }
 }

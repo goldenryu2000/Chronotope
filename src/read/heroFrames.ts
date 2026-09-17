@@ -34,7 +34,7 @@ const FLOOR = 3
  * Poles trimmed. Antarctica and the top of Greenland are a third of an
  * equirectangular plate's height and say nothing about who ruled what.
  */
-const PLATE = { west: -180, south: -58, east: 180, north: 78 } as const
+export const PLATE = { west: -180, south: -58, east: 180, north: 78 } as const
 
 /** The plate's viewBox, matching `PLATE` with y negated as `ST_AsSVG` emits it. */
 export const PLATE_VIEWBOX =

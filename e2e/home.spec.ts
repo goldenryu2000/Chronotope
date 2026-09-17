@@ -60,11 +60,55 @@ test('the hero draws three real border plates', async ({ page }) => {
 })
 
 /**
- * A landing page may describe what is coming. It may not imply it is here.
- *
- * These are real roadmap items with no implementation behind them, so the one
- * way this section can do harm is by looking clickable.
+ * The first screen has to say what this is and offer one obvious way in,
+ * without scrolling.
  */
+test('the first screen offers a way into the atlas and a tour', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.goto('/')
+
+  await expect(page.locator('h1')).toHaveCount(1)
+  const primary = page.locator('.hero .button--primary')
+  await expect(primary).toBeInViewport()
+  const href = await primary.getAttribute('href')
+  expect(href).toMatch(/^\/[^/]+\/[^/]+$/)
+  expect((await page.request.get(href!)).status()).toBe(200)
+
+  const secondary = page.locator('.hero .button--secondary')
+  await expect(secondary).toBeInViewport()
+  await secondary.click()
+  await expect(page.locator('#tours')).toBeInViewport()
+})
+
+/**
+ * Pins appear on the plate, and every picture on the page is a file this site
+ * serves. Only images that need no caption are shown here, so each one must
+ * actually load rather than leave a broken frame.
+ */
+test('the pictures on the landing page load from this site', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('.plate__pin')).not.toHaveCount(0)
+
+  const images = page.locator('.home img')
+  expect(await images.count()).toBeGreaterThan(0)
+  for (const src of await images.evaluateAll((list) =>
+    list.map((img) => img.getAttribute('src') ?? ''))) {
+    expect(src).toMatch(/^\/images\/[^/]+\/[^/]+\.jpg$/)
+    expect((await page.request.get(src)).status(), `${src} does not load`).toBe(200)
+  }
+
+  // Alt text on every picture a reader can reach; the plate is decorative.
+  for (const alt of await page.locator('.section img').evaluateAll((list) =>
+    list.map((img) => img.getAttribute('alt') ?? ''))) {
+    expect(alt).toMatch(/^Depiction of \S/)
+  }
+})
+
+test('the landing copy uses no em dashes', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.locator('.home')).not.toContainText('\u2014')
+})
+
 test('every tour offered actually opens', async ({ page }) => {
   await page.goto('/')
 
@@ -98,7 +142,7 @@ test('every tour offered actually opens', async ({ page }) => {
 test('guided tours have left the roadmap and arrived somewhere clickable', async ({ page }) => {
   await page.goto('/')
 
-  await expect(page.locator('.coming__title', { hasText: 'Guided tours' })).toHaveCount(0)
+  await expect(page.locator('.coming__item', { hasText: 'Guided tours' })).toHaveCount(0)
   await expect(page.locator('.section--tours .card').first()).toBeVisible()
 })
 
@@ -120,6 +164,12 @@ test('the atlas offers a way into the tours, even with a panel open', async ({ p
   await expect(page.locator('.tours-index__link').first()).toBeVisible()
 })
 
+/**
+ * A landing page may describe what is coming. It may not imply it is here.
+ *
+ * These are real roadmap items with no implementation behind them, so the one
+ * way this section can do harm is by looking clickable.
+ */
 test('nothing in the unbuilt section pretends to be a link', async ({ page }) => {
   await page.goto('/')
 
@@ -164,7 +214,7 @@ test('a theme picked on the atlas survives back to the landing page', async ({ p
   expect(await themeOf(page)).toBe('slate')
 
   await page.locator('.atlas__home').click()
-  await expect(page.locator('.cartouche__title')).toBeVisible()
+  await expect(page.locator('.hero__title')).toBeVisible()
   expect(await themeOf(page)).toBe('slate')
 
   // And on a cold load, before any JavaScript of ours has run: the bootstrap
