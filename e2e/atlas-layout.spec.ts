@@ -196,26 +196,59 @@ test('a cluster opens its list at the cluster, on the first frame, clear of the 
     expect(gap).toBeLessThan(40)
   }
 
-  // Picking works, closes the list, and the panel it opens does not cover the cluster.
+  // Picking works, and the list stays open beside the panel it opens, so the
+  // reader can go through every member without reopening the cluster.
   await page.locator('.cluster-popover__item', { hasText: 'Plato' }).click()
   await expect(page.locator('.panel')).toHaveAttribute('aria-label', 'Plato')
-  await expect(popover).toHaveCount(0)
-  await still(page)
-  const active = page.locator('.cluster[data-active="true"]')
-  expect(overlaps(await box(active), await box(page.locator('.panel')))).toBe(false)
-
-  // Reopened beside the panel, the list is clear of it, and the other member picks too.
-  await active.click()
   await expect(popover).toBeVisible()
   await still(page)
   const list = await box(popover)
   for (const [name, area] of Object.entries(await overlays(page))) {
     expect(overlaps(list, area), `cluster list under ${name}`).toBe(false)
   }
+  expect(overlaps(await box(page.locator('.cluster[data-active="true"]')), await box(page.locator('.panel')))).toBe(false)
+
+  // The next member picks straight from the same list.
   const socrates = page.locator('.cluster-popover__item', { hasText: 'Socrates' })
   expect(await onTop(page, await box(socrates), '.cluster-popover__item')).toBe(true)
   await socrates.click()
   await expect(page.locator('.panel')).toHaveAttribute('aria-label', 'Socrates')
+  await expect(socrates).toHaveAttribute('data-selected', 'true')
+  await expect(popover).toBeVisible()
+
+  // Escape closes it, and so does a click on bare map.
+  await page.keyboard.press('Escape')
+  await expect(popover).toHaveCount(0)
+  await page.locator('.cluster').first().click()
+  await expect(popover).toBeVisible()
+  await still(page)
+  await page.mouse.click(420, 300)
+  await expect(popover).toHaveCount(0)
+})
+
+test('every cluster says who is in it, so a zoom into a crowd lands on names', async ({ page }) => {
+  await opened(page, '/world/mythology')
+  // Many gods share their cult centre's coordinate, so no zoom separates them:
+  // after the zoom they are still clusters, and each must carry names.
+  const nippur = page.locator('.cluster[aria-label*="in Nippur"]').first()
+  await expect(nippur).toBeVisible()
+  await nippur.click()
+  await still(page)
+
+  const labels = await page.locator('.cluster').evaluateAll((clusters) =>
+    clusters
+      .filter((cluster) => {
+        const r = cluster.getBoundingClientRect()
+        return r.left > 0 && r.top > 0 && r.right < innerWidth && r.bottom < innerHeight
+      })
+      .map((cluster) => {
+        const label = cluster.querySelector('.cluster__label')!
+        return { text: label.textContent, shown: getComputedStyle(label).opacity === '1' }
+      }),
+  )
+  expect(labels.length).toBeGreaterThan(1)
+  expect(labels.filter((label) => label.shown).length).toBeGreaterThan(1)
+  for (const label of labels) expect(label.text).toMatch(/^\S.+(, .+| \+\d+)$/)
 })
 
 test('a pin chosen under the panel column is brought out from under the panel', async ({ page }) => {

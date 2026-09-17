@@ -187,6 +187,46 @@
   outline-offset: 2px;
 }
 
+/*
+ * The names in a cluster, to the right of its badge, drawn as a pin's name is.
+ *
+ * Positioned against the marker the way `.pin__label` is (see the note on
+ * `.pin`: no `position` on the button itself). Suppressed by the declutter
+ * pass when it would lie across another mark; hover and an open or selected
+ * cluster bring it back.
+ */
+.cluster__label {
+  position: absolute;
+  left: calc(100% + 0.3rem);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.15rem 0.2rem;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--map-label);
+  text-shadow:
+    0 1px 0 var(--map-label-halo),
+    0 -1px 0 var(--map-label-halo),
+    1px 0 0 var(--map-label-halo),
+    -1px 0 0 var(--map-label-halo);
+}
+
+.cluster[data-label='hide'] .cluster__label {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cluster:hover .cluster__label,
+.cluster:focus-visible .cluster__label,
+.cluster[data-active='true'] .cluster__label {
+  opacity: 1;
+  pointer-events: auto;
+  color: var(--accent);
+}
+
 /* Cluster Popover Card */
 .cluster-popover {
   position: absolute;
@@ -475,6 +515,10 @@
   .pin__dot {
     width: 0.8rem;
     height: 0.8rem;
+  }
+
+  .cluster__label {
+    display: none;
   }
 
   .cluster {

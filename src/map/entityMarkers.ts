@@ -52,6 +52,11 @@ export class EntityMarkers {
     private readonly onSelect: (id: string) => void,
   ) {
     this.map.on('zoom', this.scheduleRelayout)
+    window.addEventListener('keydown', this.onKeyDown)
+  }
+
+  private onKeyDown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') this.dismissPopover()
   }
 
   update(visible: readonly ActiveEntity[], year: number, selectedId: string | null): void {
@@ -79,7 +84,14 @@ export class EntityMarkers {
 
   /** Collapse any expanded popover — used when the map background is clicked. */
   collapse(): void {
+    this.dismissPopover()
+  }
+
+  /** Closes the list and redraws, so its cluster stops looking open. */
+  private dismissPopover(): void {
+    if (!this.popoverMarker) return
     this.closePopover()
+    this.relayout()
   }
 
   private closePopover(): void {
@@ -104,6 +116,7 @@ export class EntityMarkers {
     const { placed, clusters } = layoutPins(
       this.entities,
       (entity) => this.map.project([entity.lng, entity.lat]),
+      this.selectedId,
     )
 
     this.syncPins(placed)
@@ -166,6 +179,11 @@ export class EntityMarkers {
         element.type = 'button'
         element.className = 'cluster'
         element.innerHTML = `<span class="cluster__count">${cluster.members.length}</span>`
+        // Who is in it, beside the count, drawn like a pin's name. Built as a
+        // node rather than in the markup above: names are data, not HTML.
+        const label = document.createElement('span')
+        label.className = 'cluster__label'
+        element.append(label)
 
         element.addEventListener('click', (event) => {
           event.stopPropagation()
@@ -197,7 +215,7 @@ export class EntityMarkers {
 
           // Otherwise, toggle the location popover card
           if (this.activePopoverClusterId === cluster.id) {
-            this.closePopover()
+            this.dismissPopover()
           } else {
             this.openPopover(cluster)
           }
@@ -214,6 +232,10 @@ export class EntityMarkers {
         const countSpan = entry.element.querySelector('.cluster__count')
         if (countSpan) countSpan.textContent = String(cluster.members.length)
       }
+
+      const label = entry.element.querySelector('.cluster__label')
+      if (label) label.textContent = cluster.name
+      entry.element.dataset.label = cluster.label ? 'show' : 'hide'
 
       entry.element.setAttribute(
         'aria-label',
@@ -329,7 +351,7 @@ export class EntityMarkers {
     closeBtn.className = 'cluster-popover__close'
     closeBtn.innerHTML = '&times;'
     closeBtn.setAttribute('aria-label', 'Close')
-    closeBtn.addEventListener('click', () => this.closePopover())
+    closeBtn.addEventListener('click', () => this.dismissPopover())
 
     header.append(titleGroup, closeBtn)
 
@@ -418,19 +440,19 @@ export class EntityMarkers {
     item.append(itemHeader, itemBlurb)
 
     item.addEventListener('click', () => {
-      const cluster = this.activePopoverClusterId
-        ? this.clusters.get(this.activePopoverClusterId) ?? null
-        : null
       this.onSelect(entity.id)
-      // The choice is made, and the panel now tells the story, so the list
-      // closes rather than sitting beside it. The cluster stays lit as the mark
-      // for who is open, and is kept clear of the panel that just took the
-      // right column.
-      this.closePopover()
-      this.relayout()
-      if (cluster) {
-        const { lng, lat } = cluster.marker.getLngLat()
-        this.reveal([lng, lat], paintedBox([cluster.element]), { right: true })
+      // The list stays open: a reader going through a crowded place reads
+      // one member after another, and reopening the cluster for each is a
+      // chore. It closes on a click on the map, its close button or Escape.
+      // It is kept clear of the panel the choice just opened.
+      if (this.popoverElement) {
+        for (const element of this.popoverElement.querySelectorAll<HTMLElement>('.cluster-popover__item')) {
+          element.dataset.selected = String(element.dataset.entityId === entity.id)
+        }
+      }
+      if (this.popoverMarker) {
+        const { lng, lat } = this.popoverMarker.getLngLat()
+        this.reveal([lng, lat], paintedBox([this.popoverElement]), { right: true })
       }
     })
 
@@ -455,6 +477,8 @@ export class EntityMarkers {
 
     element.addEventListener('click', (event) => {
       event.stopPropagation()
+      // A pin elsewhere is a click elsewhere on the map: the open list is done.
+      this.dismissPopover()
       this.onSelect(entity.id)
       // The panel this opens takes the right column, and the pin clicked may be
       // in it. Nudge rather than recentre: the reader chose where to look.
@@ -467,6 +491,7 @@ export class EntityMarkers {
   destroy(): void {
     if (this.frame) cancelAnimationFrame(this.frame)
     this.map.off('zoom', this.scheduleRelayout)
+    window.removeEventListener('keydown', this.onKeyDown)
     this.closePopover()
     for (const { marker } of this.pins.values()) marker.remove()
     for (const { marker } of this.clusters.values()) marker.remove()

@@ -18,6 +18,9 @@ export interface Placed {
 /** Half the pin's hit area — the radius a label must stay clear of. */
 const PIN_RADIUS_PX = 16
 
+/** Half a cluster badge, which is wider than a pin's dot. */
+const CLUSTER_RADIUS_PX = 14
+
 /** Rough label metrics at 0.78rem; exact enough to test for a collision. */
 const LABEL_CHAR_PX = 6.2
 const LABEL_HEIGHT_PX = 15
@@ -31,6 +34,10 @@ export interface Cluster {
   lngLat: [number, number]
   bounds: [[number, number], [number, number]]
   place: string
+  /** What the badge's label says: who is in it, not only how many. */
+  name: string
+  /** False when showing the name would cover a different pin or cluster. */
+  label: boolean
 }
 
 export interface Layout {
@@ -50,6 +57,7 @@ type Point = { x: number; y: number }
 export function layoutPins(
   entities: readonly ActiveEntity[],
   project: (entity: ActiveEntity) => Point,
+  selectedId: string | null = null,
 ): Layout {
   const points = entities.map((entity) => ({ entity, point: project(entity) }))
 
@@ -139,36 +147,69 @@ export function layoutPins(
       lngLat,
       bounds,
       place: primaryPlace,
+      name: clusterName(group.map((m) => m.entity), selectedId),
+      label: true,
     })
   }
 
-  hideCollidingLabels(placed)
+  hideCollidingLabels(placed, clusters)
   return { placed, clusters }
 }
 
 /**
- * Drops labels that would sit on top of another pin.
+ * A cluster's label: the names in it, as far as a label has room for.
+ *
+ * A badge that only said "4" was the whole problem with zooming into a crowded
+ * region: many figures share one coordinate (a pantheon at its cult centre), so
+ * no zoom ever separates them, and the reader landed on a map of numbers with
+ * one name among them. A pair is named in full; a bigger group by the figure
+ * most worth leading with, and a count. Whoever is selected leads, so the mark
+ * says who the panel is showing; otherwise core figures lead halo ones.
  */
-function hideCollidingLabels(placed: Placed[]): void {
-  for (const item of placed) {
-    const width = item.entity.name.length * LABEL_CHAR_PX
-    const box = {
-      left: item.at.x + LABEL_GAP_PX,
-      right: item.at.x + LABEL_GAP_PX + width,
-      top: item.at.y - LABEL_HEIGHT_PX / 2,
-      bottom: item.at.y + LABEL_HEIGHT_PX / 2,
-    }
+export function clusterName(members: readonly ActiveEntity[], selectedId: string | null): string {
+  const rank = (entity: ActiveEntity) =>
+    entity.id === selectedId ? 0 : entity.tier === 'core' ? 1 : 2
+  const ordered = members
+    .map((entity, index) => ({ entity, index }))
+    .sort((a, b) => rank(a.entity) - rank(b.entity) || a.index - b.index)
+    .map(({ entity }) => entity)
 
-    item.label = !placed.some((other) => {
-      if (other === item) return false
-      return (
-        other.at.x + PIN_RADIUS_PX > box.left &&
-        other.at.x - PIN_RADIUS_PX < box.right &&
-        other.at.y + PIN_RADIUS_PX > box.top &&
-        other.at.y - PIN_RADIUS_PX < box.bottom
-      )
-    })
+  if (ordered.length === 2) return `${ordered[0].name}, ${ordered[1].name}`
+  return `${ordered[0].name} +${ordered.length - 1}`
+}
+
+/**
+ * Drops labels that would sit on top of another mark.
+ *
+ * Pins and clusters are both marks and both carry a label to their right, so
+ * each label must stay clear of every other pin's dot and every other badge. A
+ * label covering a mark would steal its clicks.
+ */
+function hideCollidingLabels(placed: Placed[], clusters: Cluster[]): void {
+  const marks = [
+    ...placed.map((item) => ({ owner: item as object, at: item.at, radius: PIN_RADIUS_PX })),
+    ...clusters.map((item) => ({ owner: item as object, at: item.at, radius: CLUSTER_RADIUS_PX })),
+  ]
+
+  const clear = (owner: object, at: Point, start: number, text: string) => {
+    const box = {
+      left: at.x + start,
+      right: at.x + start + text.length * LABEL_CHAR_PX,
+      top: at.y - LABEL_HEIGHT_PX / 2,
+      bottom: at.y + LABEL_HEIGHT_PX / 2,
+    }
+    return !marks.some(
+      (mark) =>
+        mark.owner !== owner &&
+        mark.at.x + mark.radius > box.left &&
+        mark.at.x - mark.radius < box.right &&
+        mark.at.y + mark.radius > box.top &&
+        mark.at.y - mark.radius < box.bottom,
+    )
   }
+
+  for (const item of placed) item.label = clear(item, item.at, LABEL_GAP_PX, item.entity.name)
+  for (const item of clusters) item.label = clear(item, item.at, CLUSTER_RADIUS_PX + LABEL_GAP_PX / 2, item.name)
 }
 
 function centroid(points: Point[]): Point {
