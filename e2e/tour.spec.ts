@@ -193,7 +193,7 @@ test('an atlas opened after a tour starts with nothing lit', async ({ page }) =>
   await expect(page.locator('[data-testid="layer-count"]')).toHaveText('1')
 
   await page.locator('.atlas__home').click()
-  await expect(page.locator('.cartouche__title')).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: /Pick a year/ })).toBeVisible()
   await page.locator('.card').first().click()
   await expect(page).toHaveURL(/\/world\/[a-z]+$/)
   await expect(page.locator('.curtain')).toHaveAttribute('data-done', 'true', { timeout: 30_000 })

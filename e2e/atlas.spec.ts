@@ -395,7 +395,7 @@ test('the atlas offers a way back to the landing page', async ({ page }) => {
 
   await home.click()
   await expect(page).toHaveURL(/\/$/)
-  await expect(page.locator('.cartouche__title')).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: /Pick a year/ })).toBeVisible()
 })
 
 /**
