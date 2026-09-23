@@ -2,7 +2,7 @@ import { asc, eq } from 'drizzle-orm'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { db } from '../db/client'
 import { tourStops, tours } from '../db/schema'
-import { seedWorldAndPacks } from '../db/testSeed'
+import { seedRegionsAndPacks } from '../db/testSeed'
 import { TourSchema } from '../data/schemas'
 import { seedTours } from '../../scripts/seed-tours'
 import { renderTour } from './renderTour'
@@ -11,7 +11,7 @@ let tourId: string
 
 describe('renderTour', () => {
   beforeAll(async () => {
-    await seedWorldAndPacks()
+    await seedRegionsAndPacks()
     await seedTours()
     const [row] = await db.select().from(tours).where(eq(tours.slug, 'gods-grew-quiet'))
     tourId = row.id

@@ -2,7 +2,7 @@ import { asc, eq, sql } from 'drizzle-orm'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { db } from '../db/client'
 import { layerFeatures, layers, packs, tourStopLayers, tourStops, tourVersions, tours } from '../db/schema'
-import { seedWorldAndPacks } from '../db/testSeed'
+import { seedRegionsAndPacks } from '../db/testSeed'
 import { TourSchema } from '../data/schemas'
 import { seedTours } from '../../scripts/seed-tours'
 import { publishLayer } from './publishLayer'
@@ -15,7 +15,7 @@ let tourId: string
 
 describe('publishTour', () => {
   beforeAll(async () => {
-    await seedWorldAndPacks()
+    await seedRegionsAndPacks()
     await seedTours()
     // A tour is validated against *published* packs, so the packs it visits
     // must have a current version before any of this can succeed.

@@ -43,6 +43,13 @@
       "when": 1789495557398,
       "tag": "0005_slimy_iron_lad",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790154101292,
+      "tag": "0006_region_parent",
+      "breakpoints": true
     }
   ]
 }

@@ -4,7 +4,7 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import { db } from '../src/db/client'
 import { boundaries, regions } from '../src/db/schema'
 import { importBoundaries } from './import-boundaries'
-import { importWorldRegion } from './import-legacy'
+import { importRegions } from './import-regions'
 import { buildTiles } from './build-tiles'
 
 /**
@@ -16,7 +16,7 @@ import { buildTiles } from './build-tiles'
  */
 async function ensureWorldRegion(): Promise<void> {
   const [existing] = await db.select().from(regions).where(eq(regions.slug, 'world'))
-  if (!existing) await importWorldRegion()
+  if (!existing) await importRegions(['world'])
 }
 
 let result: Awaited<ReturnType<typeof buildTiles>>

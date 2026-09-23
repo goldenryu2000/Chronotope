@@ -13,11 +13,13 @@ import { Protocol } from 'pmtiles'
 import { useEffect, useRef, useState } from 'react'
 import type { FeatureCollection } from 'geojson'
 import { activeAt, type ActiveEntity } from '../data/entitySpan'
+import { cameraBounds, type BBox, type Viewport } from '../lib/bbox'
 import { LayerSchema } from '../data/schemas'
 import { configureMaplibreWorker } from '../lib/maplibre-worker'
 import { cameraDuration } from '../lib/motion'
 import { measureInsets } from '../layout/measure'
 import { frame, GAP } from '../layout/safeArea'
+import { addNeatline, Doorways, repaintNeatline, type Doorway } from './doorways'
 import { EntityMarkers } from './entityMarkers'
 import { addLayerLine, layerLineId } from './layerPaint'
 import type { RegionLayer } from '../read/regionLayers'
@@ -71,6 +73,16 @@ function isDrawn(layer: RegionLayer, year: number, lit: readonly string[]): bool
 /** How far inside the clear area a framed pin sits, so its label fits too. */
 const PIN_CLEARANCE = GAP * 2
 
+/** The container's size, with a sane fallback before layout has happened. */
+function sizeOf(element: HTMLElement | null): Viewport {
+  const width = element?.clientWidth ?? 0
+  const height = element?.clientHeight ?? 0
+  return {
+    width: width > 0 ? width : window.innerWidth,
+    height: height > 0 ? height : window.innerHeight,
+  }
+}
+
 interface Hovered {
   name: string
   subjectTo: string
@@ -88,6 +100,16 @@ export interface Camera {
   zoom: number
   minZoom: number
   maxZoom: number
+  /**
+   * The plate's edges, which is as far as the camera may travel.
+   *
+   * From the region artifact, like everything else here. The world's bbox is
+   * the world, so this only removes the grey nothing beyond ±85°; a plate the
+   * size of a subcontinent is clipped to its bbox at tile-build time, so
+   * without this a reader could pan off the edge of their own atlas into
+   * empty sea and have no way of knowing the map had not broken.
+   */
+  bounds: BBox
 }
 
 interface Props {
@@ -109,14 +131,25 @@ interface Props {
   borderYears?: BorderYears
   /** Every layer this region offers, with the artifact to fetch on first use. */
   layers?: readonly RegionLayer[]
+  /**
+   * Plates drawn inside this one, offered as a way in.
+   *
+   * Rectangles, names and destinations. The engine is told nothing about what
+   * a region is or which one this is (Rule 3).
+   */
+  doorways?: readonly Doorway[]
+  /** Where a doorway click goes. The router's push, handed in. */
+  onEnterDoorway?: (href: string) => void
 }
 
 export default function MapCanvas({
   theme, camera, entities, tilesetUrl, borderYears, onReady, layers = [],
+  doorways = [], onEnterDoorway,
 }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const map = useRef<MapLibreMap | null>(null)
   const markers = useRef<EntityMarkers | null>(null)
+  const doors = useRef<Doorways | null>(null)
 
   const hoveredFeature = useRef<string | number | null>(null)
   /** Whether the map has drawn once, which is when the curtain lifts. */
@@ -180,6 +213,13 @@ export default function MapCanvas({
       dragRotate: false,
       // One world, not a repeating strip. A printed atlas has edges.
       renderWorldCopies: false,
+      // And so does a plate of one: a reader inside India must not be able to
+      // pan into an ocean their own archive was never cut for. Sized against
+      // the container rather than the plate alone, because MapLibre keeps the
+      // whole viewport inside these bounds and would otherwise zoom in until
+      // only a slice of the plate showed. Undefined for a plate that is the
+      // whole world -- see `cameraBounds`.
+      maxBounds: cameraBounds(start.bounds, sizeOf(container.current)),
       attributionControl: false,
     })
 
@@ -225,6 +265,29 @@ export default function MapCanvas({
       setReady(false)
     }
   }, [])
+
+  /*
+   * The plate's bounds follow the shape of the window.
+   *
+   * `cameraBounds` grows the box to the viewport's aspect, so a window dragged
+   * from square to wide would otherwise leave MapLibre zooming in to satisfy a
+   * box computed for a shape the screen no longer has -- the same over-zoom
+   * the aspect fit exists to prevent, arriving a resize later. Recomputed from
+   * the same function, so the two can never disagree.
+   */
+  useEffect(() => {
+    const instance = map.current
+    if (!instance) return
+
+    const apply = () => {
+      const bounds = cameraBounds(initialCamera.current.bounds, sizeOf(container.current))
+      instance.setMaxBounds(bounds ?? null)
+    }
+    instance.on('resize', apply)
+    return () => {
+      instance.off('resize', apply)
+    }
+  }, [ready])
 
   // Hover highlight. Bound once the style exists.
   useEffect(() => {
@@ -379,7 +442,50 @@ export default function MapCanvas({
     const instance = map.current
     if (!instance || !ready) return
     applyThemePaint(instance)
+    repaintNeatline(instance)
+    doors.current?.repaint()
   }, [theme, ready])
+
+  /*
+   * The ways into the plates inside this one.
+   *
+   * Through a ref so that a caller passing an inline handler does not tear the
+   * frames down and rebuild them, exactly as `onReady` is handled above.
+   */
+  const onEnterRef = useRef(onEnterDoorway)
+  useEffect(() => {
+    onEnterRef.current = onEnterDoorway
+  }, [onEnterDoorway])
+
+  // The plate's own edge, added once the style exists. A plate that reaches
+  // all the way round draws none; see `addNeatline`.
+  useEffect(() => {
+    const instance = map.current
+    if (!instance || !ready) return
+    addNeatline(instance, initialCamera.current.bounds)
+  }, [ready])
+
+  // The manager outlives what it draws. Recreating it whenever the list
+  // changed identity -- which it does on every pack switch, since a doorway's
+  // destination carries the reader's pack -- tore the frames off the map and
+  // put them back for a change of one href.
+  useEffect(() => {
+    const instance = map.current
+    if (!instance || !ready) return
+
+    const entries = new Doorways(instance, (href) => onEnterRef.current?.(href))
+    doors.current = entries
+
+    return () => {
+      entries.destroy()
+      doors.current = null
+    }
+  }, [ready])
+
+  useEffect(() => {
+    if (!ready) return
+    doors.current?.update(doorways)
+  }, [doorways, ready])
 
   useEffect(() => {
     const instance = map.current

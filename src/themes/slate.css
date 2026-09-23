@@ -47,6 +47,10 @@
   --map-label: #e6ecf3;
   --map-label-halo: #0d1117;
 
+  /* See rustic.css for what these are for. */
+  --map-doorway: #8fa6c4;
+  --map-doorway-ink: #e6ecf3;
+
   /* MapLibre's zoom icons are near-black SVG data URIs it hardcodes, and
      Slate's control surface is #232c38 — dark on dark, effectively invisible.
      A filter is the only lever a stylesheet has over a data-URI background,

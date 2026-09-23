@@ -104,6 +104,152 @@ export const TraditionSchema = z.object({
   regionLabel: z.string().min(1),
 })
 
+/**
+ * A region as it is *authored*, in `data/regions/<slug>.json`.
+ *
+ * Deliberately a different shape from `RegionSchema`, which is the *published*
+ * artifact a browser parses. The two differ in three ways and every one of them
+ * is the point:
+ *
+ * - `parent` and `packs` are here and not there. They say where a plate sits in
+ *   the atlas and what is laid on it, which is a question the read path answers
+ *   per request (see `src/read/regionKin.ts` and `packsOnRegion`) because the
+ *   answer changes when a *pack* is published, and a region artifact is
+ *   immutable and content-hashed. Baking them in would stale them.
+ * - `tilesetKey`, `borderYears` and `borderChanges` are there and not here.
+ *   They are measured from the boundary corpus and the built archive, never
+ *   authored.
+ * - `eras` is required here and may not be empty. `renderRegion` throws on a
+ *   region with no default periodization, and `buildScale` throws on an empty
+ *   era set; refusing the file is the same refusal one step earlier, where the
+ *   message can name the file.
+ *
+ * This is the stand-in for an authoring UI, exactly as `data/tours/` is: every
+ * row it writes is a row a reader's own region would travel through.
+ */
+export const RegionDefinitionSchema = z
+  .object({
+    id: Slug,
+    title: z.string().min(1),
+    subtitle: z.string().min(1),
+    /**
+     * The region this one sits inside, as a slug, or null for a root atlas.
+     *
+     * One nullable link, not a hierarchy table. It is what lets the world map
+     * offer a way into India and India a way back, and it would carry
+     * World → India → Northern India unchanged. Nothing reads more than one
+     * step of it today and nothing should until there is a level that needs it.
+     */
+    parent: Slug.nullable().default(null),
+    /** [west, south, east, north]. The plate's edges: what it clips and draws. */
+    bbox: z.tuple([z.number(), z.number(), z.number(), z.number()]),
+    minZoom: z.number().int().min(0).max(22),
+    maxZoom: z.number().int().min(0).max(22),
+    defaultCamera: z.object({
+      center: z.tuple([z.number(), z.number()]),
+      zoom: z.number(),
+    }),
+    /** The outer temporal bound. A pack narrows within it; it never widens. */
+    range: z.object({ start: Year, end: Year }),
+    theme: z.string().min(1).default('rustic'),
+    /**
+     * Which packs are laid over this plate, and how time is shaped for each.
+     *
+     * The region declares this rather than the pack, because a pack is not
+     * owned by a region: the three legacy packs are read out of a directory
+     * this repository does not contain, and the question "is philosophy worth
+     * reading at this scale?" is the plate's editorial call, not the pack's.
+     * `era_sets` is the row that records the answer, and this file is its one
+     * author -- both the bare placements and the overrides, which used to be
+     * written from two places that could disagree about the same row.
+     *
+     * A bare slug is the common case and means "no override": the timeline
+     * runs on the region's own periodization. The long form carries `eras`,
+     * which is that pack's editorial view of *this* region's shape of time.
+     * The legacy myth packs have one on `world` and want it; nothing has one
+     * on India, because India's centuries are India's.
+     */
+    packs: z
+      .array(
+        z.union([
+          Slug.transform((slug) => ({ slug, eras: [] as Era[] })),
+          z.object({ slug: Slug, eras: z.array(EraSchema).default([]) }),
+        ]),
+      )
+      .default([]),
+    /**
+     * The region's default periodization, which is also what the timeline track
+     * is built from: era weights, not years, decide how much track a century
+     * gets. A plate with a different shape of time is most of what makes it a
+     * different atlas rather than a different bounding box.
+     */
+    eras: z.array(EraSchema).min(1),
+  })
+  .refine((r) => r.bbox[0] < r.bbox[2], {
+    message: 'bbox west must be less than east', path: ['bbox'],
+  })
+  .refine((r) => r.bbox[1] < r.bbox[3], {
+    message: 'bbox south must be less than north', path: ['bbox'],
+  })
+  .refine((r) => r.maxZoom >= r.minZoom, {
+    message: 'maxZoom must not be below minZoom', path: ['maxZoom'],
+  })
+  .refine((r) => r.parent !== r.id, {
+    message: 'a region cannot be its own parent', path: ['parent'],
+  })
+  // A plate that opens outside its own edges is a blank map on arrival, and
+  // with `maxBounds` set from the same bbox the camera cannot even travel back
+  // to the content. Cheap to check here, invisible until someone opens it.
+  .refine(
+    (r) => r.defaultCamera.center[0] >= r.bbox[0] && r.defaultCamera.center[0] <= r.bbox[2]
+      && r.defaultCamera.center[1] >= r.bbox[1] && r.defaultCamera.center[1] <= r.bbox[3],
+    { message: 'defaultCamera.center must lie inside bbox', path: ['defaultCamera', 'center'] },
+  )
+  .refine(
+    (r) => r.defaultCamera.zoom >= r.minZoom && r.defaultCamera.zoom <= r.maxZoom,
+    { message: 'defaultCamera.zoom must lie between minZoom and maxZoom', path: ['defaultCamera', 'zoom'] },
+  )
+  // `buildScale` sorts the eras itself and divides the track by weight, so
+  // overlapping eras do not crash it -- they silently draw one era's years over
+  // another's stretch of track, and the reader scrubs into the wrong label.
+  // Touching ends are normal: the Axial Age ends in the year the Hellenistic
+  // begins.
+  .refine(
+    (r) => [...r.eras].sort((a, b) => a.start - b.start)
+      .every((era, i, list) => i === 0 || era.start >= list[i - 1].end),
+    { message: 'eras must not overlap', path: ['eras'] },
+  )
+  .refine((r) => r.range.end > r.range.start, {
+    message: 'range end must be after start', path: ['range', 'end'],
+  })
+  // The timeline's own ends come from the eras, not from `range` (see
+  // `buildScale`), so eras reaching outside the region's stated bound would
+  // offer years the region says it does not cover -- and `resolveRange` would
+  // then clamp the cursor to somewhere the track cannot be dragged to.
+  .refine(
+    (r) => r.eras.every((era) => era.start >= r.range.start && era.end <= r.range.end),
+    { message: 'every era must lie within the region range', path: ['eras'] },
+  )
+  // The same two rules for a pack's override, which drives the track on
+  // exactly the pages that pack is read on and is no less able to be wrong.
+  .refine(
+    (r) => r.packs.every((entry) => [...entry.eras].sort((a, b) => a.start - b.start)
+      .every((era, i, list) => i === 0 || era.start >= list[i - 1].end)),
+    { message: 'a pack override\'s eras must not overlap', path: ['packs'] },
+  )
+  .refine(
+    (r) => r.packs.every((entry) => entry.eras.every(
+      (era) => era.start >= r.range.start && era.end <= r.range.end,
+    )),
+    { message: 'every override era must lie within the region range', path: ['packs'] },
+  )
+  .refine(
+    (r) => new Set(r.packs.map((entry) => entry.slug)).size === r.packs.length,
+    { message: 'a pack may be laid over a region only once', path: ['packs'] },
+  )
+
+export type RegionDefinition = z.infer<typeof RegionDefinitionSchema>
+
 export const RegionSchema = z
   .object({
     id: Slug,

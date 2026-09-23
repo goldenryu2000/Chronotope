@@ -47,9 +47,9 @@ async function run() {
   if (untiled.length > 0) {
     throw new Error(
       `these regions have boundaries but no tile archive: ${untiled.join(', ')}. `
-      + 'Run `npx tsx scripts/build-tiles.ts <region>` first — publishing now '
-      + 'would write an artifact with no tilesetKey, and the atlas draws no map '
-      + 'without one.',
+      + 'Run `npx tsx scripts/build-tiles.ts` first (no argument cuts every '
+      + 'region) — publishing now would write an artifact with no tilesetKey, '
+      + 'and the atlas draws no map without one.',
     )
   }
 
@@ -60,7 +60,7 @@ async function run() {
   // already were.
   const regionRows = await db.select().from(regions)
   if (regionRows.length === 0) {
-    throw new Error('no regions found — run `npx tsx scripts/import-legacy.ts --all` first')
+    throw new Error('no regions found — run `npx tsx scripts/import-regions.ts` first')
   }
   for (const region of regionRows) {
     const { key } = await publishRegion(region.id, storage)

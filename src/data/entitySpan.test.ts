@@ -5,8 +5,10 @@ import {
   isActive,
   midSpan,
   nearestInTime,
+  openingYear,
   presence,
   withActiveSpan,
+  type ActiveEntity,
 } from './entitySpan'
 import type { Entity } from './schemas'
 
@@ -105,5 +107,34 @@ describe('midSpan', () => {
     const middle = midSpan(span)
     expect(middle).toBe(-340)
     expect(presence(span, middle)).toBe(1)
+  })
+})
+
+describe('openingYear', () => {
+  const span = (id: string, from: number, to: number) =>
+    ({ id, from, to } as unknown as ActiveEntity)
+
+  it('keeps the year asked for when somebody is there', () => {
+    expect(openingYear([span('a', -400, -300)], -350)).toBe(-350)
+  })
+
+  it('opens where the empty state would have sent the reader', () => {
+    // Philosophy opens in 350 BCE, which on India's plate is a century after
+    // the Buddha and four before Nagarjuna. An atlas that opens empty spends
+    // its first impression asking to be rescued.
+    const buddha = span('buddha', -543, -483)
+    expect(openingYear([buddha], -350)).toBe(-513)
+  })
+
+  it('prefers the nearest figure in time, not the first in the list', () => {
+    const early = span('early', -900, -800)
+    const late = span('late', -400, -300)
+    expect(openingYear([early, late], -350)).toBe(-350)
+    expect(openingYear([early, late], -1200)).toBe(-850)
+  })
+
+  it('leaves the year alone when the plate holds nobody at all', () => {
+    // There is no year that helps, and moving the timeline would say there is.
+    expect(openingYear([], -350)).toBe(-350)
   })
 })

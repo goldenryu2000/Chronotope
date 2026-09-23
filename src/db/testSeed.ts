@@ -1,10 +1,17 @@
 import { db } from './client'
 import { layers, packs, regions, tourStopLayers } from './schema'
 import { importLayers } from '../../scripts/import-layers'
-import { importPack, importWorldRegion, LEGACY_CONTENT_DIR } from '../../scripts/import-legacy'
+import { importPack, LEGACY_CONTENT_DIR } from '../../scripts/import-legacy'
+import { importRegions } from '../../scripts/import-regions'
 
 /**
- * Seeds the world region and all three legacy packs into the test database.
+ * Seeds the three legacy packs and, by default, every region under
+ * `data/regions/` into the test database.
+ *
+ * Every region rather than just the world, because the committed tours are
+ * authored against regions and `seedTours` refuses a tour whose region nobody
+ * imported. A suite narrows the list only when the narrowing is what it is
+ * testing.
  *
  * Vitest runs this repo's suites serially against one shared Postgres, and
  * file discovery order does not put `scripts/import-legacy.test.ts` first, so
@@ -17,18 +24,27 @@ import { importPack, importWorldRegion, LEGACY_CONTENT_DIR } from '../../scripts
  * mythology into philosophy, and a single-pack fixture would make its whole
  * reason for existing untestable.
  *
+ * **Packs before regions**, which is the order the cold start and `make
+ * import` also run in: a region file names the packs laid over it, and
+ * `importRegions` writes the `era_sets` row only for a pack that is already
+ * there. Reversing the two leaves every plate with no packs on it and the
+ * atlas route 404ing, which is a confusing way to fail a test about something
+ * else.
+ *
  * The layers come too, in the order the cold start documents: a committed stop
  * now names a road, and `seedTours` refuses one whose layer nobody imported.
  * Seeding packs without layers would fail four suites on a message about a
  * missing script rather than about anything they are testing.
  */
-export async function seedWorldAndPacks(): Promise<void> {
+export async function seedRegionsAndPacks(
+  regionSlugs?: readonly string[],
+): Promise<void> {
   await db.delete(regions)
   await db.delete(packs)
-  await importWorldRegion()
   for (const pack of ['philosophy', 'mythology', 'creatures']) {
-    await importPack(`${LEGACY_CONTENT_DIR}/${pack}`, 'world')
+    await importPack(`${LEGACY_CONTENT_DIR}/${pack}`)
   }
+  await importRegions(regionSlugs)
   await importLayers()
 }
 
@@ -51,4 +67,3 @@ export async function deleteAllLayers(): Promise<void> {
   await db.delete(tourStopLayers)
   await db.delete(layers)
 }
-

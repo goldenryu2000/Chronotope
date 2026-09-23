@@ -1,5 +1,6 @@
 import { presence, withActiveSpan } from '../data/entitySpan'
 import type { AtlasView, Pack, Region, Tour } from '../data/schemas'
+import { CAMERA_PAD, contains, pad } from '../lib/bbox'
 import { resolveRange } from '../timeline/resolveEras'
 
 /**
@@ -13,6 +14,7 @@ export const CAMERA_DEGREES = 8
 
 /** Below this, a pin renders as a ghost: on the map, but visibly fading. */
 export const PRESENCE_WARN = 0.7
+
 
 export interface ViewProblem {
   /** Which numbered rule in the design this violates. */
@@ -75,6 +77,31 @@ export function validateView(view: AtlasView, ctx: ViewContext): ViewProblem[] {
       })
     }
 
+    /*
+     * Rule 8. The rule regional atlases make necessary.
+     *
+     * A plate draws the figures who stand on it (`Atlas` narrows the pack to
+     * the region's bbox), so a stop on India selecting someone in Athens would
+     * read its narration over a map with no pin in it. Before there was a
+     * second region this could not happen: the only plate was the world, and
+     * every figure is on it.
+     *
+     * Checked against the same predicate the atlas filters with, not a looser
+     * one, for the reason rule 5 is checked against `layersOnRegion`: a stop is
+     * honest if the reader's browser can render it, and a rule that allowed
+     * more than the browser shows is not a rule.
+     */
+    if (!contains(ctx.region.bbox, entity.lng, entity.lat)) {
+      problems.push({
+        rule: 8,
+        level: 'error',
+        message:
+          `${entity.id} stands at ${entity.lng.toFixed(1)}, ${entity.lat.toFixed(1)}, `
+          + `outside ${ctx.region.id} (${ctx.region.bbox.join(', ')}), so this plate `
+          + 'draws no pin for them',
+      })
+    }
+
     // Rule 3.
     if (view.camera) {
       const [lng, lat] = view.camera.center
@@ -86,6 +113,29 @@ export function validateView(view: AtlasView, ctx: ViewContext): ViewProblem[] {
           message: `camera sits ${gap.toFixed(1)}° from ${entity.id}, past the ${CAMERA_DEGREES}° limit`,
         })
       }
+    }
+  }
+
+  /*
+   * Rule 8's other half: the camera itself.
+   *
+   * `MapCanvas` constrains the camera to the region's bbox, so a stop framing
+   * something outside it is not merely off-topic, it is unreachable: MapLibre
+   * clamps the move and the reader lands somewhere the author did not choose,
+   * silently. Padded the same tenth of the plate the camera bounds are padded
+   * by, so the two agree about what the camera can actually do.
+   */
+  if (view.camera) {
+    const [lng, lat] = view.camera.center
+    const reachable = pad(ctx.region.bbox, CAMERA_PAD)
+    if (!contains(reachable, lng, lat)) {
+      problems.push({
+        rule: 8,
+        level: 'error',
+        message:
+          `camera at ${lng.toFixed(1)}, ${lat.toFixed(1)} is outside what `
+          + `${ctx.region.id} lets the camera reach (${reachable.map((n) => n.toFixed(1)).join(', ')})`,
+      })
     }
   }
 

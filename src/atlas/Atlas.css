@@ -86,11 +86,25 @@
  * surface, quiet until wanted. The two are the only chrome on the map that is
  * not the map, and they sit in opposite corners.
  */
-.atlas__home {
+/*
+ * The way out, as a trail rather than a single link.
+ *
+ * One pill on the world map, two inside a plate drawn within it: the front
+ * door, then the map this one is part of. Both are the same move (out) so they
+ * sit together, and the row is what `data-layout` measures rather than either
+ * link, so the safe area does not change as a second one appears.
+ */
+.atlas__trail {
   position: absolute;
   top: 1.25rem;
   left: 1.25rem;
   z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.atlas__home {
   display: flex;
   align-items: center;
   gap: 0.45rem;
@@ -126,6 +140,18 @@
 
 .atlas__home-label {
   text-indent: 0.2em;
+}
+
+/*
+ * The step out to the plate this one is drawn inside.
+ *
+ * Darker ink than the front door beside it, because it is the move a reader is
+ * more likely to want: they came from that map, and the one thing a regional
+ * atlas must never do is feel like a place you cannot leave.
+ */
+.atlas__home--up {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--rule));
 }
 
 @media (prefers-reduced-motion: reduce) {

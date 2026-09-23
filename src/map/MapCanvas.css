@@ -607,3 +607,64 @@
 /* The ported build's `.game-pin` rules lived here. `src/game/` is not part of
    this milestone, so they came out with it; the `--map-guess` and `--map-truth`
    tokens stay in the themes, because the theme files are the contract. */
+
+/*
+ * The way into a plate drawn in more detail.
+ *
+ * Anchored to the top edge of a dashed frame the map draws around that plate,
+ * which is a paper atlas's own mark for "this rectangle is shown larger
+ * elsewhere". The label has to be legible over both land and sea at any zoom,
+ * so it carries its own surface rather than a text halo.
+ */
+.doorway {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  align-items: center;
+  padding: 0.3rem 0.7rem 0.34rem;
+  border: 1px solid color-mix(in srgb, var(--map-doorway) 70%, transparent);
+  border-radius: 0.2rem;
+  background: color-mix(in srgb, var(--surface-raised) 90%, transparent);
+  color: var(--map-doorway-ink);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transform: translateY(-0.45rem);
+  transition: border-color 180ms ease, transform 180ms ease, background 180ms ease;
+}
+
+.doorway:hover,
+.doorway:focus-visible {
+  border-color: var(--map-doorway);
+  background: var(--surface-raised);
+  transform: translateY(-0.7rem);
+}
+
+.doorway:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.doorway__name {
+  font-family: var(--font-display, inherit);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+}
+
+.doorway__hint {
+  font-size: 0.52rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .doorway,
+  .doorway:hover,
+  .doorway:focus-visible {
+    transition: none;
+    transform: translateY(-0.45rem);
+  }
+}

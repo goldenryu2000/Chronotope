@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { db } from '../src/db/client'
 import { layers, tourStops, tours } from '../src/db/schema'
-import { seedWorldAndPacks } from '../src/db/testSeed'
+import { seedRegionsAndPacks } from '../src/db/testSeed'
 import { renderTour } from '../src/publish/renderTour'
 import { tourOpening } from '../src/read/currentTour'
 import { importLayers } from './import-layers'
@@ -14,7 +14,7 @@ import { seedTours } from './seed-tours'
 describe('seedTours', () => {
   beforeAll(async () => {
     // The flagship crosses packs, so one pack is not enough to seed it.
-    await seedWorldAndPacks()
+    await seedRegionsAndPacks()
     await db.delete(tours)
   })
 

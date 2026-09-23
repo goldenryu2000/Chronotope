@@ -1,0 +1,225 @@
+{
+  "id": "world",
+  "title": "World",
+  "subtitle": "everywhere, all of it",
+  "parent": null,
+  "bbox": [
+    -180,
+    -85,
+    180,
+    85
+  ],
+  "minZoom": 0,
+  "maxZoom": 6,
+  "defaultCamera": {
+    "center": [
+      20,
+      25
+    ],
+    "zoom": 1.6
+  },
+  "range": {
+    "start": -4000,
+    "end": 2026
+  },
+  "theme": "rustic",
+  "packs": [
+    "philosophy",
+    {
+      "slug": "mythology",
+      "eras": [
+        {
+          "id": "bronze",
+          "label": "Bronze Age",
+          "start": -3000,
+          "end": -1200,
+          "weight": 16,
+          "blurb": "The first written myths. Sumer, Egypt and Ugarit put gods into clay and stone, and the earliest names we can still read appear."
+        },
+        {
+          "id": "iron",
+          "label": "Iron Age & Classical",
+          "start": -1200,
+          "end": 400,
+          "weight": 20,
+          "blurb": "Homer, the Vedas and the Hebrew Bible take shape. The Mediterranean and Iranian pantheons reach the form later ages inherit."
+        },
+        {
+          "id": "late-antique",
+          "label": "Late Antiquity",
+          "start": 400,
+          "end": 1000,
+          "weight": 16,
+          "blurb": "Conversion and compilation. Norse, Slavic and Celtic material is written down largely by the Christians replacing it."
+        },
+        {
+          "id": "medieval",
+          "label": "Medieval",
+          "start": 1000,
+          "end": 1500,
+          "weight": 18,
+          "blurb": "Bestiaries, sagas and the Shahnameh. Myth is copied, systematised and moralised across Eurasia."
+        },
+        {
+          "id": "early-modern",
+          "label": "Early Modern",
+          "start": 1500,
+          "end": 1800,
+          "weight": 15,
+          "blurb": "Conquest, print and collection. European encounter records, and distorts, mythologies across the Americas, Africa and the Pacific."
+        },
+        {
+          "id": "modern",
+          "label": "Modern",
+          "start": 1800,
+          "end": 2026,
+          "weight": 15,
+          "blurb": "Folklorists, nationalists and novelists. Myth is catalogued as heritage and simultaneously rewritten as entertainment."
+        }
+      ]
+    },
+    {
+      "slug": "creatures",
+      "eras": [
+        {
+          "id": "bronze",
+          "label": "Bronze Age",
+          "start": -3000,
+          "end": -1200,
+          "weight": 16,
+          "blurb": "The first written myths. Sumer, Egypt and Ugarit put gods into clay and stone, and the earliest names we can still read appear."
+        },
+        {
+          "id": "iron",
+          "label": "Iron Age & Classical",
+          "start": -1200,
+          "end": 400,
+          "weight": 20,
+          "blurb": "Homer, the Vedas and the Hebrew Bible take shape. The Mediterranean and Iranian pantheons reach the form later ages inherit."
+        },
+        {
+          "id": "late-antique",
+          "label": "Late Antiquity",
+          "start": 400,
+          "end": 1000,
+          "weight": 16,
+          "blurb": "Conversion and compilation. Norse, Slavic and Celtic material is written down largely by the Christians replacing it."
+        },
+        {
+          "id": "medieval",
+          "label": "Medieval",
+          "start": 1000,
+          "end": 1500,
+          "weight": 18,
+          "blurb": "Bestiaries, sagas and the Shahnameh. Myth is copied, systematised and moralised across Eurasia."
+        },
+        {
+          "id": "early-modern",
+          "label": "Early Modern",
+          "start": 1500,
+          "end": 1800,
+          "weight": 15,
+          "blurb": "Conquest, print and collection. European encounter records, and distorts, mythologies across the Americas, Africa and the Pacific."
+        },
+        {
+          "id": "modern",
+          "label": "Modern",
+          "start": 1800,
+          "end": 2026,
+          "weight": 15,
+          "blurb": "Folklorists, nationalists and novelists. Myth is catalogued as heritage and simultaneously rewritten as entertainment."
+        }
+      ]
+    }
+  ],
+  "eras": [
+    {
+      "id": "axial",
+      "label": "The Axial Age",
+      "start": -800,
+      "end": -300,
+      "weight": 14,
+      "blurb": "Within a few centuries and without contact, Greece, the Ganges plain, China and Persia each turned to asking how one ought to live. The single strangest coincidence in intellectual history."
+    },
+    {
+      "id": "hellenistic",
+      "label": "Hellenistic & Classical",
+      "start": -300,
+      "end": 200,
+      "weight": 12,
+      "blurb": "Schools become institutions. Stoics, Epicureans and Sceptics compete for the good life in the Mediterranean while Nyāya sharpens logic in India and Legalism hardens statecraft in Han China."
+    },
+    {
+      "id": "late-antiquity",
+      "label": "Late Antiquity",
+      "start": 200,
+      "end": 600,
+      "weight": 11,
+      "blurb": "Philosophy meets revealed religion. Neoplatonism runs through Augustine into Christian thought; Nāgārjuna's emptiness reshapes Buddhism across Asia."
+    },
+    {
+      "id": "islamic-golden",
+      "label": "Islamic Golden Age",
+      "start": 600,
+      "end": 1100,
+      "weight": 12,
+      "blurb": "Baghdad, Bukhara and Córdoba inherit and extend the Greeks. Falsafa carries Aristotle forward while Śaṅkara systematises Advaita and Buddhism transforms in China."
+    },
+    {
+      "id": "scholastic",
+      "label": "Scholastic & Medieval",
+      "start": 1100,
+      "end": 1400,
+      "weight": 11,
+      "blurb": "The university is invented. Aquinas, Ibn Rushd and Maimonides argue over the same inherited Aristotle in three languages, while Zhu Xi rebuilds Confucianism as metaphysics."
+    },
+    {
+      "id": "renaissance",
+      "label": "Renaissance & Reformation",
+      "start": 1400,
+      "end": 1600,
+      "weight": 9,
+      "blurb": "Authority fractures. Humanists go back to the sources, printing spreads dissent faster than it can be suppressed, and the world turns out to be larger than the maps."
+    },
+    {
+      "id": "early-modern",
+      "label": "Early Modern",
+      "start": 1600,
+      "end": 1750,
+      "weight": 11,
+      "blurb": "Descartes restarts philosophy from doubt. Rationalists and empiricists divide over where knowledge comes from, and the new physics forces everyone to answer to it."
+    },
+    {
+      "id": "enlightenment",
+      "label": "Enlightenment",
+      "start": 1750,
+      "end": 1830,
+      "weight": 9,
+      "blurb": "Kant tries to end the quarrel by mapping the limits of reason itself. Political philosophy stops being theory and starts becoming revolutions."
+    },
+    {
+      "id": "nineteenth",
+      "label": "The Nineteenth Century",
+      "start": 1830,
+      "end": 1900,
+      "weight": 7,
+      "blurb": "History, economics and suspicion enter philosophy. Marx, Mill, Kierkegaard and Nietzsche each attack a different pillar of the inherited picture."
+    },
+    {
+      "id": "twentieth",
+      "label": "The Twentieth Century",
+      "start": 1900,
+      "end": 1990,
+      "weight": 8,
+      "blurb": "Analytic and continental traditions drift apart. Logic, language, phenomenology and existentialism split the discipline into conversations that stop hearing each other."
+    },
+    {
+      "id": "contemporary",
+      "label": "Contemporary",
+      "start": 1990,
+      "end": 2026,
+      "weight": 4,
+      "blurb": "The map fills in outside Europe again. Ethics goes practical (minds, machines, climate, justice) and the old regional boundaries start to look accidental."
+    }
+  ]
+}

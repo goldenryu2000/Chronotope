@@ -32,6 +32,16 @@ describe('resolveEras', () => {
     const japan = { ...region, id: 'japan' }
     expect(resolveEras(japan, pack).map((e) => e.id)).toEqual(['vedic', 'mauryan'])
   })
+
+  it('treats an empty override as no override', () => {
+    // `era_sets` says both "this pack is laid over this region" and "it
+    // reshapes that region's time" with one row, and a plate that offers a
+    // pack on its own periodization writes the first without the second.
+    // Without this the region's own eras are replaced by nothing, which reaches
+    // `buildScale([])` and throws in the reader's browser rather than here.
+    const placed = { ...pack, eraOverrides: { india: [] } }
+    expect(resolveEras(region, placed).map((e) => e.id)).toEqual(['vedic', 'mauryan'])
+  })
 })
 
 describe('resolveRange', () => {

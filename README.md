@@ -44,8 +44,9 @@ it and explains what's missing if it isn't there.
 docker compose down -v && docker compose up -d --wait
 npx drizzle-kit migrate
 npx tsx scripts/import-legacy.ts --all
+npx tsx scripts/import-regions.ts
 npx tsx scripts/import-boundaries.ts
-npx tsx scripts/build-tiles.ts world
+npx tsx scripts/build-tiles.ts
 npx tsx scripts/import-layers.ts
 npx tsx scripts/seed-tours.ts
 npx tsx scripts/publish-all.ts
@@ -63,9 +64,10 @@ earlier run. `make` on its own lists the rest. It is a convenience over the
 commands here, not a replacement for them.
 
 The root of the site is a landing page listing whatever has been published.
-The atlases themselves live at `/<region>/<pack>` — with the legacy content
-imported, that is `/world/philosophy`, `/world/mythology` and
-`/world/creatures`. An individual figure is a further segment down,
+The atlases themselves live at `/<region>/<pack>` — with the committed content
+imported, that is `/world/philosophy`, `/world/mythology`, `/world/creatures`
+and the same three packs read through India's plate at `/india/philosophy` and
+so on. An individual figure is a further segment down,
 `/world/philosophy/laozi`.
 
 A few things about that sequence that are easy to misread:
@@ -85,18 +87,27 @@ A few things about that sequence that are easy to misread:
   postgis` so that `drizzle-kit generate` can be re-run from scratch without
   silently losing extension provisioning.
 - `scripts/import-legacy.ts --all` reads the previous static build's content
-  directory (a machine-local path, set with `LEGACY_CONTENT_DIR`)
-  and imports all three packs onto the `world` region in one transaction
-  per pack.
+  directory (a machine-local path, set with `LEGACY_CONTENT_DIR`) and imports
+  all three packs, one transaction per pack. It lays them over no region: where
+  a pack is read is the next step's business.
+- `scripts/import-regions.ts` reads `data/regions/` into the `regions` table:
+  one file per plate, carrying its edges, its zooms, its periodization, which
+  plate it sits inside, and which packs are laid over it. It runs *after* the
+  packs because it writes the `era_sets` row that places one, and only for a
+  pack that is already there. See "Regional atlases" below.
 - `scripts/import-boundaries.ts` folds the 48 historical border snapshots in
   `data/borders/` into the `boundaries` table as validity intervals —
   10,614 rows — deduplicating geometry that does not change between
   consecutive snapshots, and applying the Jammu and Kashmir correction
   described below as it goes.
-- `scripts/build-tiles.ts world` clips those rows to the region's bbox and
-  hands them to tippecanoe, producing `public/tiles/world.pmtiles` (also
-  gitignored: it is generated from the database). It records the archive's
-  path on the region row, which is how the next step finds it.
+- `scripts/build-tiles.ts` cuts one archive per region: it clips those rows to
+  each region's bbox and hands them to tippecanoe, producing
+  `public/tiles/world.pmtiles` and `public/tiles/india.pmtiles` (also
+  gitignored: they are generated from the database). It records each archive's
+  path on its region row, which is how the next step finds it. A slug narrows
+  it to one plate; no argument cuts them all, which is what the cold start
+  wants — `world` is a row like any other and defaulting to its slug meant a
+  second plate silently never got an archive.
 - `scripts/import-layers.ts` reads the nine historical layers in `data/layers/`
   into the `layers` and `layer_features` tables. It runs *before*
   `seed-tours.ts` because a tour stop names the layers it lights through a
@@ -109,7 +120,7 @@ A few things about that sequence that are easy to misread:
   and then tours, and a tour is validated against published packs: seeding
   afterwards would leave six tours in the database with no artifact behind them
   and `/world/tours` empty with nothing to say why.
-- `scripts/publish-all.ts` renders the `world` region and all three packs
+- `scripts/publish-all.ts` renders every region and every pack
   into content-hashed JSON files under `public/artifacts/` (gitignored —
   see "Read path" below) and points each one's "current version" at what it
   just wrote. **It must run after `build-tiles`**, and refuses to run before
@@ -125,11 +136,16 @@ A few things about that sequence that are easy to misread:
 
 - `npx tsx scripts/import-legacy.ts --all` imports all three legacy packs.
   Pass no `--all` for usage help.
+- `npx tsx scripts/import-regions.ts` re-reads `data/regions/` into the
+  `regions` table. Safe to re-run; it replaces each plate it finds a file for,
+  which cascades to that plate's era sets, its placements and any tour authored
+  on it — so `seed-tours.ts` runs after it, never before. A slug or several
+  narrows it to those plates and their ancestors.
 - `npx tsx scripts/import-boundaries.ts` re-reads `data/borders/` into the
   `boundaries` table. Safe to re-run; it replaces what is there.
-- `npx tsx scripts/build-tiles.ts world` rebuilds that region's archive.
-  Run it after any change to boundary geometry, and run `publish-all` after
-  it. It reports what it wrote:
+- `npx tsx scripts/build-tiles.ts` rebuilds every region's archive; a slug
+  rebuilds one. Run it after any change to boundary geometry or to a region's
+  bbox or zooms, and run `publish-all` after it. It reports what it wrote:
 
   ```
   Built public/tiles/world.pmtiles: 10614 features into 2557 tiles,
@@ -226,6 +242,80 @@ a reader lights it, not before.
   layer that belongs to a reader, and refuses a leg that crosses the
   antimeridian, which the atlas would draw the long way round the world.
 
+## Regional atlases
+
+An atlas is a plate: a rectangle of the world, a shape of time, and whatever
+content falls inside it. `world` is one, `india` is another drawn inside it,
+and the second is not a special case of the first. Both are files in
+`data/regions/`, both go through the same importer, the same publisher, the
+same tile build and the same map engine, and nothing under `src/` knows either
+of their names (Rule 3).
+
+What a plate decides:
+
+- **Its edges.** `bbox` is what `scripts/build-tiles.ts` clips the boundary
+  corpus to, what the camera may travel over, and which figures the atlas
+  draws. India shows the ten philosophers, seventeen gods and six creatures who
+  stand inside it, out of the same three published pack artifacts the world
+  atlas reads. Nothing is duplicated per region, and adding a plate republishes
+  nothing.
+- **Its depth.** `maxZoom` is how far in the archive is cut. The world stops at
+  6; India goes to 8, from exactly the same `boundaries` rows, which is what
+  makes the Mahajanapadas, the Chalukyas and the Palas legible at all. India's
+  archive is 1.4 MB against the world's 9.6, and its largest tile 30 KB against
+  341.
+- **Its shape of time.** `eras` is the region's own periodization and it is
+  what the timeline track is built from, so a plate is a different atlas rather
+  than a different bounding box. India runs from the Indus cities to the
+  Republic in ten eras; the world runs from the Axial Age in eleven.
+- **What is laid over it.** `packs` names the packs the plate offers, and
+  optionally each one's own periodization for *this* plate. A bare slug means
+  no override, which is the normal case: on India the region's centuries drive
+  every pack's timeline. The two myth packs carry an override on `world`, which
+  is the six-era periodization they have always had there.
+- **Where it sits.** `parent` is one slug, or null for a root atlas. That is
+  the whole hierarchy: one nullable self-reference on `regions`, which is
+  enough to carry World → India → Northern India unchanged, and which nothing
+  reads more than one step of.
+
+What a plate does *not* decide, and must not: which entities exist, which
+layers there are, how borders are stored, or anything about how the map draws.
+An entity belongs to a pack and is laid over whatever plates contain it; a
+layer belongs to nobody and reaches whatever plates its geometry touches
+(`src/read/regionLayers.ts`); a boundary is a row in one global table. That is
+why India needed no new entities, no new layers, no second pipeline and no
+`if (region === 'india')` anywhere.
+
+### Adding one
+
+1. Write `data/regions/<slug>.json`. Copy `india.json`: it is the shorter of
+   the two and every field is commented in `RegionDefinitionSchema`
+   (`src/data/schemas.ts`), which refuses a camera outside its own bbox,
+   overlapping eras, an era reaching outside the region's range, a pack laid
+   twice, and a parent that does not exist.
+2. `npx tsx scripts/import-regions.ts` — or just `make import`, which runs the
+   whole sequence in the one order that works.
+3. `npx tsx scripts/build-tiles.ts` and `npx tsx scripts/publish-all.ts`.
+
+That is the entire list. The plate appears on the landing page nested under its
+parent, its parent's map grows a dashed frame around it labelled with its name,
+and the trail in its own top-left corner gains a step back out. No code
+changes, and no map-engine changes ever.
+
+Two things worth knowing before writing one:
+
+- **A plate is offered only where it would open.** The landing page, the pack
+  switcher and the doorway on the parent's map all require the region to be
+  published, the pack to be published, *and* at least one of that pack's
+  entities to stand inside the plate. A plate whose packs are all empty is not
+  linked from anywhere, which is deliberate: a door onto an empty map is worse
+  than no door.
+- **A tour on a plate is validated against it.** `publishTour`'s rule 8 refuses
+  a stop selecting someone the plate draws no pin for, and a stop whose camera
+  sits outside where the plate lets the camera go. Both were unreachable while
+  the world was the only region, and both are the first thing a regional tour
+  gets wrong.
+
 ## The read path is not the write path
 
 Import and publish write to Postgres and then to storage. The *browser*
@@ -292,14 +382,17 @@ pack-specific or region-specific. Three rules keep it that way:
 3. **No region vocabulary in engine code.** The engine renders *a* region.
    The world map is simply the row in `regions` whose slug happens to be
    `world`; it carries no special privileges, no hardcoded bounding box, no
-   `if (region === 'world')` anywhere in the engine.
+   `if (region === 'world')` anywhere in the engine. India is the falsifiable
+   form of that claim: it is a file in `data/regions/`, it goes through every
+   step the world does, and its slug appears nowhere under `src/`.
 
 ## What's deliberately not here yet
 
 - **Authoring and review (M3).** There's no login, no submissions queue, no
   editor UI. `users` exists as a table, not yet wired to real sessions.
-- **Other regions (M4).** `world` is the only region with content. The
-  schema doesn't privilege it, but nothing else has been imported yet.
+- **Regions beyond India.** The backbone is region-agnostic and India proves
+  it, but Europe, China and the Islamic world are files nobody has written yet.
+  See "Regional atlases" for what writing one involves.
 
 ## Where the borders come from, and where they deliberately differ
 
@@ -395,12 +488,14 @@ secretlint, and typechecks; `npm install` sets it up.
 
 Both need more than the source tree:
 
-- **`npm test` needs the legacy content.** Three test files
-  (`scripts/import-legacy.test.ts`, `src/publish/renderPack.test.ts`,
-  `src/read/currentArtifact.test.ts`) import real packs rather than
-  fixtures, so they read the directory named by `LEGACY_CONTENT_DIR` — see
-  `.env.example`. They also need the `chronotope_test` database from
-  docker-compose to be up.
+- **`npm test` needs the legacy content.** Several test files import real
+  packs rather than fixtures (through `src/db/testSeed.ts`, or directly in
+  `scripts/import-legacy.test.ts`, `src/publish/renderPack.test.ts` and
+  `src/read/currentArtifact.test.ts`), so they read the directory named by
+  `LEGACY_CONTENT_DIR` — see `.env.example`. They also need the
+  `chronotope_test` database from docker-compose to be up. Packs are imported
+  before regions there, the same order the cold start uses and for the same
+  reason: a region file names the packs laid over it.
 - **`npm run test:e2e` needs published artifacts**, i.e. the cold-start
   sequence above at least as far as `publish-all.ts`. It starts its own dev
   server, but it will reuse one already on port 3000 if it finds it.

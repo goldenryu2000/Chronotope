@@ -265,6 +265,32 @@ html:has(.home) {
   text-decoration: underline;
 }
 
+/*
+ * A plate drawn inside another, indented under it behind a rule.
+ *
+ * Indent and a rule rather than a smaller card: the atlas inside is not a
+ * lesser thing, it is the same offer at a closer scale, so its own cards stay
+ * full size and only its position says where it sits.
+ */
+.region__inside {
+  margin-top: 1.25rem;
+  padding-left: 1.1rem;
+  border-left: 2px solid color-mix(in srgb, var(--accent) 30%, var(--rule));
+}
+
+.region__inside-note {
+  margin: 0 0 0.25rem;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+}
+
+@media (width <= 40rem) {
+  /* At phone width the indent costs more than it says. */
+  .region__inside {
+    padding-left: 0.65rem;
+  }
+}
+
 /* ---- cards ---------------------------------------------------------- */
 
 .card {
@@ -338,11 +364,22 @@ html:has(.home) {
   flex-direction: column;
 }
 
+/*
+ * The strip of faces across the top of a pack card.
+ *
+ * Four slots whatever it holds, so the strip is the same height on every card
+ * and a portrait is the same size wherever it appears. What changed with
+ * regional atlases is the background: a plate holds only the figures who stand
+ * on it, and not all of them have a freely licensed picture, so a regional
+ * card legitimately fills one or two slots where the world fills four. Painted
+ * in the rule colour, the unused slots read as two images that had failed to
+ * load; in the card's own paper they read as the whitespace they are.
+ */
 .pack__faces {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 2px;
-  background: var(--rule);
+  background: var(--surface-raised);
   border-bottom: 1px solid var(--rule);
 }
 

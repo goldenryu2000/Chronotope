@@ -18,6 +18,16 @@ const pack = {
 
 const region = {
   id: 'world', range: { start: -3000, end: 2026 }, eras: [],
+  // Rule 8 reads this: a plate draws the figures who stand on it. The world's
+  // bbox is the world, so every rule below behaves as it did before rule 8
+  // existed, which is the point.
+  bbox: [-180, -85, 180, 85],
+} as unknown as Region
+
+/** A plate the size of a subcontinent, for the rules the world cannot exercise. */
+const plate = {
+  id: 'india', range: { start: -3000, end: 2026 }, eras: [],
+  bbox: [66, 5, 97.6, 37.6],
 } as unknown as Region
 
 const ctx: ViewContext = { region, pack, layers: new Map() }
@@ -154,6 +164,50 @@ describe('rule 7: a stop with no entity frames its layers', () => {
     const problems = validateView(unknown, layerCtx)
     expect(problems.filter((p) => p.rule === 5)).toHaveLength(1)
     expect(problems.filter((p) => p.rule === 7)).toHaveLength(0)
+  })
+})
+
+describe('rule 8: what a plate can actually draw', () => {
+  it('refuses a stop selecting someone the plate has no pin for', () => {
+    // Aristotle is at 23.5E: on the world map, and nowhere near India's plate.
+    const problems = validateView(view, { ...ctx, region: plate })
+    expect(problems.some((p) => p.rule === 8 && p.level === 'error')).toBe(true)
+    expect(problems.find((p) => p.rule === 8)?.message).toContain('aristotle')
+  })
+
+  it('refuses a stop whose camera the plate will not let the reader reach', () => {
+    const inside = { ...entity, id: 'nagarjuna', lng: 79.0, lat: 16.5 }
+    const indianPack = { ...pack, entities: [inside] } as unknown as Pack
+    const problems = validateView(
+      { ...view, entityId: 'nagarjuna', camera: { center: [79.0, 16.5], zoom: 5 } },
+      { region: plate, pack: indianPack, layers: new Map() },
+    )
+    expect(problems).toEqual([])
+
+    // 12E is in the Mediterranean: MapLibre would clamp the move and the
+    // reader would land somewhere the author never chose.
+    const away = validateView(
+      { ...view, entityId: 'nagarjuna', camera: { center: [12.0, 16.5], zoom: 5 } },
+      { region: plate, pack: indianPack, layers: new Map() },
+    )
+    expect(away.some((p) => p.rule === 8 && p.level === 'error')).toBe(true)
+  })
+
+  it('allows a camera just past the plate edge, within the padding the map allows', () => {
+    // India's bbox stops at 97.6E and `CAMERA_PAD` widens it by a tenth of the
+    // plate, so about 100.8E is still reachable. A rule stricter than the map
+    // would refuse stops that work.
+    const edge = { ...entity, id: 'nagarjuna', lng: 97.0, lat: 26.0 }
+    const indianPack = { ...pack, entities: [edge] } as unknown as Pack
+    const problems = validateView(
+      { ...view, entityId: 'nagarjuna', camera: { center: [99.5, 26.0], zoom: 5 } },
+      { region: plate, pack: indianPack, layers: new Map() },
+    )
+    expect(problems.filter((p) => p.rule === 8)).toEqual([])
+  })
+
+  it('leaves every world stop alone', () => {
+    expect(validateView(view, ctx).filter((p) => p.rule === 8)).toEqual([])
   })
 })
 

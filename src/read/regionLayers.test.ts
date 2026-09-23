@@ -2,7 +2,7 @@ import { eq, sql } from 'drizzle-orm'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { db } from '../db/client'
 import { layers, regions } from '../db/schema'
-import { deleteAllLayers, seedWorldAndPacks } from '../db/testSeed'
+import { deleteAllLayers, seedRegionsAndPacks } from '../db/testSeed'
 import { importLayers } from '../../scripts/import-layers'
 import { publishLayer } from '../publish/publishLayer'
 import { memoryStorage } from '../publish/storage'
@@ -10,8 +10,8 @@ import { layersOnRegion } from './regionLayers'
 
 describe('layersOnRegion', () => {
   beforeAll(async () => {
-    await seedWorldAndPacks()
-    // seedWorldAndPacks imports the world region but never publishes it, so
+    await seedRegionsAndPacks()
+    // seedRegionsAndPacks imports the world region but never publishes it, so
     // current_artifact_key is null coming out of it. layersOnRegion now
     // requires the region to carry one (mirroring packsOnRegion), so the
     // fixture has to set it — a literal key, not a real publish, is enough:

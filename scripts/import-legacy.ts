@@ -1,26 +1,21 @@
 import { readFileSync } from 'node:fs'
 import { pathToFileURL } from 'node:url'
-import { eq } from 'drizzle-orm'
 import type { z } from 'zod'
 // Side-effect import, must precede `db`: see load-env.ts for why loading
 // .env.local from within this file, after the db import, would be too late.
 import './load-env'
 import { db } from '../src/db/client'
-import {
-  entities, entityTraditions, eraSets, eras, packs, regions, traditions,
-} from '../src/db/schema'
-import { EntitySchema, EraSchema, TraditionSchema } from '../src/data/schemas'
-import type { Entity, Era, Tradition } from '../src/data/schemas'
-
-const WORLD_BBOX = 'SRID=4326;POLYGON((-180 -85,180 -85,180 85,-180 85,-180 -85))'
+import { entities, entityTraditions, packs, tours, traditions } from '../src/db/schema'
+import { EntitySchema, TraditionSchema } from '../src/data/schemas'
+import type { Entity, Tradition } from '../src/data/schemas'
 
 /**
  * The previous static build's content directory, one pack per subfolder.
  * A machine-specific absolute path, so it comes only from LEGACY_CONTENT_DIR
  * and has no default: a fallback baked into the source would be one
  * machine's layout, and on any other machine it fails later and less clearly
- * than this. Used by both importWorldRegion (which only needs philosophy's
- * manifest) and the CLI below.
+ * than this. Read by `importPack` through the CLI below, and by the test
+ * suites that import content for real.
  */
 export const LEGACY_CONTENT_DIR = requireLegacyContentDir()
 
@@ -34,9 +29,6 @@ function requireLegacyContentDir(): string {
   }
   return dir
 }
-
-/** The type `tx` has inside a `db.transaction(async (tx) => ...)` callback. */
-type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
 /**
  * Parses `raw` through `schema`, throwing on failure with enough context to
@@ -66,62 +58,7 @@ function parseOrThrow<T>(
   throw new Error(`pack "${pack}": ${kind} ${label} failed validation: ${issues}`)
 }
 
-export async function importWorldRegion(): Promise<void> {
-  const manifest = JSON.parse(
-    readFileSync(`${LEGACY_CONTENT_DIR}/philosophy/manifest.json`, 'utf8'),
-  )
-  const validatedEras: Era[] = (manifest.eras ?? []).map(
-    (era: unknown, i: number) => parseOrThrow(EraSchema, era, 'world (seeded from philosophy)', 'era', i),
-  )
-
-  // Wrapped in a transaction for the same reason importPack is: the region,
-  // its default era set and that set's eras are three separate statements,
-  // and a failure partway through must not leave a region with no eras (or
-  // no default era set at all) sitting in the database.
-  await db.transaction(async (tx) => {
-    const [world] = await tx.insert(regions).values({
-      slug: 'world',
-      title: 'World',
-      subtitle: 'everywhere, all of it',
-      bbox: WORLD_BBOX,
-      minZoom: 0,
-      maxZoom: 6,
-      defaultCamera: { center: [20, 25], zoom: 1.6 },
-      range: [-4000, 2027],
-      theme: 'rustic',
-      visibility: 'official',
-      status: 'published',
-    }).returning()
-
-    /**
-     * The world's default periodization is seeded from philosophy's eleven eras
-     * — the most developed of the three legacy packs. Arbitrary but defensible;
-     * it is editable content, not a structural claim.
-     */
-    const [set] = await tx.insert(eraSets)
-      .values({ regionId: world.id, packId: null })
-      .returning()
-    await insertEras(tx, set.id, validatedEras)
-  })
-}
-
-async function insertEras(tx: Tx, eraSetId: string, list: Era[]) {
-  if (list.length === 0) return
-  await tx.insert(eras).values(
-    list.map((era, i) => ({
-      eraSetId,
-      slug: era.id,
-      label: era.label,
-      start: era.start,
-      end: era.end,
-      weight: era.weight,
-      blurb: era.blurb,
-      ordinal: i,
-    })),
-  )
-}
-
-export async function importPack(dir: string, regionSlug: string) {
+export async function importPack(dir: string) {
   const manifest = JSON.parse(readFileSync(`${dir}/manifest.json`, 'utf8'))
   const rawList = JSON.parse(readFileSync(`${dir}/entities.json`, 'utf8'))
 
@@ -141,16 +78,17 @@ export async function importPack(dir: string, regionSlug: string) {
   const validatedEntities: Entity[] = rawList.map(
     (e: unknown, i: number) => parseOrThrow(EntitySchema, e, manifest.id, 'entity', i),
   )
-  const validatedEras: Era[] = (manifest.eras ?? []).map(
-    (era: unknown, i: number) => parseOrThrow(EraSchema, era, manifest.id, 'era', i),
-  )
-
-  // Everything below is one transaction: a pack, its traditions, its
-  // entities, its entity-tradition links and its era-set override either all
-  // land, or none of them do. Without this, the unknown-tradition throw
-  // partway through the entity loop (or any insert failure) would leave a
-  // pack row with some fraction of its entities and no era override, and
-  // nothing downstream would know it was incomplete.
+  // Everything below is one transaction: a pack, its traditions, its entities
+  // and its entity-tradition links either all land, or none of them do.
+  // Without this, the unknown-tradition throw partway through the entity loop
+  // (or any insert failure) would leave a pack row with some fraction of its
+  // entities, and nothing downstream would know it was incomplete.
+  //
+  // Where the pack is *laid* is not written here. `era_sets` is the row that
+  // says "this pack is on this region", and `scripts/import-regions.ts` is its
+  // one author: a region declares what it offers, because the same pack is
+  // read at world scale and at regional scale and neither placement belongs to
+  // the pack's own import.
   return db.transaction(async (tx) => {
     const [pack] = await tx.insert(packs).values({
       slug: manifest.id,
@@ -213,13 +151,7 @@ export async function importPack(dir: string, regionSlug: string) {
       if (links.length) await tx.insert(entityTraditions).values(links)
     }
 
-    const [region] = await tx.select().from(regions).where(eq(regions.slug, regionSlug))
-    const [set] = await tx.insert(eraSets)
-      .values({ regionId: region.id, packId: pack.id })
-      .returning()
-    await insertEras(tx, set.id, validatedEras)
-
-    return { entities: validatedEntities.length, eras: validatedEras.length }
+    return { entities: validatedEntities.length }
   })
 }
 
@@ -231,25 +163,39 @@ const isMain = process.argv[1] !== undefined
 if (isMain) {
   const run = async () => {
     if (process.argv.includes('--all')) {
-      // Destructive by design, and unscoped: `regions` and `packs` are
-      // cleared in full, cascading to era sets, entities, traditions and
-      // links, not just the `world` region and these three legacy packs.
-      // That is what makes a re-run start clean instead of dying on unique
-      // constraints. Harmless today — this database holds nothing else yet
-      // — but regions and packs become user-owned in a later milestone, at
-      // which point this would delete other people's content too.
-      await db.delete(regions)
+      // Destructive by design, and unscoped: `packs` is cleared in full,
+      // cascading to entities, traditions, links and every `era_sets` row that
+      // placed one of them on a region. That is what makes a re-run start
+      // clean instead of dying on unique constraints. Harmless today — this
+      // database holds nothing else yet — but packs become user-owned in a
+      // later milestone, at which point this would delete other people's
+      // content too.
+      //
+      // `regions` is deliberately *not* cleared here any more. A region is no
+      // longer a thing this script invents; it is a file under `data/regions/`
+      // and `scripts/import-regions.ts` owns it. Clearing regions here would
+      // destroy the placements that script wrote, from a script that could not
+      // put them back.
+      //
+      // `tours` is, and has to be: `tour_stops.pack_id` is a plain foreign key
+      // with no cascade, so Postgres refuses to drop a pack a stop still names.
+      // That refusal is right — it is the same key that makes a misspelled
+      // entity unwritable — and re-importing every pack from nothing does
+      // genuinely invalidate every tour, so this deletes them and
+      // `scripts/seed-tours.ts` puts them back. Until this line existed the
+      // work was done by `delete(regions)` cascading, which is a surprising
+      // way for a pack import to have been getting its way.
+      await db.delete(tours)
       await db.delete(packs)
 
-      await importWorldRegion()
-      const philosophy = await importPack(`${LEGACY_CONTENT_DIR}/philosophy`, 'world')
-      const mythology = await importPack(`${LEGACY_CONTENT_DIR}/mythology`, 'world')
-      const creatures = await importPack(`${LEGACY_CONTENT_DIR}/creatures`, 'world')
+      const philosophy = await importPack(`${LEGACY_CONTENT_DIR}/philosophy`)
+      const mythology = await importPack(`${LEGACY_CONTENT_DIR}/mythology`)
+      const creatures = await importPack(`${LEGACY_CONTENT_DIR}/creatures`)
       console.log(
-        'Imported onto world: '
-        + `philosophy (${philosophy.entities} entities, ${philosophy.eras} eras), `
-        + `mythology (${mythology.entities} entities, ${mythology.eras} eras), `
-        + `creatures (${creatures.entities} entities, ${creatures.eras} eras).`,
+        `Imported philosophy (${philosophy.entities} entities), `
+        + `mythology (${mythology.entities} entities), `
+        + `creatures (${creatures.entities} entities). `
+        + 'Run `npx tsx scripts/import-regions.ts` next to lay them over a region.',
       )
     } else {
       console.log('Usage: tsx scripts/import-legacy.ts --all')

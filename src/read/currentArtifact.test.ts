@@ -2,7 +2,8 @@ import { eq } from 'drizzle-orm'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { db } from '../db/client'
 import { packs, regions } from '../db/schema'
-import { importPack, importWorldRegion, LEGACY_CONTENT_DIR } from '../../scripts/import-legacy'
+import { importPack, LEGACY_CONTENT_DIR } from '../../scripts/import-legacy'
+import { importRegions } from '../../scripts/import-regions'
 import { memoryStorage } from '../publish/storage'
 import { publishPack, publishRegion } from '../publish/publishPack'
 import { currentArtifactUrl } from './currentArtifact'
@@ -20,8 +21,8 @@ const WORLD_BBOX = 'SRID=4326;POLYGON((-180 -85,180 -85,180 85,-180 85,-180 -85)
 beforeAll(async () => {
   await db.delete(regions)
   await db.delete(packs)
-  await importWorldRegion()
-  await importPack(`${LEGACY_CONTENT_DIR}/philosophy`, 'world')
+  await importPack(`${LEGACY_CONTENT_DIR}/philosophy`)
+  await importRegions(['world'])
 
   const storage = memoryStorage()
   const [pack] = await db.select().from(packs).where(eq(packs.slug, 'philosophy'))

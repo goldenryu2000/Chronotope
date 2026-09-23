@@ -1,8 +1,9 @@
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { db } from '../db/client'
 import { packs, regions } from '../db/schema'
-import { importPack, importWorldRegion, LEGACY_CONTENT_DIR } from '../../scripts/import-legacy'
+import { importPack, LEGACY_CONTENT_DIR } from '../../scripts/import-legacy'
+import { importRegions } from '../../scripts/import-regions'
 import { memoryStorage } from '../publish/storage'
 import { publishPack, publishRegion } from '../publish/publishPack'
 import { packsOnRegion } from './regionPacks'
@@ -18,14 +19,16 @@ import { packsOnRegion } from './regionPacks'
 beforeAll(async () => {
   await db.delete(regions)
   await db.delete(packs)
-  await importWorldRegion()
   for (const slug of ['philosophy', 'mythology', 'creatures']) {
-    await importPack(`${LEGACY_CONTENT_DIR}/${slug}`, 'world')
+    await importPack(`${LEGACY_CONTENT_DIR}/${slug}`)
   }
+  await importRegions(['world', 'india'])
 
   const storage = memoryStorage()
-  const [region] = await db.select().from(regions).where(eq(regions.slug, 'world'))
-  await publishRegion(region.id, storage)
+  for (const slug of ['world', 'india']) {
+    const [row] = await db.select().from(regions).where(eq(regions.slug, slug))
+    await publishRegion(row.id, storage)
+  }
   for (const slug of ['philosophy', 'mythology']) {
     const [pack] = await db.select().from(packs).where(eq(packs.slug, slug))
     await publishPack(pack.id, storage)
@@ -56,5 +59,29 @@ describe('packsOnRegion', () => {
 
   it('is empty for a region nothing has been laid over', async () => {
     expect(await packsOnRegion('no-such-region')).toEqual([])
+  })
+})
+
+describe('packsOnRegion, on a plate smaller than the world', () => {
+  it('offers the same packs, because each has figures inside india', async () => {
+    const found = await packsOnRegion('india')
+    expect(found.map((pack) => pack.slug)).toEqual(['mythology', 'philosophy'])
+  })
+
+  it('leaves out a pack with nobody on the plate', async () => {
+    // A switcher entry that empties the map is the dead end the published-only
+    // filter already guards against by another route. Proved by narrowing the
+    // plate to open sea rather than by deleting content: the rule is about
+    // where figures stand, not about which pack.
+    await db.execute(sql`
+      update regions
+      set bbox = ST_SetSRID(ST_MakeEnvelope(-30, -30, -20, -20), 4326)
+      where slug = 'india'
+    `)
+    try {
+      expect(await packsOnRegion('india')).toEqual([])
+    } finally {
+      await importRegions(['world', 'india'])
+    }
   })
 })

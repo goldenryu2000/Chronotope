@@ -4,15 +4,14 @@ import { join } from 'node:path'
 import { eq, sql } from 'drizzle-orm'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { db } from '../src/db/client'
-import { entities, eraSets, eras, packs, regions } from '../src/db/schema'
-import { importPack, importWorldRegion, LEGACY_CONTENT_DIR } from './import-legacy'
+import { entities, eraSets, packs, regions } from '../src/db/schema'
+import { importPack, LEGACY_CONTENT_DIR } from './import-legacy'
 
 describe('legacy import', () => {
   beforeAll(async () => {
     await db.delete(regions)
     await db.delete(packs)
-    await importWorldRegion()
-    await importPack(`${LEGACY_CONTENT_DIR}/philosophy`, 'world')
+    await importPack(`${LEGACY_CONTENT_DIR}/philosophy`)
   })
 
   it('imports every philosophy entity', async () => {
@@ -26,18 +25,15 @@ describe('legacy import', () => {
     expect(laozi.span).toEqual([-604, -499])
   })
 
-  it('attaches the pack eras as an override on world, not as the region default', async () => {
+  it('lays the pack on no region by itself', async () => {
+    // Placement moved to `scripts/import-regions.ts` when regions became files
+    // under `data/regions/`: a region declares what is laid over it, so
+    // importing a pack writes no `era_sets` row at all. Held here because the
+    // opposite — two scripts writing the same row — is the drift that change
+    // was made to prevent. `import-regions.test.ts` holds the other half.
     const [pack] = await db.select().from(packs).where(eq(packs.slug, 'philosophy'))
-    const [override] = await db.select().from(eraSets).where(eq(eraSets.packId, pack.id))
-    expect(override).toBeDefined()
-    const rows = await db.select().from(eras).where(eq(eras.eraSetId, override.id))
-    expect(rows.length).toBe(11)
-  })
-
-  it('leaves the world region with a default era set of its own', async () => {
-    const [world] = await db.select().from(regions).where(eq(regions.slug, 'world'))
-    const sets = await db.select().from(eraSets).where(eq(eraSets.regionId, world.id))
-    expect(sets.some((s) => s.packId === null)).toBe(true)
+    const sets = await db.select().from(eraSets).where(eq(eraSets.packId, pack.id))
+    expect(sets).toEqual([])
   })
 
   it('does not transpose latitude and longitude', async () => {
@@ -87,7 +83,7 @@ describe('legacy import', () => {
 
     let caught: unknown
     try {
-      await importPack(dir, 'world')
+      await importPack(dir)
     } catch (err) {
       caught = err
     }

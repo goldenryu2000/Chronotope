@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { publishedAtlases } from '@/src/read/atlasIndex'
+import { publishedAtlases, type AtlasIndexRegion } from '@/src/read/atlasIndex'
 import { publishedTours } from '@/src/read/currentTour'
 import { borderSpan, heroFrames } from '@/src/read/heroFrames'
 import { freePortraits, tourCovers, type Portrait } from '@/src/read/landingPortraits'
@@ -33,17 +33,17 @@ export const revalidate = 300
 type ComingIcon = 'region' | 'puzzle' | 'tour' | 'compare' | 'life' | 'atlases'
 
 const COMING: { title: string; hook: string; status: 'in-works' | 'planned'; icon: ComingIcon }[] = [
-  {
-    title: 'India, up close',
-    hook: 'Kingdoms, trade towns and dynasties drawn at a finer scale. More regions to follow.',
-    status: 'in-works',
-    icon: 'region',
-  },
   { title: 'Daily puzzle', hook: 'One figure, one map. Guess where and when they lived.', status: 'planned', icon: 'puzzle' },
   { title: 'Build your own tour', hook: 'Pick the stops, write the story, share the link.', status: 'planned', icon: 'tour' },
   { title: 'Compare two years', hook: 'Split the map and see 1914 beside 1920.', status: 'planned', icon: 'compare' },
   { title: 'Follow a life', hook: "Trace one person's journey across the map, city by city.", status: 'planned', icon: 'life' },
   { title: 'New atlases', hook: 'Explorers, empires, inventions and languages.', status: 'planned', icon: 'atlases' },
+  {
+    title: 'More regions',
+    hook: 'Europe, China and the Islamic world drawn as closely as India is.',
+    status: 'planned',
+    icon: 'region',
+  },
 ]
 
 const COMING_GROUPS = [
@@ -130,6 +130,101 @@ function listed(items: readonly string[]): string {
   return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`
 }
 
+/** Every region in the tree, parents before the plates inside them. */
+function flatten(regions: readonly AtlasIndexRegion[]): AtlasIndexRegion[] {
+  return regions.flatMap((region) => [region, ...flatten(region.children)])
+}
+
+/**
+ * One region and the packs laid over it, with the plates drawn inside it
+ * nested underneath.
+ *
+ * Recursive, so a third level of detail costs this component nothing. Nothing
+ * authors one yet; the shape simply does not stand in the way.
+ */
+function RegionBlock({
+  region, portraits, startPackSlug, depth = 0,
+}: {
+  region: AtlasIndexRegion
+  portraits: Map<string, Portrait[]>
+  /** Which pack carries the "Start here" tag, if any is on this region. */
+  startPackSlug?: string
+  depth?: number
+}) {
+  const mine = portraits.get(region.slug) ?? []
+
+  return (
+    <div className="region" data-depth={depth}>
+      <div className="region__head">
+        <h3 className="region__title">{region.title}</h3>
+        <p className="region__subtitle">{region.subtitle}</p>
+      </div>
+
+      <ul className="packs">
+        {region.packs.map((pack) => {
+          const strip = portraitStrip(
+            mine.filter((portrait) => portrait.pack === pack.slug),
+            STRIP,
+          )
+          const more = othersCount(pack.entityCount, strip.length)
+          return (
+            <li key={pack.slug}>
+              <Link className="card pack" href={`/${region.slug}/${pack.slug}`}>
+                {strip.length > 0 && (
+                  <span className="pack__faces">
+                    {strip.map((portrait) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        key={portrait.slug}
+                        className="pack__face"
+                        src={portrait.src}
+                        alt={`Depiction of ${portrait.name}`}
+                        width={110}
+                        height={146}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ))}
+                  </span>
+                )}
+                <span className="pack__body">
+                  <span className="pack__heading">
+                    <span className="card__title">{pack.title}</span>
+                    {pack.slug === startPackSlug && <span className="pack__tag">Start here</span>}
+                  </span>
+                  <span className="card__subtitle">{pack.subtitle}</span>
+                  <span className="pack__names">
+                    {strip.length > 0
+                      ? `${listed([
+                        ...strip.map((portrait) => portrait.name),
+                        ...(more > 0 ? [`${more} more`] : []),
+                      ])}`
+                      : `${pack.entityCount} figures`}
+                  </span>
+                  <span className="pack__open">Open {pack.title}</span>
+                </span>
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+
+      {region.children.length > 0 && (
+        <div className="region__inside">
+          {/* Named, because a nested block with no explanation reads as a
+              sub-category of packs rather than as a closer map. */}
+          <p className="region__inside-note">
+            Closer in: the same figures and the same years, drawn at a finer scale.
+          </p>
+          {region.children.map((child) => (
+            <RegionBlock key={child.slug} region={child} portraits={portraits} depth={depth + 1} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default async function Home() {
   const [atlases, tourRegions, covers] = await Promise.all([
     publishedAtlases(),
@@ -144,12 +239,16 @@ export default async function Home() {
     ? await Promise.all([heroFrames(first.slug), borderSpan(first.slug), freePortraits(first.slug)])
     : [[], null, [] as Portrait[]]
 
-  // Every other region's portraits, for its own pack cards.
+  // Every other region's portraits, for its own pack cards. Flattened, because
+  // a plate drawn inside another is rendered nested but still draws its own
+  // faces, and `freePortraits` is already scoped to what stands on it.
   const portraitsByRegion = new Map<string, Portrait[]>()
   if (first) portraitsByRegion.set(first.slug, firstPortraits)
-  await Promise.all(atlases.slice(1).map(async (region) => {
-    portraitsByRegion.set(region.slug, await freePortraits(region.slug))
-  }))
+  await Promise.all(flatten(atlases)
+    .filter((region) => region !== first)
+    .map(async (region) => {
+      portraitsByRegion.set(region.slug, await freePortraits(region.slug))
+    }))
 
   const start = first ? startPack(first.packs, firstPortraits) : undefined
   const otherPacks = first?.packs.filter((pack) => pack.slug !== start?.slug) ?? []
@@ -223,68 +322,20 @@ export default async function Home() {
 
             {/* Grouped by region: a pack is a choice made inside a region, so
                 the region is the map being chosen and its packs are the ways in.
-                The heading is not a link; there is no `/<region>` route. */}
-            {atlases.map((region) => {
-              const portraits = portraitsByRegion.get(region.slug) ?? []
-              return (
-                <div className="region" key={region.slug}>
-                  <div className="region__head">
-                    <h3 className="region__title">{region.title}</h3>
-                    <p className="region__subtitle">{region.subtitle}</p>
-                  </div>
+                The heading is not a link; there is no `/<region>` route.
 
-                  <ul className="packs">
-                    {region.packs.map((pack) => {
-                      const strip = portraitStrip(
-                        portraits.filter((portrait) => portrait.pack === pack.slug),
-                        STRIP,
-                      )
-                      const more = othersCount(pack.entityCount, strip.length)
-                      const isStart = region === first && pack.slug === start?.slug
-                      return (
-                        <li key={pack.slug}>
-                          <Link className="card pack" href={`/${region.slug}/${pack.slug}`}>
-                            {strip.length > 0 && (
-                              <span className="pack__faces">
-                                {strip.map((portrait) => (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <img
-                                    key={portrait.slug}
-                                    className="pack__face"
-                                    src={portrait.src}
-                                    alt={`Depiction of ${portrait.name}`}
-                                    width={110}
-                                    height={146}
-                                    loading="lazy"
-                                    decoding="async"
-                                  />
-                                ))}
-                              </span>
-                            )}
-                            <span className="pack__body">
-                              <span className="pack__heading">
-                                <span className="card__title">{pack.title}</span>
-                                {isStart && <span className="pack__tag">Start here</span>}
-                              </span>
-                              <span className="card__subtitle">{pack.subtitle}</span>
-                              <span className="pack__names">
-                                {strip.length > 0
-                                  ? `${listed([
-                                    ...strip.map((portrait) => portrait.name),
-                                    ...(more > 0 ? [`${more} more`] : []),
-                                  ])}`
-                                  : `${pack.entityCount} figures`}
-                              </span>
-                              <span className="pack__open">Open {pack.title}</span>
-                            </span>
-                          </Link>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                </div>
-              )
-            })}
+                A plate drawn inside another is nested under it rather than
+                listed beside it, because it is not an alternative: it is a
+                closer look at part of the same map, and a flat list would say
+                the opposite. */}
+            {atlases.map((region) => (
+              <RegionBlock
+                key={region.slug}
+                region={region}
+                portraits={portraitsByRegion}
+                startPackSlug={region === first ? start?.slug : undefined}
+              />
+            ))}
           </section>
         ) : (
           /* An empty list is a real state worth naming, not a blank space. */
@@ -311,7 +362,11 @@ export default async function Home() {
                   <h3 className="region__title">{region.title}</h3>
                   <p className="region__subtitle">
                     <Link className="region__more" href={`/${region.slug}/tours`}>
-                      All {region.tours.length} tours
+                      {/* A plate can have one tour, and "All 1 tours" reads
+                          like a placeholder nobody finished. */}
+                      {region.tours.length === 1
+                        ? 'The one tour here'
+                        : `All ${region.tours.length} tours`}
                     </Link>
                   </p>
                 </div>
@@ -359,7 +414,12 @@ export default async function Home() {
             <p className="section__note">What we are building next. None of it is here yet.</p>
           </div>
 
-          {COMING_GROUPS.map((group) => (
+          {/* Only a group with something in it. Items leave this list when they
+              ship, and a heading left standing over nothing reads as a section
+              that failed to load rather than as a promise nobody made. */}
+          {COMING_GROUPS.filter(
+            (group) => COMING.some((item) => item.status === group.status),
+          ).map((group) => (
             <div className={`coming-group coming-group--${group.status}`} key={group.status}>
               <h3 className="coming-group__title">{group.label}</h3>
               <ul className="coming">

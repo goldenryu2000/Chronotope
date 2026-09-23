@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { cache } from 'react'
-import { and, asc, eq } from 'drizzle-orm'
+import { and, asc, eq, sql } from 'drizzle-orm'
 import { isSlug } from '@/src/data/schemas'
 import { db } from '@/src/db/client'
 import { entities, entityTraditions, packs, regions, traditions } from '@/src/db/schema'
@@ -48,7 +48,7 @@ const loadEntity = cache(async (
   // The atlas route 404s on an unknown region; a URL like
   // /nonsense/philosophy/laozi should not render here either.
   const [regionRow] = await db
-    .select({ id: regions.id })
+    .select({ id: regions.id, bbox: regions.bbox })
     .from(regions)
     .where(eq(regions.slug, region))
     .limit(1)
@@ -70,7 +70,16 @@ const loadEntity = cache(async (
     })
     .from(entities)
     .innerJoin(packs, eq(entities.packId, packs.id))
-    .where(and(eq(packs.slug, pack), eq(entities.slug, entity)))
+    // On the plate, not merely in the pack. The back link goes to
+    // `/<region>/<pack>`, and a regional atlas draws only the figures inside
+    // its own edges -- so `/india/philosophy/socrates` would be a page whose
+    // one way out is a map with no pin for the person it is about. Same
+    // predicate the atlas filters with and `generateStaticParams` enumerates.
+    .where(and(
+      eq(packs.slug, pack),
+      eq(entities.slug, entity),
+      sql`${entities.point} && (select bbox from ${regions} where slug = ${region})`,
+    ))
     .limit(1)
   if (!row) return null
 
@@ -107,17 +116,20 @@ const loadEntity = cache(async (
  * changing.
  */
 export async function generateStaticParams() {
-  const [regionRows, entityRows] = await Promise.all([
-    db.select({ slug: regions.slug }).from(regions),
-    db
-      .select({ pack: packs.slug, entity: entities.slug })
-      .from(entities)
-      .innerJoin(packs, eq(entities.packId, packs.id)),
-  ])
+  // Not a cross product any more. A region draws the figures inside its own
+  // edges, so a second plate multiplying every entity by every region would
+  // prerender hundreds of pages the atlas never links and whose back link
+  // leads to a map without them. The bbox test is the same one the atlas and
+  // `loadEntity` apply, and on `world` it selects everything, so the world's
+  // pages are unchanged.
+  const rows = await db.execute(sql`
+    select r.slug as region, p.slug as pack, e.slug as entity
+    from entities e
+    join packs p on p.id = e.pack_id
+    join regions r on e.point && r.bbox
+  `) as unknown as Array<{ region: string; pack: string; entity: string }>
 
-  return regionRows.flatMap((region) =>
-    entityRows.map((row) => ({ region: region.slug, pack: row.pack, entity: row.entity })),
-  )
+  return rows.map((row) => ({ region: row.region, pack: row.pack, entity: row.entity }))
 }
 
 export async function generateMetadata(

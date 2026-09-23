@@ -1,0 +1,105 @@
+{
+  "id": "india",
+  "title": "India",
+  "subtitle": "the subcontinent, kingdom by kingdom",
+  "parent": "world",
+  "bbox": [66, 5, 97.6, 37.6],
+  "minZoom": 3,
+  "maxZoom": 8,
+  "defaultCamera": {
+    "center": [80.5, 21.5],
+    "zoom": 3.8
+  },
+  "range": {
+    "start": -3000,
+    "end": 2026
+  },
+  "theme": "rustic",
+  "packs": [
+    "philosophy",
+    "mythology",
+    "creatures"
+  ],
+  "eras": [
+    {
+      "id": "indus",
+      "label": "The Indus Cities",
+      "start": -3000,
+      "end": -1500,
+      "weight": 7,
+      "blurb": "Mohenjo-daro and Harappa ran drains, standard weights and a script nobody can read, over an area larger than Egypt and Mesopotamia together. Then the cities were left, for reasons still argued over, and writing did not return to the subcontinent for a thousand years."
+    },
+    {
+      "id": "vedic",
+      "label": "The Vedic Age",
+      "start": -1500,
+      "end": -600,
+      "weight": 9,
+      "blurb": "No cities, no inscriptions, and the longest continuously recited text in the world. The hymns put their singers on the rivers of the Punjab and later on the Ganges plain, which is most of what is known about where anyone was."
+    },
+    {
+      "id": "mahajanapadas",
+      "label": "The Sixteen Realms",
+      "start": -600,
+      "end": -321,
+      "weight": 10,
+      "blurb": "Kuru, Kosala, Magadha, Avanti and a dozen more, some of them kingdoms and some of them republics, arguing over the Ganges. Two men who walked out of them to think about suffering, Mahavira and the Buddha, are why this century is remembered outside India at all."
+    },
+    {
+      "id": "mauryan",
+      "label": "Maurya and After",
+      "start": -321,
+      "end": 200,
+      "weight": 10,
+      "blurb": "Chandragupta takes Magadha, and his grandson Ashoka cuts edicts into rock from Kandahar to Karnataka, in four scripts, apologising for a war. What follows is two centuries of Greeks, Sakas, Kushans and Satavahanas dividing the pieces up again."
+    },
+    {
+      "id": "classical",
+      "label": "The Classical Age",
+      "start": 200,
+      "end": 650,
+      "weight": 11,
+      "blurb": "The Guptas in the north, the Vakatakas and the Pallavas in the south, and the centuries that produced decimal place value, Kalidasa, and Nagarjuna's emptiness. Called golden mostly by people who were not farming it."
+    },
+    {
+      "id": "early-medieval",
+      "label": "Kingdoms Without a Centre",
+      "start": 650,
+      "end": 1206,
+      "weight": 12,
+      "blurb": "Palas, Pratiharas, Rashtrakutas, Cholas, Chalukyas: four or five great powers at any moment, and not one of them able to hold the others down. The Cholas sail as far as Srivijaya, the temples get taller, and Kashmir writes the hardest philosophy in Asia."
+    },
+    {
+      "id": "sultanates",
+      "label": "The Sultanates",
+      "start": 1206,
+      "end": 1526,
+      "weight": 9,
+      "blurb": "Delhi is ruled from Delhi by five dynasties in three hundred years, and the south answers with Vijayanagara. Persian becomes a language of Indian administration and stays one for the next six centuries."
+    },
+    {
+      "id": "mughal",
+      "label": "Mughal India",
+      "start": 1526,
+      "end": 1757,
+      "weight": 10,
+      "blurb": "Babur wins at Panipat with artillery, and his descendants govern most of the subcontinent for two hundred years. Akbar argues theology with Jesuits and Jains; Aurangzeb spends his last decades besieging the Deccan and never finishes."
+    },
+    {
+      "id": "company",
+      "label": "Company and Crown",
+      "start": 1757,
+      "end": 1947,
+      "weight": 11,
+      "blurb": "A trading company acquires an army, then provinces, then the right to tax Bengal, and in 1858 hands the whole of it over to a queen. Railways, famines, trigonometrical surveys, and a long argument about whose country this is."
+    },
+    {
+      "id": "republic",
+      "label": "The Republic",
+      "start": 1947,
+      "end": 2026,
+      "weight": 6,
+      "blurb": "Partition draws two new lines through Punjab and Bengal at a few weeks' notice. The princely states are absorbed, the lines in Kashmir and along the Himalaya are still disputed, and this map draws them as the Survey of India requires."
+    }
+  ]
+}

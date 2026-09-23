@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url'
 import type { S3Client } from '@aws-sdk/client-s3'
 import { db } from '../src/db/client'
 import { putObject, r2Client, r2ConfigFromEnv } from '../src/publish/r2'
-import { TILE_DIR } from './build-tiles'
+import { TILE_DIR, tileableRegions } from './build-tiles'
 
 /**
  * An hour, not forever. The archive keeps one key per region and is rebuilt
@@ -44,11 +44,20 @@ export async function uploadTiles(
 }
 
 async function run() {
-  const region = process.argv[2]
-  if (!region) throw new Error('usage: upload-tiles.ts <region>')
+  // No argument uploads every archive that has been cut, matching
+  // `build-tiles.ts`: a deploy that uploaded only the region whose slug
+  // someone remembered to type would publish a second plate pointing at tiles
+  // the bucket does not hold, and the atlas draws no map without them.
+  const only = process.argv[2]
+  const slugs = only ? [only] : await tileableRegions()
+  if (slugs.length === 0) throw new Error('no region has an archive to upload')
+
   const config = r2ConfigFromEnv(process.env)
-  const { key, bytes } = await uploadTiles(r2Client(config), config.bucket, region)
-  console.log(`Uploaded ${key} (${(bytes / 1e6).toFixed(1)} MB)`)
+  const client = r2Client(config)
+  for (const region of slugs) {
+    const { key, bytes } = await uploadTiles(client, config.bucket, region)
+    console.log(`Uploaded ${key} (${(bytes / 1e6).toFixed(1)} MB)`)
+  }
 }
 
 const isMain = process.argv[1] !== undefined

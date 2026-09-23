@@ -3,8 +3,11 @@ import { expect, test } from '@playwright/test'
 test('the landing page groups packs under the map they are drawn on', async ({ page }) => {
   await page.goto('/')
 
+  // Scoped to the block's own head: a region can hold another region, so an
+  // unscoped lookup inside the first block finds the nested plate's title too.
   const region = page.locator('.region').first()
-  await expect(region.locator('.region__title')).toHaveText(/\S/)
+  await expect(region.locator('.region__head').first().locator('.region__title'))
+    .toHaveText(/\S/)
 
   // The grouping is the point: a pack is a choice inside a region now, so the
   // region is what is being chosen and its packs are the ways in.
@@ -186,17 +189,48 @@ test('the roadmap separates what is in the works from what is planned', async ({
   await page.goto('/')
 
   const section = page.getByRole('region', { name: 'Coming to Chronotope' })
-  await expect(section.getByRole('heading', { name: 'In the works' })).toBeVisible()
-  await expect(section.getByRole('heading', { name: 'Planned' })).toBeVisible()
-  await expect(section.locator('.coming__item')).toHaveCount(6)
+  await expect(section.locator('.coming__item')).not.toHaveCount(0)
 
-  await expect(section.locator('.coming__item[data-status="in-works"]')).toHaveText(/India, up close/)
-  await expect(section.locator('.coming__item[data-status="planned"]')).toHaveCount(5)
+  /*
+   * Every heading has something under it, and nothing is under no heading.
+   *
+   * Asserted as an invariant rather than as a fixed list, because the list is
+   * meant to shrink: an item leaves it in the same change that ships the
+   * feature. Pinning the count meant this test had to be edited to record
+   * progress, and a test edited to record progress stops arguing with you.
+   */
+  const groups = section.locator('.coming-group')
+  for (const group of await groups.all()) {
+    await expect(group.locator('.coming__item')).not.toHaveCount(0)
+  }
+  const grouped = await section.locator('.coming-group .coming__item').count()
+  expect(await section.locator('.coming__item').count()).toBe(grouped)
 
   // Dropped from the roadmap: not exciting enough to promise.
   for (const gone of ['Accounts', 'Search']) {
     await expect(section.getByText(gone, { exact: true })).toHaveCount(0)
   }
+})
+
+/**
+ * The rule the roadmap's own comment states: anything that ships leaves the
+ * list in the same change and arrives somewhere clickable.
+ *
+ * India shipped as a regional atlas, so it may not still be promised as
+ * unbuilt. This is the falsifiable half of that rule, and it is what would
+ * catch the next feature being announced twice.
+ */
+test('a promise that has shipped is not still on the roadmap', async ({ page }) => {
+  await page.goto('/')
+  const section = page.getByRole('region', { name: 'Coming to Chronotope' })
+  await expect(section.getByText('India, up close')).toHaveCount(0)
+
+  const india = page.locator('.region__inside .card').first()
+  await expect(india).toBeVisible()
+  const href = await india.getAttribute('href')
+  expect(href).toMatch(/^\/india\//)
+  const response = await page.goto(href as string)
+  expect(response?.status()).toBe(200)
 })
 
 const themeOf = (page: import('@playwright/test').Page) =>

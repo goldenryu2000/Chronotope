@@ -244,20 +244,53 @@ function idsAtZoom(reader: TileArchive, zoom: number): Set<number> {
 const isMain = process.argv[1] !== undefined
   && import.meta.url === pathToFileURL(process.argv[1]).href
 
+/**
+ * Every region that has boundaries to cut, by slug.
+ *
+ * Named regions with no geometry inside them are not an error and not listed:
+ * `import-boundaries` is a step of its own, and a cold start that has not
+ * reached it yet is a normal intermediate state. Bounded by each region's own
+ * bbox, matching how `buildTiles` clips and how `publish-all` decides a region
+ * is untiled, so the three agree about which plates are waiting on an archive.
+ */
+export async function tileableRegions(): Promise<string[]> {
+  const rows = await db.execute(sql`
+    select r.slug from regions r
+    where exists (select 1 from boundaries b where b.geom && r.bbox)
+    order by r.slug
+  `) as unknown as Array<{ slug: string }>
+  return rows.map((row) => row.slug)
+}
+
 if (isMain) {
   const run = async () => {
-    const slug = process.argv[2] ?? 'world'
-    const started = Date.now()
-    const result = await buildTiles(slug)
-    const elapsed = (Date.now() - started) / 1000
-    console.log(
-      `Built ${result.archive}: ${result.features} features into ${result.tiles} tiles, `
-      + `${(result.bytes / 1e6).toFixed(2)} MB, largest tile `
-      + `${(result.maxTileBytes / 1024).toFixed(0)} KB, `
-      + `${result.droppedAtMaxZoom} features missing at max zoom `
-      + `(widest ${result.widestDropped.toExponential(2)}°), `
-      + `in ${elapsed.toFixed(1)}s.`,
-    )
+    // No argument cuts every region, the way `publish-all` publishes every
+    // region: `world` is a row like any other (Rule 3), and defaulting to its
+    // slug meant a second plate silently never got an archive and its atlas
+    // drew a timeline over an empty page. A slug still narrows to one, which
+    // is what re-cutting a single plate after an edit wants.
+    const only = process.argv[2]
+    const slugs = only ? [only] : await tileableRegions()
+    if (slugs.length === 0) {
+      throw new Error(
+        'no region has boundaries to tile. Run `npx tsx scripts/import-regions.ts` and '
+        + '`npx tsx scripts/import-boundaries.ts` first.',
+      )
+    }
+
+    for (const slug of slugs) {
+      const started = Date.now()
+      const result = await buildTiles(slug)
+      const elapsed = (Date.now() - started) / 1000
+      console.log(
+        `Built ${result.archive}: ${result.features} features into ${result.tiles} tiles, `
+        + `${(result.bytes / 1e6).toFixed(2)} MB, largest tile `
+        + `${(result.maxTileBytes / 1024).toFixed(0)} KB, `
+        + `${result.droppedAtMaxZoom} features missing at max zoom `
+        + `(widest ${result.widestDropped.toExponential(2)}°), `
+        + `in ${elapsed.toFixed(1)}s.`,
+      )
+    }
   }
 
   run()

@@ -65,6 +65,13 @@
   --map-label: #33281a;
   --map-label-halo: #faf4e6;
 
+  /* The frame around a plate drawn in more detail elsewhere, and the label
+     that names it. Not a border colour and deliberately not near one: every
+     other line on this map is a frontier, and the one line that is an
+     invitation has to read as a different kind of mark. */
+  --map-doorway: #7a5c2e;
+  --map-doorway-ink: #2a2115;
+
   /* MapLibre draws its own zoom/compass icons as near-black SVG data URIs, so
      the theme cannot recolour them — it can only filter them. Rustic's control
      surface is pale, which is what those icons already assume, so nothing to

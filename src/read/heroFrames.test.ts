@@ -3,12 +3,12 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import { db } from '../db/client'
 import { boundaries, regions } from '../db/schema'
 import { importBoundaries } from '../../scripts/import-boundaries'
-import { importWorldRegion } from '../../scripts/import-legacy'
+import { importRegions } from '../../scripts/import-regions'
 import { borderSpan, heroFrames } from './heroFrames'
 
 beforeAll(async () => {
   const [existing] = await db.select().from(regions).where(eq(regions.slug, 'world'))
-  if (!existing) await importWorldRegion()
+  if (!existing) await importRegions(['world'])
 
   const [counted] = await db.execute(
     sql`select count(*)::int as n from ${boundaries}`,

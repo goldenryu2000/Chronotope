@@ -88,3 +88,28 @@ export function nearestInTime(
 export function midSpan(entity: ActiveEntity): number {
   return Math.round((entity.from + entity.to) / 2)
 }
+
+/**
+ * The year an atlas should open on, given the year it was asked to.
+ *
+ * A pack names one opening year for everywhere it is laid, and that year is
+ * chosen for the whole of what the pack holds. Read through a plate that draws
+ * only part of it, the same year can be empty: philosophy opens in 350 BCE,
+ * which is Plato's Athens and nobody at all in India, where the nearest
+ * figures are a century dead and four centuries unborn.
+ *
+ * So the asked-for year is kept whenever anyone is there, and otherwise the
+ * atlas opens where its own empty state would have offered to send the reader
+ * — the nearest figure in time, at a year they are comfortably on the map.
+ * The two agreeing is the point: an atlas that opens empty has spent its first
+ * impression asking to be rescued.
+ *
+ * Identity when the plate has nobody at all: there is no year that helps, and
+ * inventing one would move the timeline for no reason.
+ */
+export function openingYear(entities: readonly ActiveEntity[], wanted: number): number {
+  if (entities.length === 0) return wanted
+  if (activeAt(entities, wanted).length > 0) return wanted
+  const nearest = nearestInTime(entities, wanted)
+  return nearest ? midSpan(nearest) : wanted
+}

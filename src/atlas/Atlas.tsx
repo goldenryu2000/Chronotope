@@ -1,13 +1,17 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { activeAt, isActive, withActiveSpan } from '../data/entitySpan'
+import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { activeAt, isActive, openingYear, withActiveSpan } from '../data/entitySpan'
 import { assetUrl } from '../lib/assetUrl'
+import { contains } from '../lib/bbox'
 import { PackSchema, RegionSchema, type AtlasView, type Pack, type Region } from '../data/schemas'
 import LayerMenu from '../map/LayerMenu'
 import MapCanvas, { type Camera } from '../map/MapCanvas'
 import Curtain from './Curtain'
+import type { Doorway } from '../map/doorways'
+import { kinHref, type RegionKin } from '../read/kin'
 import type { RegionLayer } from '../read/regionLayers'
 import type { RegionPack } from '../read/regionPacks'
 import PackSwitcher from './PackSwitcher'
@@ -41,6 +45,16 @@ interface Props {
    * fetches artifacts it was handed the address of.
    */
   layers?: readonly RegionLayer[]
+  /**
+   * Plates drawn inside this one, offered on the map as a way in.
+   *
+   * Resolved on the server, for the reason the pack list and the layers are:
+   * the browser never asks the database anything, and which plate is worth
+   * offering depends on what has been published.
+   */
+  deeper?: readonly RegionKin[]
+  /** The plate this one is drawn inside, or nothing for a root atlas. */
+  parent?: RegionKin | null
   /**
    * Where to open, when something other than the pack decides.
    *
@@ -85,9 +99,10 @@ const clamp = (value: number, low: number, high: number) =>
  * standing: the map, its loaded tiles, the camera, and the year.
  */
 export function Atlas({
-  packUrl, regionUrl, packs, activePack, regionSlug, layers = [], initialView, children,
-  writesPackUrl = true,
+  packUrl, regionUrl, packs, activePack, regionSlug, layers = [], deeper = [], parent = null,
+  initialView, children, writesPackUrl = true,
 }: Props) {
+  const router = useRouter()
   // Region and pack land separately because they change separately: the
   // region is the route, the pack is a choice made inside it. `Loaded` is
   // derived from the pair rather than fetched as one.
@@ -195,6 +210,32 @@ export function Atlas({
     }
   }, [active, packUrl, packUrls, select])
 
+  /**
+   * The pack's spans, offset into the years the map actually shows them, and
+   * narrowed to the figures who stand on this plate.
+   *
+   * The narrowing is the one rule a regional atlas adds to the engine, and it
+   * is here rather than anywhere further down so that every reader of this
+   * list agrees: the pins, the timeline's lanes, the empty-state count and the
+   * panel's list of contemporaries are all answering "who was here, then", and
+   * three of them answering it about the whole world would be three different
+   * maps on one screen.
+   *
+   * A pack artifact is still the canonical, undivided pack. Nothing is
+   * duplicated per region and nothing is republished to add a plate: the
+   * region says where its edges are and the same artifact is read through
+   * them. On `world` the edges are the world's, so this is the identity.
+   */
+  const entities = useMemo(
+    () => {
+      if (!pack || !region) return []
+      return pack.entities
+        .filter((entity) => contains(region.bbox, entity.lng, entity.lat))
+        .map((entity) => withActiveSpan(entity, pack.activeOffset))
+    },
+    [pack, region],
+  )
+
   /*
    * Where the cursor lands once both documents are in.
    *
@@ -213,11 +254,16 @@ export function Atlas({
     // Read straight off the store rather than from the `year` binding: the
     // year this effect wants is whatever is on screen when a pack lands, and
     // depending on it would re-run this on every scrub and pin the cursor.
-    const wanted = opened.current ? useAtlas.getState().year : pack.startYear
+    const asked = opened.current ? useAtlas.getState().year : pack.startYear
     const range = resolveRange(region, pack)
+    // Only on the first pack. A switch is a question about the year already on
+    // screen ("who else was here, *then*"), and moving the cursor to rescue an
+    // empty answer would answer a different one — the empty state is the right
+    // response there, and it says so in words.
+    const wanted = opened.current ? asked : openingYear(entities, asked)
     setYear(clamp(wanted, range.start, range.end))
     opened.current = true
-  }, [region, pack, setYear])
+  }, [region, pack, entities, setYear])
 
   /*
    * The route's opening view, parked before anything is fetched.
@@ -277,13 +323,6 @@ export function Atlas({
   if (pendingView && pendingView.pack !== active && packUrls.has(pendingView.pack)) {
     setActive(pendingView.pack)
   }
-
-  /** The pack's spans, offset into the years the map actually shows them. */
-  const entities = useMemo(
-    () =>
-      pack ? pack.entities.map((entity) => withActiveSpan(entity, pack.activeOffset)) : [],
-    [pack],
-  )
 
   /*
    * A parked view lands once its pack is on screen.
@@ -437,9 +476,47 @@ export function Atlas({
             zoom: region.defaultCamera.zoom,
             minZoom: region.minZoom,
             maxZoom: region.maxZoom,
+            bounds: region.bbox,
           }
         : null,
     [region],
+  )
+
+  /*
+   * Going into a plate is a navigation, not a pack switch.
+   *
+   * `router.push` rather than the `pushState` a pack switch uses: this is a
+   * different region, so the artifacts, the tiles, the periodization and the
+   * layer menu all change. Remounting the island is exactly right, and the
+   * curtain covers the wait the way it does on any other arrival.
+   */
+  const enterDoorway = useCallback((href: string) => router.push(href), [router])
+
+  /*
+   * The ways in and the way out, addressed to the pack the reader is actually
+   * reading.
+   *
+   * Built here rather than on the server, because `active` changes without a
+   * navigation: a reader who opens India and switches to the gods should leave
+   * India among the gods, and go deeper among them too. The server's own pack
+   * is only the opening one. `kinHref` falls back to the destination's first
+   * pack when it does not offer this one, which is the honest answer rather
+   * than a link to a 404.
+   */
+  const doorways = useMemo<Doorway[]>(
+    () => deeper.map((child) => ({
+      id: child.slug,
+      title: child.title,
+      subtitle: child.subtitle,
+      bbox: child.bbox,
+      href: kinHref(child, active),
+    })),
+    [deeper, active],
+  )
+
+  const up = useMemo(
+    () => (parent ? { title: parent.title, href: kinHref(parent, active) } : null),
+    [parent, active],
   )
 
   const root = useRef<HTMLDivElement>(null)
@@ -455,6 +532,8 @@ export function Atlas({
           tilesetUrl={tilesetUrl}
           borderYears={region.borderYears}
           layers={layers}
+          doorways={doorways}
+          onEnterDoorway={enterDoorway}
           onReady={() => setPainted(true)}
         />
       )}
@@ -496,10 +575,30 @@ export function Atlas({
         * It doubles as the only place this screen says what it is: the header
         * names the region and the pack, and never the atlas they belong to.
         */}
-      <Link className="atlas__home" href="/" data-layout="top" data-layout-corner="">
-        <span className="atlas__home-arrow" aria-hidden="true" />
-        <span className="atlas__home-label">Chronotope</span>
-      </Link>
+      <nav className="atlas__trail" aria-label="Where you are" data-layout="top" data-layout-corner="">
+        <Link className="atlas__home" href="/">
+          <span className="atlas__home-arrow" aria-hidden="true" />
+          <span className="atlas__home-label">Chronotope</span>
+        </Link>
+        {/*
+          * The plate this one is drawn inside, when there is one.
+          *
+          * Beside the way home rather than anywhere else on the screen,
+          * because it is the same kind of move: out. A reader three switches
+          * deep into India's packs needs one step back to the world map and
+          * one more to the front door, and the browser's own back button walks
+          * through every pack switch before it does either.
+          *
+          * It keeps the pack where the plate above offers it, so leaving India
+          * in the middle of the gods puts you back among the gods.
+          */}
+        {up && (
+          <Link className="atlas__home atlas__home--up" href={up.href}>
+            <span className="atlas__home-arrow" aria-hidden="true" />
+            <span className="atlas__home-label">{up.title}</span>
+          </Link>
+        )}
+      </nav>
 
       <div className="atlas__chrome" data-layout="top" data-layout-corner="">
         <LayerMenu layers={layers} />

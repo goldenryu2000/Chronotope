@@ -1,11 +1,12 @@
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { db } from '../db/client'
 import {
-  boundaries, entities, entityTraditions, packs, regions, traditions,
+  boundaries, entities, entityTraditions, eraSets, packs, regions, traditions,
 } from '../db/schema'
 import { PackSchema, RegionSchema } from '../data/schemas'
-import { importPack, importWorldRegion, LEGACY_CONTENT_DIR } from '../../scripts/import-legacy'
+import { importPack, LEGACY_CONTENT_DIR } from '../../scripts/import-legacy'
+import { importRegions } from '../../scripts/import-regions'
 import { artifactKey, hashArtifact } from './hash'
 import { renderPack } from './renderPack'
 import { renderRegion } from './renderRegion'
@@ -24,8 +25,16 @@ let packId: string
 async function seedWorldAndPhilosophy() {
   await db.delete(regions)
   await db.delete(packs)
-  await importWorldRegion()
-  await importPack(`${LEGACY_CONTENT_DIR}/philosophy`, 'world')
+  // Packs first: a region file names the packs laid over it, and
+  // `importRegions` writes the `era_sets` row only for a pack already there.
+  //
+  // Mythology comes too, because the two cases this suite has to tell apart
+  // are both real in the committed data: philosophy is laid over the world
+  // with no override (the world's own eleven eras are philosophy's), and
+  // mythology is laid over it with six of its own.
+  await importPack(`${LEGACY_CONTENT_DIR}/philosophy`)
+  await importPack(`${LEGACY_CONTENT_DIR}/mythology`)
+  await importRegions(['world'])
 }
 
 describe('renderPack', () => {
@@ -33,6 +42,24 @@ describe('renderPack', () => {
     await seedWorldAndPhilosophy()
     const [row] = await db.select().from(packs).where(eq(packs.slug, 'philosophy'))
     packId = row.id
+  })
+
+  it('omits an era set with no rows, because a placement is not an override', async () => {
+    // A region that offers a pack on its own periodization writes an
+    // `era_sets` row with no eras, which is philosophy on the world. Rendered
+    // as `eraOverrides.world = []`, the client reads it as an override to
+    // nothing, reaches `buildScale([])` and throws in the reader's browser.
+    //
+    // The placement row is asserted first, so this cannot pass by the row
+    // simply being absent — which would be a different bug with the same
+    // symptom here.
+    const [world] = await db.select().from(regions).where(eq(regions.slug, 'world'))
+    const placements = await db.select().from(eraSets)
+      .where(sql`${eraSets.regionId} = ${world.id} and ${eraSets.packId} = ${packId}`)
+    expect(placements).toHaveLength(1)
+
+    const artifact = await renderPack(packId)
+    expect(artifact.eraOverrides).not.toHaveProperty('world')
   })
 
   it('produces an artifact that satisfies the published contract', async () => {
@@ -48,8 +75,13 @@ describe('renderPack', () => {
   })
 
   it('keys eraOverrides by region slug', async () => {
-    const artifact = await renderPack(packId)
+    // Mythology, because that is the pack with a real override on the world:
+    // the gods' timeline runs on six eras where the region's own runs on
+    // eleven, and the key is how the client finds it.
+    const [mythology] = await db.select().from(packs).where(eq(packs.slug, 'mythology'))
+    const artifact = await renderPack(mythology.id)
     expect(Object.keys(artifact.eraOverrides)).toContain('world')
+    expect(artifact.eraOverrides.world).toHaveLength(6)
   })
 
   it('renders identically across repeated calls, so the hash is stable', async () => {

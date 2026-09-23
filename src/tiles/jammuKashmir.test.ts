@@ -3,7 +3,7 @@ import { eq, sql } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { buildTiles } from '../../scripts/build-tiles'
 import { importBoundaries } from '../../scripts/import-boundaries'
-import { importWorldRegion } from '../../scripts/import-legacy'
+import { importRegions } from '../../scripts/import-regions'
 import { claimSql } from '../boundaries/indiaClaim'
 import { db } from '../db/client'
 import { boundaries, regions } from '../db/schema'
@@ -63,9 +63,9 @@ interface Uncovered {
  * database (`docker compose down -v`, then `npm test`) it is simply absent
  * and the build fails with "no region with slug world".
  */
-async function ensureWorldRegion(): Promise<void> {
-  const [existing] = await db.select().from(regions).where(eq(regions.slug, 'world'))
-  if (!existing) await importWorldRegion()
+async function ensureRegions(): Promise<void> {
+  const [existing] = await db.select().from(regions).where(eq(regions.slug, 'india'))
+  if (!existing) await importRegions(['world', 'india'])
 }
 
 let archive: TileArchive
@@ -81,7 +81,7 @@ const namesAt = (lng: number, lat: number): string[] =>
 
 describe('the Jammu and Kashmir correction, in the tiles', () => {
   beforeAll(async () => {
-    await ensureWorldRegion()
+    await ensureRegions()
 
     const [existing] = await db.execute(
       sql`select count(*)::int as n from ${boundaries}`,
@@ -186,4 +186,72 @@ describe('the Jammu and Kashmir correction, in the tiles', () => {
     // stronger assertion: India is not over this town at all.
     expect(names).not.toContain('India')
   })
+})
+
+/**
+ * The same gate against India's own plate.
+ *
+ * Not redundant with the suite above, and the reason is the thing that suite
+ * exists for: **tippecanoe simplifies, and each archive is simplified
+ * differently.** India's is cut from the same corrected rows over a different
+ * zoom range (3 to 8 against 0 to 6), so the geometry a reader sees on
+ * `/india/<pack>` is not the geometry they see on `/world/<pack>`, and a line
+ * that survives one cut is not thereby proved to survive the other. This is
+ * the depiction the Survey of India requires; it has to hold on every plate
+ * that draws it, or the atlas says two different things about Kashmir
+ * depending on how closely you are looking.
+ *
+ * Thinner than the world suite deliberately: the coverage measurement there is
+ * the substantive proof that the correction reached a tile at all, and it does
+ * not need making twice. What is new here is the cut.
+ */
+describe('the Jammu and Kashmir correction, in India\'s own archive', () => {
+  let plate: TileArchive
+  let plateZoom: number
+
+  beforeAll(async () => {
+    await ensureRegions()
+    const [existing] = await db.execute(
+      sql`select count(*)::int as n from ${boundaries}`,
+    ) as unknown as Array<{ n: number }>
+    if (existing.n === 0) await importBoundaries(undefined, { replace: true })
+
+    const built = await buildTiles('india')
+    expect(existsSync(built.archive)).toBe(true)
+    plate = TileArchive.open(built.archive)
+    plateZoom = plate.header.maxZoom
+  }, 900_000)
+
+  afterAll(() => plate?.close())
+
+  const namesOnPlate = (lng: number, lat: number): string[] =>
+    featuresAt(plate, lng, lat, plateZoom)
+      .filter((f) => f.validFrom <= YEAR && YEAR < f.validTo)
+      .map((f) => f.name)
+
+  it('draws the whole claim, which means the plate must not clip it', async () => {
+    // A bbox stopping short of Gilgit or Arunachal would cut the correction in
+    // half at the tile build and no assertion below would notice: the points
+    // outside the plate would simply have no features over them.
+    const [row] = await db.execute(sql`
+      select ST_Contains(r.bbox, ${claimSql()}) as covers
+      from regions r where r.slug = 'india'
+    `) as unknown as Array<{ covers: boolean }>
+    expect(row.covers).toBe(true)
+  })
+
+  it.each(INDIAN)('puts $0 inside India on the plate too', (_place, lng, lat) => {
+    expect(namesOnPlate(lng, lat)).toContain('India')
+  })
+
+  // Beijing is outside the plate and has no features over it there, which is
+  // correct and says nothing about the correction.
+  it.each(UNMOVED.filter(([, lng, lat]) => lng >= 66 && lng <= 97.6 && lat >= 5 && lat <= 37.6))(
+    'leaves $0 in $3 on the plate too',
+    (_place, lng, lat, expected) => {
+      const names = namesOnPlate(lng, lat)
+      expect(names).toContain(expected)
+      expect(names).not.toContain('India')
+    },
+  )
 })

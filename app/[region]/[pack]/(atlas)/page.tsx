@@ -7,6 +7,7 @@ import { isSlug } from '@/src/data/schemas'
 import { db } from '@/src/db/client'
 import { packs, regions } from '@/src/db/schema'
 import { currentArtifactUrl } from '@/src/read/currentArtifact'
+import { childAtlases, parentAtlas } from '@/src/read/regionKin'
 import { layersOnRegion } from '@/src/read/regionLayers'
 import { packsOnRegion } from '@/src/read/regionPacks'
 
@@ -86,11 +87,18 @@ export default async function Page(props: PageProps<'/[region]/[pack]'>) {
   // they are: the browser never asks the database anything. It is one query
   // against rows this request has already warmed, and it is what lets the pack
   // be a choice made on the map rather than a page of its own.
-  const [regionUrl, packUrl, siblings, regionLayers] = await Promise.all([
+  // The plates this one opens onto and the one it sits in are resolved here
+  // for the same reason the pack list is: the browser never asks the database
+  // anything. Both are one indexed lookup against rows this request has
+  // already warmed, and neither is in the region artifact, because the answer
+  // changes when a *pack* is published and the artifact is immutable.
+  const [regionUrl, packUrl, siblings, regionLayers, deeper, parent] = await Promise.all([
     currentArtifactUrl('regions', region),
     currentArtifactUrl('packs', pack),
     packsOnRegion(region),
     layersOnRegion(region),
+    childAtlases(region),
+    parentAtlas(region),
   ])
 
   // A version pointer can outlive the object it points at during a bad
@@ -106,6 +114,8 @@ export default async function Page(props: PageProps<'/[region]/[pack]'>) {
       activePack={pack}
       regionSlug={region}
       layers={regionLayers}
+      deeper={deeper}
+      parent={parent}
     />
   )
 }

@@ -2,7 +2,7 @@ import { eq, sql } from 'drizzle-orm'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { db } from '../db/client'
 import { entities, packs, regions } from '../db/schema'
-import { seedWorldAndPacks } from '../db/testSeed'
+import { seedRegionsAndPacks } from '../db/testSeed'
 import { publishRegion } from '../publish/publishPack'
 import { memoryStorage } from '../publish/storage'
 import { seedTours } from '../../scripts/seed-tours'
@@ -10,7 +10,7 @@ import { freePortraits, tourCovers } from './landingPortraits'
 import { publishAllTours } from './testSupport'
 
 beforeAll(async () => {
-  await seedWorldAndPacks()
+  await seedRegionsAndPacks()
   const [world] = await db.select().from(regions).where(eq(regions.slug, 'world'))
   await publishRegion(world.id, memoryStorage())
   await seedTours()

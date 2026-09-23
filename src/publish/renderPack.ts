@@ -65,11 +65,26 @@ export async function renderPack(packId: string): Promise<Pack> {
     .innerJoin(regions, eq(eraSets.regionId, regions.id))
     .where(eq(eraSets.packId, packId))
 
+  /*
+   * An era set with no rows is a *placement*, not an override.
+   *
+   * `era_sets` answers two questions with one row: "is this pack laid over
+   * this region" and "does it reshape that region's time". A region that
+   * offers a pack on its own periodization -- the normal case for a new plate
+   * -- writes the first without the second, and the set is empty.
+   *
+   * Emitted as `eraOverrides[slug] = []`, that is read by `resolveEras` as an
+   * override to nothing, which reaches `buildScale([])` and throws in the
+   * reader's browser. Omitting the key is the honest encoding: there is no
+   * override here. `resolveEras` also treats an empty array as absent, because
+   * an artifact published before this line existed still has to open.
+   */
   const eraOverrides: Record<string, unknown[]> = {}
   for (const set of overrideSets) {
     const rows = await db.select().from(eras)
       .where(eq(eras.eraSetId, set.setId))
       .orderBy(asc(eras.ordinal))
+    if (rows.length === 0) continue
     eraOverrides[set.regionSlug] = rows.map((e) => ({
       id: e.slug, label: e.label, start: e.start, end: e.end,
       weight: e.weight, blurb: e.blurb,

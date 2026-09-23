@@ -11,7 +11,10 @@
 .NOTPARALLEL:
 
 PORT ?= 3000
-REGION ?= world
+# Which plate to re-cut or re-upload. Empty means every one of them, which is
+# what the cold start and the deploy want: `world` is a row like any other, and
+# defaulting to its slug meant a second region silently never got an archive.
+REGION ?=
 
 .DEFAULT_GOAL := help
 
@@ -80,6 +83,11 @@ status:
 # against published packs. Seeding later would leave six tours in the database
 # with no artifact behind them, and `/world/tours` empty with nothing to say why.
 #
+# Regions come straight after the packs, and in that order: a region file names
+# the packs laid over it, and `import-regions` writes the `era_sets` row that
+# places one only for a pack already in the database. Reversed, every plate
+# would come up with no packs on it and every atlas route would 404.
+#
 # Layers are imported before the tours are seeded, and for a harder reason than
 # ordering taste: a stop names its layers through a foreign key, so seeding a
 # stop that lights a route the database has never heard of is refused outright.
@@ -90,6 +98,7 @@ cold:
 	docker compose up -d --wait
 	npx drizzle-kit migrate
 	npx tsx scripts/import-legacy.ts --all
+	npx tsx scripts/import-regions.ts
 	npx tsx scripts/import-boundaries.ts
 	npx tsx scripts/build-tiles.ts $(REGION)
 	npx tsx scripts/import-layers.ts
@@ -102,14 +111,20 @@ cold:
 migrate:
 	npx drizzle-kit migrate
 
-## import: re-read the legacy packs, the boundaries, the layers and the tours
+## import: re-read the packs, the regions, the boundaries, the layers and the tours
+#
+# The same order as `cold`, and for the same reasons. `import-regions` has to be
+# in here rather than left to `cold`: re-importing the packs drops every
+# `era_sets` row that placed one, so an import that stopped short would leave
+# the regions standing with nothing laid over them.
 import:
 	npx tsx scripts/import-legacy.ts --all
+	npx tsx scripts/import-regions.ts
 	npx tsx scripts/import-boundaries.ts
 	npx tsx scripts/import-layers.ts
 	npx tsx scripts/seed-tours.ts
 
-## tiles: rebuild one region's PMTiles archive (REGION=world)
+## tiles: rebuild every region's PMTiles archive, or one with REGION=<slug>
 tiles:
 	npx tsx scripts/build-tiles.ts $(REGION)
 
@@ -175,6 +190,7 @@ deploy-data:
 	@test -f $(DEPLOY_ENV) || { echo "$(DEPLOY_ENV) is missing. See .env.example."; exit 1; }
 	ENV_FILE=$(DEPLOY_ENV) npx drizzle-kit migrate
 	ENV_FILE=$(DEPLOY_ENV) npx tsx scripts/import-legacy.ts --all
+	ENV_FILE=$(DEPLOY_ENV) npx tsx scripts/import-regions.ts
 	ENV_FILE=$(DEPLOY_ENV) npx tsx scripts/import-boundaries.ts
 	ENV_FILE=$(DEPLOY_ENV) npx tsx scripts/build-tiles.ts $(REGION)
 	ENV_FILE=$(DEPLOY_ENV) npx tsx scripts/upload-tiles.ts $(REGION)
@@ -192,7 +208,7 @@ help:
 		| sed -e 's/^## //' \
 		| awk -F': ' '{ printf "  \033[1m%-12s\033[0m %s\n", $$1, $$2 }'
 	@echo
-	@echo '  Variables: PORT=$(PORT) REGION=$(REGION)'
+	@echo '  Variables: PORT=$(PORT) REGION=$(REGION) (empty REGION means every region)'
 
 .PHONY: dev serve up down stop stop-app restart status cold migrate import \
         tiles publish psql logs check test e2e typecheck lint build all help \

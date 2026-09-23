@@ -1,7 +1,7 @@
 import { relations, sql } from 'drizzle-orm'
 import {
   boolean, check, index, integer, jsonb, pgTable, primaryKey, smallint,
-  text, timestamp, unique, uniqueIndex, uuid,
+  text, timestamp, unique, uniqueIndex, uuid, type AnyPgColumn,
 } from 'drizzle-orm/pg-core'
 import { geometry, int4range } from './types'
 
@@ -33,12 +33,37 @@ export const regions = pgTable('regions', {
    */
   currentArtifactKey: text('current_artifact_key'),
   theme: text('theme').notNull().default('rustic'),
+  /**
+   * The region this one sits inside, or null for a root atlas.
+   *
+   * One nullable self-reference, and deliberately not a hierarchy table, a
+   * path column or a nested set. The only questions asked of it are "what can
+   * I go into from here" and "what am I inside of", both one step, both
+   * answered by an index on one column (`src/read/regionKin.ts`). It would
+   * carry World -> India -> Northern India unchanged; anything richer than
+   * that is a GIS framework nobody has asked for yet.
+   *
+   * `set null` rather than `cascade`: deleting a parent must not silently take
+   * every plate drawn inside it with it. An orphaned region is a root region,
+   * which is a state the schema already describes.
+   */
+  parentId: uuid('parent_id').references((): AnyPgColumn => regions.id, { onDelete: 'set null' }),
   ownerId: uuid('owner_id').references(() => users.id),
   visibility: text('visibility', { enum: ['official', 'community'] }).notNull().default('community'),
   status: text('status', { enum: ['draft', 'in_review', 'published', 'unlisted'] })
     .notNull().default('draft'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (t) => [check('regions_range_not_empty', sql`not isempty(${t.range})`)])
+}, (t) => [
+  check('regions_range_not_empty', sql`not isempty(${t.range})`),
+  // A region may not be its own parent. Deeper cycles are not expressible in a
+  // check constraint and are refused by the importer instead, which is the
+  // only thing that writes this column.
+  check('regions_parent_not_self', sql`${t.parentId} is distinct from ${t.id}`),
+  // Postgres does not index a referencing column on its own, and "the plates
+  // inside this one" is a query the atlas route and the landing page both make
+  // on every request.
+  index('regions_parent_idx').on(t.parentId),
+])
 
 /**
  * Global historical geometry. Deliberately has no region_id: a region is a

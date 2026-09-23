@@ -2,7 +2,8 @@ import { eq } from 'drizzle-orm'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { db } from '../db/client'
 import { packs, regions } from '../db/schema'
-import { importPack, importWorldRegion, LEGACY_CONTENT_DIR } from '../../scripts/import-legacy'
+import { importPack, LEGACY_CONTENT_DIR } from '../../scripts/import-legacy'
+import { importRegions } from '../../scripts/import-regions'
 import { memoryStorage } from '../publish/storage'
 import { publishPack, publishRegion } from '../publish/publishPack'
 import { publishedAtlases } from './atlasIndex'
@@ -11,21 +12,24 @@ import { publishedAtlases } from './atlasIndex'
  * Seeded here rather than assumed, like every db-backed suite in this repo.
  *
  * The fixture is deliberately awkward: `world` gets two published packs and
- * one imported-but-unpublished, and `atlantis` is a published region with no
- * packs at all. Both of those are doors that do not open, and the landing
- * page's whole job is to only offer doors that do.
+ * one imported-but-unpublished, `india` is a plate drawn inside it, and
+ * `atlantis` is a published region with no packs at all. Two of those are doors
+ * that do not open, and the landing page's whole job is to only offer doors
+ * that do.
  */
 beforeAll(async () => {
   await db.delete(regions)
   await db.delete(packs)
-  await importWorldRegion()
   for (const slug of ['philosophy', 'mythology', 'creatures']) {
-    await importPack(`${LEGACY_CONTENT_DIR}/${slug}`, 'world')
+    await importPack(`${LEGACY_CONTENT_DIR}/${slug}`)
   }
+  await importRegions(['world', 'india'])
 
   const storage = memoryStorage()
-  const [world] = await db.select().from(regions).where(eq(regions.slug, 'world'))
-  await publishRegion(world.id, storage)
+  for (const slug of ['world', 'india']) {
+    const [row] = await db.select().from(regions).where(eq(regions.slug, slug))
+    await publishRegion(row.id, storage)
+  }
   for (const slug of ['mythology', 'philosophy']) {
     const [pack] = await db.select().from(packs).where(eq(packs.slug, slug))
     await publishPack(pack.id, storage)
@@ -55,6 +59,23 @@ describe('publishedAtlases', () => {
     expect(found[0].packs.map((pack) => pack.slug)).toEqual(['mythology', 'philosophy'])
   })
 
+  it('nests a plate under the one it is drawn inside, rather than beside it', async () => {
+    // "India" listed next to "World" reads as an alternative, and it is not
+    // one: it is a closer look at part of the same map.
+    const [world] = await publishedAtlases()
+    expect(world.children.map((child) => child.slug)).toEqual(['india'])
+    expect(world.children[0].packs.map((pack) => pack.slug))
+      .toEqual(['mythology', 'philosophy'])
+  })
+
+  it('leads with the root, so the hero is the widest map published', async () => {
+    // The landing page draws its hero from the first entry, over a world-shaped
+    // plate. Ordered by title alone, "India" sorts first and the hero becomes a
+    // subcontinent stretched across a map of the world.
+    const found = await publishedAtlases()
+    expect(found[0].slug).toBe('world')
+  })
+
   it('omits a pack imported but never published', async () => {
     const [world] = await publishedAtlases()
     expect(world.packs.map((pack) => pack.slug)).not.toContain('creatures')
@@ -75,6 +96,17 @@ describe('publishedAtlases', () => {
     }
     const [philosophy] = world.packs.filter((pack) => pack.slug === 'philosophy')
     expect(philosophy.entityCount).toBe(81)
+  })
+
+  it('counts only the figures standing on the plate, not the whole pack', async () => {
+    // A card on India's block saying "81 figures" over a map that draws ten is
+    // a promise the atlas does not keep.
+    const [world] = await publishedAtlases()
+    const [india] = world.children
+    const onIndia = india.packs.find((pack) => pack.slug === 'philosophy')
+    const onWorld = world.packs.find((pack) => pack.slug === 'philosophy')
+    expect(onIndia?.entityCount).toBeGreaterThan(0)
+    expect(onIndia?.entityCount).toBeLessThan(onWorld?.entityCount as number)
   })
 
   it('carries what a region heading needs', async () => {

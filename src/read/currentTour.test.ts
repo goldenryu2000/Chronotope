@@ -2,14 +2,14 @@ import { eq } from 'drizzle-orm'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { db } from '../db/client'
 import { tours } from '../db/schema'
-import { seedWorldAndPacks } from '../db/testSeed'
+import { seedRegionsAndPacks } from '../db/testSeed'
 import { seedTours } from '../../scripts/seed-tours'
 import { currentTourUrl, publishedTours, tourOpening, toursOnRegion } from './currentTour'
 import { publishAllTours } from './testSupport'
 
 describe('the tour read path', () => {
   beforeAll(async () => {
-    await seedWorldAndPacks()
+    await seedRegionsAndPacks()
     await seedTours()
     await publishAllTours()
   })
@@ -42,7 +42,10 @@ describe('the tour read path', () => {
 
   it('groups every published tour under the region it walks', async () => {
     const regions = await publishedTours()
-    expect(regions).toHaveLength(1)
+    // Two: the world's six, and the one that walks India's plate. Roots first,
+    // matching `publishedAtlases`, so both landing-page lists read in the same
+    // order rather than one of them putting India above the world.
+    expect(regions.map((region) => region.slug)).toEqual(['world', 'india'])
     expect(regions[0]).toMatchObject({ slug: 'world', title: 'World' })
 
     const flagship = regions[0].tours.find((tour) => tour.slug === 'gods-grew-quiet')

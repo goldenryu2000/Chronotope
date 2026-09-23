@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { db } from '../src/db/client'
 import { boundaries, regions } from '../src/db/schema'
-import { importWorldRegion } from './import-legacy'
+import { importRegions } from './import-regions'
 import { untiledRegions } from './publish-all'
 
 /**
@@ -25,7 +25,7 @@ const square = 'SRID=4326;MULTIPOLYGON(((70 30,80 30,80 40,70 40,70 30)))'
 describe('untiledRegions', () => {
   beforeAll(async () => {
     const [existing] = await db.select().from(regions).where(eq(regions.slug, 'world'))
-    if (!existing) await importWorldRegion()
+    if (!existing) await importRegions(['world'])
     const [row] = await db.select().from(regions).where(eq(regions.slug, 'world'))
     regionId = row.id
 

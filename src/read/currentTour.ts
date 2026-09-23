@@ -1,4 +1,4 @@
-import { and, asc, count, eq, isNotNull } from 'drizzle-orm'
+import { and, asc, count, eq, isNotNull, sql } from 'drizzle-orm'
 import { db } from '../db/client'
 import {
   entities, layers, packs, regions, tourStopLayers, tourStops, tourVersions, tours,
@@ -168,8 +168,12 @@ export async function publishedTours(): Promise<TourIndexRegion[]> {
     .innerJoin(regions, eq(tours.regionId, regions.id))
     .innerJoin(tourVersions, eq(tours.currentVersionId, tourVersions.id))
     .innerJoin(tourStops, eq(tourStops.tourId, tours.id))
-    .groupBy(tours.id, regions.slug, regions.title)
-    .orderBy(asc(regions.title), asc(tours.title))
+    .groupBy(tours.id, regions.slug, regions.title, regions.parentId)
+    // Roots before the plates drawn inside them, matching `publishedAtlases`.
+    // The landing page offers both lists in the same order, so a reader who
+    // read "World, then India" under the atlases should not find "India, then
+    // World" under the tours.
+    .orderBy(asc(sql`${regions.parentId} is not null`), asc(regions.title), asc(tours.title))
 
   // One pass, relying on the ORDER BY: rows for a region arrive together and
   // in the order they should be offered, so grouping is a lookup rather than a

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
-import { AtlasViewSchema, EntitySchema, EraSchema, isSlug, LayerSchema, RegionSchema, TourSchema } from './schemas'
+import {
+  AtlasViewSchema, EntitySchema, EraSchema, isSlug, LayerSchema, RegionDefinitionSchema,
+  RegionSchema, TourSchema,
+} from './schemas'
 import { LAYER_SLOTS } from '../theme/layerSlots'
 
 const entity = {
@@ -41,6 +44,114 @@ describe('EraSchema', () => {
       blurb: 'Greece, the Ganges plain, China and Persia each turned to how one ought to live.',
     }
     expect(() => EraSchema.parse(era)).toThrow()
+  })
+})
+
+describe('RegionDefinitionSchema', () => {
+  /** The India plate, near enough, as a starting point each case bends. */
+  const base = {
+    id: 'india',
+    title: 'India',
+    subtitle: 'the subcontinent, kingdom by kingdom',
+    parent: 'world',
+    bbox: [66, 5, 97.6, 37.6],
+    minZoom: 3,
+    maxZoom: 8,
+    defaultCamera: { center: [80.5, 21.5], zoom: 3.8 },
+    range: { start: -3000, end: 2026 },
+    packs: ['philosophy'],
+    eras: [
+      {
+        id: 'indus', label: 'The Indus Cities', start: -3000, end: -1500, weight: 7,
+        blurb: 'Drains, standard weights and a script nobody can read, then the cities were left.',
+      },
+      {
+        id: 'vedic', label: 'The Vedic Age', start: -1500, end: 2026, weight: 9,
+        blurb: 'No cities, no inscriptions, and the longest continuously recited text there is.',
+      },
+    ],
+  }
+
+  it('accepts a plate drawn inside another', () => {
+    const region = RegionDefinitionSchema.parse(base)
+    expect(region.parent).toBe('world')
+    expect(region.theme).toBe('rustic')
+  })
+
+  it('treats a bare pack slug as a placement with no era override', () => {
+    // The shorthand exists because "no override" is the common case; the long
+    // form is for the myth packs, which reshape the world's own time.
+    expect(RegionDefinitionSchema.parse(base).packs).toEqual([{ slug: 'philosophy', eras: [] }])
+  })
+
+  it('accepts the long form with an override', () => {
+    const region = RegionDefinitionSchema.parse({
+      ...base,
+      packs: [{ slug: 'mythology', eras: [base.eras[0]] }],
+    })
+    expect(region.packs[0].eras).toHaveLength(1)
+  })
+
+  it('defaults a root plate to no parent', () => {
+    const rest = { ...base }
+    delete (rest as { parent?: string }).parent
+    expect(RegionDefinitionSchema.parse(rest).parent).toBeNull()
+  })
+
+  it('refuses a region that is its own parent', () => {
+    expect(() => RegionDefinitionSchema.parse({ ...base, parent: 'india' })).toThrow()
+  })
+
+  it('refuses a plate with no periodization, which has no timeline to draw', () => {
+    // `renderRegion` throws on this and `buildScale` throws on it again. Being
+    // refused here means the message can name the file.
+    expect(() => RegionDefinitionSchema.parse({ ...base, eras: [] })).toThrow()
+  })
+
+  it('refuses a camera outside the plate it opens', () => {
+    // With `maxBounds` set from the same bbox this is a blank map the reader
+    // cannot travel back from.
+    expect(() => RegionDefinitionSchema.parse({
+      ...base,
+      defaultCamera: { center: [20, 25], zoom: 3.8 },
+    })).toThrow()
+  })
+
+  it('refuses an opening zoom the plate does not allow', () => {
+    expect(() => RegionDefinitionSchema.parse({
+      ...base,
+      defaultCamera: { center: [80.5, 21.5], zoom: 1.6 },
+    })).toThrow()
+  })
+
+  it('refuses overlapping eras, which silently mislabel the track', () => {
+    expect(() => RegionDefinitionSchema.parse({
+      ...base,
+      eras: [
+        { ...base.eras[0], start: -3000, end: -1000 },
+        { ...base.eras[1], start: -1500, end: 2026 },
+      ],
+    })).toThrow()
+  })
+
+  it('allows eras that merely touch, because one age ends where the next begins', () => {
+    expect(() => RegionDefinitionSchema.parse(base)).not.toThrow()
+  })
+
+  it('refuses an era reaching outside the range the region claims', () => {
+    // The timeline's own ends come from the eras, so this would offer years the
+    // region says it does not cover.
+    expect(() => RegionDefinitionSchema.parse({
+      ...base,
+      range: { start: -2000, end: 2026 },
+    })).toThrow()
+  })
+
+  it('refuses the same pack laid over a region twice', () => {
+    expect(() => RegionDefinitionSchema.parse({
+      ...base,
+      packs: ['philosophy', { slug: 'philosophy', eras: [] }],
+    })).toThrow()
   })
 })
 

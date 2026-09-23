@@ -51,6 +51,11 @@ export async function freePortraits(regionSlug: string): Promise<Portrait[]> {
     where ${regions.slug} = ${regionSlug}
       and ${regions.currentArtifactKey} is not null
       and ${packs.currentVersionId} is not null
+      -- Inside the plate, not merely in a pack the plate offers. These
+      -- portraits are drawn onto the landing page's map of this region and
+      -- counted as what it holds, so a figure the plate does not show would be
+      -- a face in the strip that the atlas behind it has no pin for.
+      and ${entities.point} && ${regions.bbox}
       and ${entities.image}->>'licence' in (${licenceList()})
     order by ${packs.slug}, lower(${entities.span}), ${entities.slug}
   `) as unknown as Array<{
