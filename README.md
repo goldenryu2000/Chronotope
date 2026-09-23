@@ -298,18 +298,55 @@ why India needed no new entities, no new layers, no second pipeline and no
 3. `npx tsx scripts/build-tiles.ts` and `npx tsx scripts/publish-all.ts`.
 
 That is the entire list. The plate appears on the landing page nested under its
-parent, its parent's map grows a dashed frame around it labelled with its name,
-and the trail in its own top-left corner gains a step back out. No code
-changes, and no map-engine changes ever.
+parent, in the menu on every atlas title, and on its parent's map as soon as
+somebody zooms in on it; the trail in its own top-left corner gains a step back
+out. No code changes, and no map-engine changes ever.
+
+### Finding one
+
+Two ways in, deliberately, because they answer different questions.
+
+- **The menu on the title.** The atlas title already says which map you are
+  looking at, so it is where you go to look at a different one. It lists every
+  published plate, nested, with the one you are on marked. It is always there,
+  needs no discovering, scales to as many plates as there ever are, and costs
+  the map nothing. With only one atlas published it is a plain heading rather
+  than a control: a menu whose list holds only where you already are is not an
+  offer.
+- **The plate offers itself as you approach.** Zooming in is how this atlas
+  goes deeper, so when a plate becomes most of what you are looking at — around
+  a quarter of the view, which for India on a laptop is about zoom 3.7 — its
+  name fades in over it as a caption, with an invitation under it, and fades
+  out again when you pull back. Nothing at all is drawn at rest.
+
+The first design marked each plate permanently with a dashed rectangle and a
+boxed label. It is worth saying why that was wrong, because the reasons
+generalise:
+
+- The rectangle is `regions.bbox`, which is a *clipping* artifact. It is where
+  we cut the tiles, not anything true about the place, and putting it on the
+  reader's map shows them our implementation.
+- Every other line on this map is a historical border. A second kind of
+  rectangle competes with the data at every year and every zoom, and the data
+  is the whole point.
+- A modern region's outline drawn over the year 1200 BCE asserts something
+  false. The rest of this project is careful about exactly that (see the note
+  on the Jammu and Kashmir correction below), and navigation furniture does not
+  get an exemption.
+- It does not scale. One box is clutter; ten is a grid over the world.
+
+The caption avoids all four: it draws no geometry, it appears only when asked
+for by a gesture the reader already makes, and it says "open the closer atlas"
+rather than naming a country over a century that had none.
 
 Two things worth knowing before writing one:
 
 - **A plate is offered only where it would open.** The landing page, the pack
-  switcher and the doorway on the parent's map all require the region to be
-  published, the pack to be published, *and* at least one of that pack's
-  entities to stand inside the plate. A plate whose packs are all empty is not
-  linked from anywhere, which is deliberate: a door onto an empty map is worse
-  than no door.
+  switcher, the title menu and the caption on the parent's map all require the
+  region to be published, the pack to be published, *and* at least one of that
+  pack's entities to stand inside the plate. A plate whose packs are all empty
+  is not linked from anywhere, which is deliberate: a door onto an empty map is
+  worse than no door.
 - **A tour on a plate is validated against it.** `publishTour`'s rule 8 refuses
   a stop selecting someone the plate draws no pin for, and a stop whose camera
   sits outside where the plate lets the camera go. Both were unreachable while

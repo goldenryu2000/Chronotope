@@ -609,62 +609,116 @@
    tokens stay in the themes, because the theme files are the contract. */
 
 /*
- * The way into a plate drawn in more detail.
+ * The way into a plate drawn in more detail: a caption, not a control.
  *
- * Anchored to the top edge of a dashed frame the map draws around that plate,
- * which is a paper atlas's own mark for "this rectangle is shown larger
- * elsewhere". The label has to be legible over both land and sea at any zoom,
- * so it carries its own surface rather than a text halo.
+ * No border, no background and no geometry. It is set like the caption under a
+ * plate in a printed atlas, it appears only once that plate is most of what
+ * the reader is looking at, and it fades out when they pull back. The first
+ * design was a dashed rectangle with a boxed label, permanently on the world
+ * map; see the note on `Invitations` in src/map/invitation.ts for why that was
+ * wrong rather than merely ugly.
+ *
+ * The halo, rather than a panel, is what keeps it legible over both land and
+ * sea at any zoom. It is the same device the pin labels use.
  */
-.doorway {
+/*
+ * The marker element itself, which MapLibre owns: it writes this element's
+ * transform and its opacity on every move (see `createSlot`). Nothing here may
+ * set either. It is transparent to the pointer whatever it holds, so a caption
+ * that is not on offer can never swallow a drag on the map.
+ */
+.invite-slot {
+  pointer-events: none;
+}
+
+.invite {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
   align-items: center;
-  padding: 0.3rem 0.7rem 0.34rem;
-  border: 1px solid color-mix(in srgb, var(--map-doorway) 70%, transparent);
-  border-radius: 0.2rem;
-  background: color-mix(in srgb, var(--surface-raised) 90%, transparent);
-  color: var(--map-doorway-ink);
+  gap: 0.25rem;
+  padding: 0.5rem 1rem;
+  color: var(--map-label);
   text-align: center;
   text-decoration: none;
   cursor: pointer;
-  transform: translateY(-0.45rem);
-  transition: border-color 180ms ease, transform 180ms ease, background 180ms ease;
+  opacity: 0;
+  transform: translateY(0.4rem);
+  pointer-events: none;
+  transition: opacity 420ms ease, transform 420ms ease;
 }
 
-.doorway:hover,
-.doorway:focus-visible {
-  border-color: var(--map-doorway);
-  background: var(--surface-raised);
-  transform: translateY(-0.7rem);
+.invite[data-shown='true'] {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
 }
 
-.doorway:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.doorway__name {
+.invite__name {
   font-family: var(--font-display, inherit);
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  line-height: 1.1;
+  font-size: 1.6rem;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-indent: 0.14em;
+  text-shadow:
+    0 0 0.5em var(--map-label-halo),
+    0 0 0.2em var(--map-label-halo),
+    0 1px 0 var(--map-label-halo);
 }
 
-.doorway__hint {
-  font-size: 0.52rem;
-  letter-spacing: 0.22em;
+/* Drawn rather than typed, so it takes the accent without a glyph. */
+.invite__rule {
+  width: 3.2rem;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0.75;
+  transition: width 260ms ease;
+}
+
+.invite__action {
+  font-size: 0.56rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
+  color: var(--accent);
+  text-shadow: 0 0 0.6em var(--map-label-halo), 0 0 0.3em var(--map-label-halo);
+}
+
+/*
+ * The plate's own words for itself, set in the map's label face rather than
+ * the interface one. Every other piece of type on this map -- pin names,
+ * cluster names -- is the display serif, and a line of Inter over the
+ * parchment reads as something pasted onto the map instead of drawn on it.
+ */
+.invite__hint {
+  max-width: 16rem;
+  font-family: var(--font-display, inherit);
+  font-size: 0.82rem;
+  font-style: italic;
+  line-height: 1.35;
+  color: var(--map-label);
   opacity: 0.72;
+  text-shadow: 0 0 0.6em var(--map-label-halo), 0 0 0.3em var(--map-label-halo);
+}
+
+.invite:hover .invite__rule,
+.invite:focus-visible .invite__rule {
+  width: 5.5rem;
+}
+
+.invite:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .doorway,
-  .doorway:hover,
-  .doorway:focus-visible {
+  .invite,
+  .invite__rule {
     transition: none;
-    transform: translateY(-0.45rem);
+  }
+
+  .invite {
+    transform: none;
   }
 }

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { cameraBounds, contains, pad } from './bbox'
+import {
+  cameraBounds, contains, INVITE_HIDE, INVITE_SHOW, pad, viewportShare,
+} from './bbox'
 
 const INDIA = [66, 5, 97.6, 37.6] as const
 const WORLD = [-180, -85, 180, 85] as const
@@ -101,5 +103,45 @@ describe('cameraBounds', () => {
     // A container measured before layout. Returning bounds computed from zero
     // would hand MapLibre a degenerate box.
     expect(cameraBounds(INDIA, { width: 0, height: 0 })).toBeUndefined()
+  })
+})
+
+describe('viewportShare', () => {
+  /** What a 1600x950 viewport covers at a given zoom, centred on India. */
+  const viewAt = (zoom: number): [number, number, number, number] => {
+    const world = 512 * 2 ** zoom
+    const lngSpan = (1600 / world) * 360
+    // Rough, and rough is enough: the assertions below are about which side of
+    // a threshold a zoom falls on, not about a fourth decimal place.
+    const latSpan = (950 / world) * 360 * 0.78
+    const [midLng, midLat] = [81.8, 21.3]
+    return [midLng - lngSpan / 2, midLat - latSpan / 2, midLng + lngSpan / 2, midLat + latSpan / 2]
+  }
+
+  it('is nearly nothing at world view, which is why nothing is drawn there', () => {
+    expect(viewportShare(INDIA, viewAt(1.6))).toBeLessThan(INVITE_HIDE)
+  })
+
+  it('is not enough at a zoom that merely has India on screen', () => {
+    expect(viewportShare(INDIA, viewAt(3))).toBeLessThan(INVITE_SHOW)
+  })
+
+  it('is enough once somebody has gone to look at the subcontinent', () => {
+    expect(viewportShare(INDIA, viewAt(4))).toBeGreaterThan(INVITE_SHOW)
+  })
+
+  it('stays high rather than falling away again when zoomed further in', () => {
+    // Clipped by the plate's own area as well as the viewport's. Without that,
+    // zooming past the point where the plate fills the screen would withdraw
+    // the offer exactly when the reader is most interested.
+    expect(viewportShare(INDIA, viewAt(6))).toBeGreaterThan(INVITE_SHOW)
+  })
+
+  it('is zero for a plate nowhere near the view', () => {
+    expect(viewportShare(INDIA, [-60, 30, -40, 50])).toBe(0)
+  })
+
+  it('leaves room between showing and hiding, so a resting map does not flicker', () => {
+    expect(INVITE_HIDE).toBeLessThan(INVITE_SHOW)
   })
 })

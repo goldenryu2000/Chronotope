@@ -1,0 +1,165 @@
+/*
+ * The menu on the atlas title. See RegionMenu.tsx for why it lives there
+ * rather than as another chip in the chrome cluster.
+ *
+ * `.atlas__header` is `pointer-events: none` so it never swallows a drag on
+ * the map, and anything inside it that the reader is meant to be able to hit
+ * has to say so, exactly as `PackSwitcher` does. Only the control and its
+ * panel do; the heading around them stays transparent to the pointer, so
+ * dragging the map by the empty space beside the title still works.
+ */
+.regions {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.regions__toggle {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: color 140ms ease;
+}
+
+.regions__toggle:hover {
+  color: var(--accent);
+}
+
+.regions__toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+/* Drawn, not typed, so it inherits colour and needs no glyph from the font. */
+.regions__caret {
+  width: 0.3em;
+  height: 0.3em;
+  border-right: 1px solid currentcolor;
+  border-bottom: 1px solid currentcolor;
+  transform: translateY(-0.18em) rotate(45deg);
+  opacity: 0.55;
+  transition: transform 160ms ease, opacity 140ms ease;
+}
+
+.regions__toggle[aria-expanded='true'] .regions__caret {
+  transform: translateY(0.02em) rotate(225deg);
+  opacity: 1;
+}
+
+/*
+ * Dropped clear of the whole header, not just of the title.
+ *
+ * The pack switcher sits between the two, and a panel that starts under the
+ * title covers it half way, leaving the pill's rounded corners poking out
+ * above. Clearing it costs nothing and lets the reader still see which pack
+ * they are in while they choose which map to see it on.
+ */
+.regions__popover {
+  position: absolute;
+  top: calc(100% + 3.1rem);
+  left: 50%;
+  z-index: 20;
+  width: min(22rem, calc(100vw - 2.5rem));
+  padding: 0.85rem 0.9rem 0.6rem;
+  transform: translateX(-50%);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--surface-raised);
+  box-shadow: 0 18px 40px -22px rgb(0 0 0 / 45%);
+  text-align: left;
+  pointer-events: auto;
+}
+
+.regions__help {
+  margin: 0 0 0.6rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--ink-faint);
+}
+
+.regions__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/*
+ * Nesting shown by indent and a rule, the way the landing page shows it. A
+ * plate drawn inside another is not an alternative to it.
+ */
+.regions__list li[data-depth='1'] {
+  margin-left: 0.55rem;
+  padding-left: 0.6rem;
+  border-left: 2px solid color-mix(in srgb, var(--accent) 30%, var(--rule));
+}
+
+.regions__list li[data-depth='2'] {
+  margin-left: 1.5rem;
+  padding-left: 0.6rem;
+  border-left: 2px solid color-mix(in srgb, var(--accent) 30%, var(--rule));
+}
+
+.regions__item {
+  display: block;
+  padding: 0.4rem 0.45rem;
+  border-radius: 3px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: background 140ms ease;
+}
+
+.regions__item:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.regions__item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.regions__item[data-here='true'] {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.regions__name {
+  display: block;
+  font-family: var(--font-display, inherit);
+  font-size: 0.98rem;
+  line-height: 1.2;
+}
+
+.regions__subtitle {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--ink-soft);
+}
+
+.regions__here {
+  display: inline-block;
+  margin-top: 0.2rem;
+  font-size: 0.52rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .regions__toggle,
+  .regions__caret,
+  .regions__item {
+    transition: none;
+  }
+}

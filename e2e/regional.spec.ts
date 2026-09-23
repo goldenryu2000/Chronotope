@@ -96,46 +96,95 @@ test('india runs on its own periodization, not the world\'s', async ({ page }) =
   expect(await eras.count()).toBeGreaterThanOrEqual(0)
 })
 
-test('the world map offers a way into india, and keeps the reader\'s pack', async ({ page }) => {
+/** Zoom the map straight to a camera, without waiting out a flight. */
+async function jumpTo(page: Page, center: [number, number], zoom: number): Promise<void> {
+  await page.evaluate(([c, z]) => {
+    (window as unknown as {
+      __map: { jumpTo: (o: { center: unknown; zoom: unknown }) => void }
+    }).__map.jumpTo({ center: c, zoom: z })
+  }, [center, zoom] as const)
+}
+
+test('the world map draws nothing for india until the reader goes to look at it', async ({ page }) => {
   await page.goto('/world/mythology')
   await expect(page.locator('.maplibregl-ctrl-zoom-in')).toBeVisible()
   await opened(page)
 
-  const doorway = page.locator('.doorway[data-doorway="india"]')
-  await expect(doorway).toBeVisible()
-  await expect(doorway).toContainText('India')
-  // Reading the gods and going closer should not land in a different pack.
-  await expect(doorway).toHaveAttribute('href', '/india/mythology')
+  /*
+   * At rest the map is clean. This is the whole of the redesign: the first
+   * version drew a dashed rectangle and a boxed label over the subcontinent at
+   * every year and every zoom, which put a clipping artifact on the reader's
+   * map and competed with the only other lines there, the historical borders.
+   */
+  const invite = page.locator('.invite[data-invite="india"]')
+  await expect(invite).toHaveAttribute('data-shown', 'false')
 
-  await doorway.click();
+  // Then the reader zooms in on the subcontinent, and it offers itself.
+  await jumpTo(page, [81.8, 21.3], 4.2)
+  await expect(invite).toHaveAttribute('data-shown', 'true')
+  await expect(invite).toContainText('India')
+  await expect(invite).toContainText('Open the closer atlas')
+
+  // And it withdraws again when they pull back out.
+  await jumpTo(page, [20, 25], 1.6)
+  await expect(invite).toHaveAttribute('data-shown', 'false')
+})
+
+test('accepting the invitation keeps the reader\'s pack', async ({ page }) => {
+  await page.goto('/world/mythology')
+  await expect(page.locator('.maplibregl-ctrl-zoom-in')).toBeVisible()
+  await opened(page)
+  await jumpTo(page, [81.8, 21.3], 4.2)
+
+  const invite = page.locator('.invite[data-invite="india"]')
+  await expect(invite).toHaveAttribute('data-shown', 'true')
+  // Reading the gods and going closer should not land in a different pack.
+  await expect(invite).toHaveAttribute('href', '/india/mythology')
+
+  await invite.click()
   await expect(page).toHaveURL('/india/mythology')
   await opened(page)
   await expect(page.locator('.atlas__title')).toHaveText('India')
 })
 
-test('the way back to the world is there, and unobtrusive', async ({ page }) => {
-  await page.goto('/india/philosophy')
-  await opened(page)
-
-  const up = page.locator('.atlas__home--up')
-  await expect(up).toBeVisible()
-  await expect(up).toHaveText(/World/)
-  await expect(up).toHaveAttribute('href', '/world/philosophy')
-
-  await up.click()
-  await expect(page).toHaveURL('/world/philosophy')
-  await opened(page)
-  await expect(page.locator('.atlas__title')).toHaveText('World')
-})
-
-test('the world map offers no way out of itself, because there is nothing above it', async ({ page }) => {
+test('the title is the map of the maps, and always there', async ({ page }) => {
   await page.goto('/world/philosophy')
   await opened(page)
-  await expect(page.locator('.atlas__home--up')).toHaveCount(0)
-  // And nothing inside India to go further into, yet.
-  await page.goto('/india/philosophy')
+
+  // The path that needs no zooming to discover, and the one that scales past
+  // the two plates there are today.
+  const toggle = page.locator('.regions__toggle')
+  await expect(toggle).toHaveText(/World/)
+  await toggle.click()
+
+  const menu = page.locator('.regions__popover')
+  await expect(menu).toBeVisible()
+  await expect(menu.locator('.regions__name')).toHaveText(['World', 'India'])
+  await expect(menu.locator('[data-here="true"] .regions__name')).toHaveText('World')
+
+  // India is nested under the world, not offered beside it.
+  await expect(menu.locator('li[data-depth="1"] .regions__name')).toHaveText('India')
+
+  await menu.locator('.regions__item[href="/india/philosophy"]').click()
+  await expect(page).toHaveURL('/india/philosophy')
   await opened(page)
-  await expect(page.locator('.doorway')).toHaveCount(0)
+  await expect(page.locator('.atlas__title')).toHaveText('India')
+})
+
+test('the menu closes on escape and on a click outside it', async ({ page }) => {
+  await page.goto('/world/philosophy')
+  await opened(page)
+
+  await page.locator('.regions__toggle').click()
+  await expect(page.locator('.regions__popover')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.regions__popover')).toHaveCount(0)
+
+  await page.locator('.regions__toggle').click()
+  await expect(page.locator('.regions__popover')).toBeVisible()
+  // On the map itself, which is the gesture a reader actually makes.
+  await page.locator('.map__canvas').click({ position: { x: 60, y: 420 } })
+  await expect(page.locator('.regions__popover')).toHaveCount(0)
 })
 
 test('a plate draws only the figures who stand on it', async ({ page }) => {

@@ -1,44 +1,57 @@
 import { sql } from 'drizzle-orm'
 import { db } from '../db/client'
-import type { RegionKin } from './kin'
+import type { Plate } from './kin'
 
-/*
- * The shape and the two pure link helpers live in `./kin`, which imports no
- * database client.
- *
- * Not tidiness: `Atlas` is a client island and it needs `kinHref`, because
- * which pack a doorway points at depends on the pack the reader has switched
- * to, which only the browser knows. Importing that from this file pulled
- * `postgres` into the client bundle and failed the build outright. Re-exported
- * so a caller that wants both still has one import.
- */
-export type { RegionKin } from './kin'
-export { entryPackFor, kinHref } from './kin'
+export type { Plate } from './kin'
+export {
+  childrenOfPlate, entryPackFor, findPlate, flattenPlates, parentOfPlate, plateHref,
+} from './kin'
+
+interface PlateRow {
+  slug: string
+  title: string
+  subtitle: string
+  parent: string | null
+  west: number; south: number; east: number; north: number
+  packs: string[]
+}
 
 /**
- * The SQL behind both directions.
+ * Every atlas that would actually open, nested inside the one it is drawn in.
  *
- * A plate is offered only when it would actually open: published region
- * artifact, at least one published pack laid over it through `era_sets`, and
- * at least one of that pack's entities inside the plate's own bbox. The last
- * condition is the one a regional atlas adds -- a plate shows what is inside
- * it, so a pack whose every figure is somewhere else is a door onto an empty
- * map, and `packsOnRegion` and `publishedAtlases` apply exactly the same test.
+ * One query for the whole tree rather than one per relationship. The atlas
+ * route needs three answers from it — the plates this one opens onto, the one
+ * it sits in, and the full list for the menu on the title — and asking three
+ * times for overlapping subsets of the same eight rows is three round trips to
+ * answer one question.
+ *
+ * A plate is included only when it would open: published region artifact, at
+ * least one published pack laid over it through `era_sets`, and at least one
+ * of that pack's entities standing inside the plate's own bbox. The last is
+ * the condition a regional atlas adds -- a plate shows what is inside it, so a
+ * pack whose every figure is somewhere else is a door onto an empty map.
+ * `packsOnRegion` and `publishedAtlases` apply exactly the same test.
  *
  * `entryPack` is the first pack by title, matching the order the switcher and
- * the landing page offer them in, so the link lands on the pack a reader
- * arriving through any other route would also have been given first.
+ * the landing page offer them in, so a link lands on the pack a reader
+ * arriving by any other route would also have been given first.
  *
  * Resolved per request rather than baked into the region artifact, for the
  * reason `packsOnRegion` and `layersOnRegion` are: a region artifact is
  * immutable and content-hashed, and this answer changes when a *pack* is
  * published. Baking it in would need every region republished to follow.
  *
+ * A plate whose parent is not itself published comes back as a root. That is
+ * not a fallback but the honest reading: there is no page to send a reader to
+ * for a region with no published pack, and hiding a working atlas because of
+ * the state of a different one would lose more than it protects.
+ *
  * No slug is named here, and none may be (Rule 3).
  */
-async function kin(where: ReturnType<typeof sql>): Promise<RegionKin[]> {
+export async function plateTree(): Promise<Plate[]> {
   const rows = await db.execute(sql`
     select r.slug, r.title, r.subtitle,
+           (select p.slug from regions p where p.id = r.parent_id) as parent,
            ST_XMin(r.bbox) as west, ST_YMin(r.bbox) as south,
            ST_XMax(r.bbox) as east, ST_YMax(r.bbox) as north,
            array(
@@ -55,48 +68,35 @@ async function kin(where: ReturnType<typeof sql>): Promise<RegionKin[]> {
            ) as packs
     from regions r
     where r.current_artifact_key is not null
-      and ${where}
-    order by r.title
-  `) as unknown as Array<{
-    slug: string; title: string; subtitle: string
-    west: number; south: number; east: number; north: number
-    packs: string[]
-  }>
+    -- Roots before the plates inside them, then by title, matching
+    -- publishedAtlases so every list of atlases in the product reads in the
+    -- same order. (No backticks in here: this is a template literal.)
+    order by (r.parent_id is not null), r.title
+  `) as unknown as PlateRow[]
 
-  return rows
-    .filter((row) => row.packs.length > 0)
-    .map((row) => ({
+  const byslug = new Map<string, Plate>()
+  const order: PlateRow[] = []
+  for (const row of rows) {
+    if (row.packs.length === 0) continue
+    byslug.set(row.slug, {
       slug: row.slug,
       title: row.title,
       subtitle: row.subtitle,
       bbox: [Number(row.west), Number(row.south), Number(row.east), Number(row.north)],
       entryPack: row.packs[0],
       packs: row.packs,
-    }))
-}
+      children: [],
+    })
+    order.push(row)
+  }
 
-/**
- * The plates drawn inside this one, which is how a reader goes deeper.
- *
- * The world map offers India because `regions.parent_id` says India sits in
- * it, and for no other reason: there is no list of regions anywhere in `src/`
- * and there may not be. Adding Europe is a file in `data/regions/` naming
- * `world` as its parent, and it appears here on the next import.
- */
-export async function childAtlases(regionSlug: string): Promise<RegionKin[]> {
-  return kin(sql`r.parent_id = (select id from regions where slug = ${regionSlug})`)
-}
+  const roots: Plate[] = []
+  for (const row of order) {
+    const plate = byslug.get(row.slug) as Plate
+    const parent = row.parent ? byslug.get(row.parent) : undefined
+    if (parent) parent.children.push(plate)
+    else roots.push(plate)
+  }
 
-/**
- * The plate this one is drawn inside, or null for a root atlas.
- *
- * One step, not an ancestry: the atlas shows the way back out, and a trail of
- * every ancestor is a feature for a depth nobody has built yet.
- */
-export async function parentAtlas(regionSlug: string): Promise<RegionKin | null> {
-  const [found] = await kin(
-    sql`r.id = (select parent_id from regions where slug = ${regionSlug})`,
-  )
-  return found ?? null
+  return roots
 }
-

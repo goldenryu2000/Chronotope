@@ -10,11 +10,12 @@ import { PackSchema, RegionSchema, type AtlasView, type Pack, type Region } from
 import LayerMenu from '../map/LayerMenu'
 import MapCanvas, { type Camera } from '../map/MapCanvas'
 import Curtain from './Curtain'
-import type { Doorway } from '../map/doorways'
-import { kinHref, type RegionKin } from '../read/kin'
+import type { Invite } from '../map/invitation'
+import { childrenOfPlate, parentOfPlate, plateHref, type Plate } from '../read/kin'
 import type { RegionLayer } from '../read/regionLayers'
 import type { RegionPack } from '../read/regionPacks'
 import PackSwitcher from './PackSwitcher'
+import RegionMenu from './RegionMenu'
 import DetailPanel from '../panel/DetailPanel'
 import EmptyState from '../panel/EmptyState'
 import { useAtlas } from '../state/store'
@@ -46,15 +47,18 @@ interface Props {
    */
   layers?: readonly RegionLayer[]
   /**
-   * Plates drawn inside this one, offered on the map as a way in.
+   * Every atlas that would open, nested inside the one it is drawn in.
+   *
+   * One tree rather than three props, because the three questions asked of it
+   * — what can I go into, what am I inside, and what else is there — are the
+   * same eight rows read three ways, and answering them separately meant three
+   * round trips for one question.
    *
    * Resolved on the server, for the reason the pack list and the layers are:
    * the browser never asks the database anything, and which plate is worth
    * offering depends on what has been published.
    */
-  deeper?: readonly RegionKin[]
-  /** The plate this one is drawn inside, or nothing for a root atlas. */
-  parent?: RegionKin | null
+  plates?: readonly Plate[]
   /**
    * Where to open, when something other than the pack decides.
    *
@@ -99,7 +103,7 @@ const clamp = (value: number, low: number, high: number) =>
  * standing: the map, its loaded tiles, the camera, and the year.
  */
 export function Atlas({
-  packUrl, regionUrl, packs, activePack, regionSlug, layers = [], deeper = [], parent = null,
+  packUrl, regionUrl, packs, activePack, regionSlug, layers = [], plates = [],
   initialView, children, writesPackUrl = true,
 }: Props) {
   const router = useRouter()
@@ -490,7 +494,7 @@ export function Atlas({
    * layer menu all change. Remounting the island is exactly right, and the
    * curtain covers the wait the way it does on any other arrival.
    */
-  const enterDoorway = useCallback((href: string) => router.push(href), [router])
+  const enterPlate = useCallback((href: string) => router.push(href), [router])
 
   /*
    * The ways in and the way out, addressed to the pack the reader is actually
@@ -499,25 +503,28 @@ export function Atlas({
    * Built here rather than on the server, because `active` changes without a
    * navigation: a reader who opens India and switches to the gods should leave
    * India among the gods, and go deeper among them too. The server's own pack
-   * is only the opening one. `kinHref` falls back to the destination's first
+   * is only the opening one. `plateHref` falls back to the destination's first
    * pack when it does not offer this one, which is the honest answer rather
    * than a link to a 404.
    */
-  const doorways = useMemo<Doorway[]>(
-    () => deeper.map((child) => ({
+  const invitations = useMemo<Invite[]>(
+    // Nothing is offered during a tour. A way *out* is never an interruption,
+    // which is why the title and the trail stay, but an offer to leave in the
+    // middle of somebody's narration is exactly one.
+    () => (children ? [] : childrenOfPlate(plates, regionSlug)).map((child) => ({
       id: child.slug,
       title: child.title,
       subtitle: child.subtitle,
       bbox: child.bbox,
-      href: kinHref(child, active),
+      href: plateHref(child, active),
     })),
-    [deeper, active],
+    [plates, regionSlug, active, children],
   )
 
-  const up = useMemo(
-    () => (parent ? { title: parent.title, href: kinHref(parent, active) } : null),
-    [parent, active],
-  )
+  const up = useMemo(() => {
+    const parent = parentOfPlate(plates, regionSlug)
+    return parent ? { title: parent.title, href: plateHref(parent, active) } : null
+  }, [plates, regionSlug, active])
 
   const root = useRef<HTMLDivElement>(null)
   useLayoutVars(root)
@@ -532,8 +539,8 @@ export function Atlas({
           tilesetUrl={tilesetUrl}
           borderYears={region.borderYears}
           layers={layers}
-          doorways={doorways}
-          onEnterDoorway={enterDoorway}
+          invitations={invitations}
+          onEnterPlate={enterPlate}
           onReady={() => setPainted(true)}
         />
       )}
@@ -548,7 +555,14 @@ export function Atlas({
         * map is showing lands in the part of it nothing covers.
         */}
       <header className="atlas__header" data-layout="top">
-        <h1 className="atlas__title">{region?.title ?? 'Chronotope'}</h1>
+        {/* The title, and the way to another map. It is a plain heading until
+            there is somewhere else to go; see RegionMenu. */}
+        <RegionMenu
+          plates={plates}
+          current={regionSlug}
+          activePack={active}
+          title={region?.title ?? 'Chronotope'}
+        />
 
         {/* The packs on this region, and which one is showing. Until the
             artifacts land there is nothing to choose between, so the line

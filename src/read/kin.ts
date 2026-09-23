@@ -1,16 +1,17 @@
 import type { BBox } from '../lib/bbox'
 
 /**
- * A neighbouring plate in the atlas: the one this is drawn inside, or one
- * drawn inside this.
+ * One atlas in the tree of them: a rectangle of the world with packs laid over
+ * it, and the plates drawn inside it.
  *
- * `entryPack` is which pack to open it on, resolved here rather than guessed
- * by the caller: a link into a plate that offers no published pack is a link
- * to a 404, and which packs a plate offers is a question only the database can
- * answer. A region with no published pack yields no row at all, which is the
- * same rule `publishedAtlases` applies to what the landing page will link.
+ * `entryPack` is which pack a link into it should open on, resolved on the
+ * server rather than guessed by the caller: a link into a plate that offers no
+ * published pack is a link to a 404, and which packs a plate offers is a
+ * question only the database can answer. A plate with none yields no node at
+ * all, which is the rule `publishedAtlases` already applies to what the landing
+ * page will link.
  */
-export interface RegionKin {
+export interface Plate {
   slug: string
   title: string
   subtitle: string
@@ -20,22 +21,59 @@ export interface RegionKin {
   entryPack: string
   /** Packs it offers, so a caller can keep the reader's own pack if it is here. */
   packs: string[]
+  /** Plates drawn inside this one. Recursive, and usually empty. */
+  children: Plate[]
+}
+
+/** The plate with this slug, anywhere in the tree. */
+export function findPlate(tree: readonly Plate[], slug: string): Plate | null {
+  for (const plate of tree) {
+    if (plate.slug === slug) return plate
+    const found = findPlate(plate.children, slug)
+    if (found) return found
+  }
+  return null
+}
+
+/** The plate this one is drawn inside, or null for a root atlas. */
+export function parentOfPlate(tree: readonly Plate[], slug: string): Plate | null {
+  for (const plate of tree) {
+    if (plate.children.some((child) => child.slug === slug)) return plate
+    const found = parentOfPlate(plate.children, slug)
+    if (found) return found
+  }
+  return null
+}
+
+/** The plates drawn inside this one, which is how a reader goes deeper. */
+export function childrenOfPlate(tree: readonly Plate[], slug: string): Plate[] {
+  return findPlate(tree, slug)?.children ?? []
+}
+
+/** Every plate, in reading order, with how deep it sits. For a list. */
+export function flattenPlates(
+  tree: readonly Plate[], depth = 0,
+): { plate: Plate; depth: number }[] {
+  return tree.flatMap((plate) => [
+    { plate, depth },
+    ...flattenPlates(plate.children, depth + 1),
+  ])
 }
 
 /**
- * Which pack a link into `kin` should open on, keeping the reader's own where
- * it can.
+ * Which pack a link into `plate` should open on, keeping the reader's own
+ * where it can.
  *
- * Going closer in is a change of scale, not a change of subject: a reader
- * three centuries into the gods does not want to arrive in philosophy because
- * that is what the destination happens to list first. When the plate does not
- * offer their pack, its own first is the honest fallback.
+ * Changing plate is a change of scale, not a change of subject: a reader three
+ * centuries into the gods does not want to arrive in philosophy because that
+ * is what the destination happens to list first. When the plate does not offer
+ * their pack, its own first is the honest fallback.
  */
-export function entryPackFor(kinRegion: RegionKin, currentPack: string): string {
-  return kinRegion.packs.includes(currentPack) ? currentPack : kinRegion.entryPack
+export function entryPackFor(plate: Plate, currentPack: string): string {
+  return plate.packs.includes(currentPack) ? currentPack : plate.entryPack
 }
 
-/** Where a link into `kin` goes, keeping the reader's pack where it can. */
-export function kinHref(kinRegion: RegionKin, currentPack: string): string {
-  return `/${kinRegion.slug}/${entryPackFor(kinRegion, currentPack)}`
+/** Where a link into `plate` goes, keeping the reader's pack where it can. */
+export function plateHref(plate: Plate, currentPack: string): string {
+  return `/${plate.slug}/${entryPackFor(plate, currentPack)}`
 }

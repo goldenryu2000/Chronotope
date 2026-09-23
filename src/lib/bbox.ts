@@ -55,6 +55,45 @@ export interface Viewport {
 }
 
 /**
+ * How much of what the reader is looking at this plate fills, from 0 to 1.
+ *
+ * The question behind it is "is this plate what they are looking at?", and the
+ * honest measure of that is area on screen rather than zoom: zoom alone says
+ * nothing, because a plate the size of a county and a plate the size of Asia
+ * fill a screen at completely different zooms. Measured in Web Mercator
+ * fractions so the comparison is of what is actually drawn, not of degrees,
+ * which are not the same size at 5 north and 37 north.
+ *
+ * Clipped by the plate's own area as well as the viewport's, so zooming
+ * further in past the point where the plate covers the screen keeps the answer
+ * at 1 rather than letting it fall away again.
+ */
+export function viewportShare(plate: BBox, view: BBox): number {
+  const width = Math.min(plate[2], view[2]) - Math.max(plate[0], view[0])
+  const height = mercatorY(Math.max(plate[1], view[1])) - mercatorY(Math.min(plate[3], view[3]))
+  if (width <= 0 || height <= 0) return 0
+
+  const viewWidth = view[2] - view[0]
+  const viewHeight = mercatorY(view[1]) - mercatorY(view[3])
+  if (viewWidth <= 0 || viewHeight <= 0) return 0
+
+  return (width * height) / (viewWidth * viewHeight)
+}
+
+/**
+ * When a plate starts offering itself on its parent's map, and when it stops.
+ *
+ * Two numbers rather than one, because a single threshold flickers: a reader
+ * resting the map exactly on the line would watch the offer appear and vanish
+ * on every pixel of drag. It appears once the plate is better than a quarter
+ * of the view -- around zoom 3.7 for India on a laptop, which is to say once
+ * somebody has deliberately gone to look at the subcontinent -- and stays
+ * until it is down to a fifth.
+ */
+export const INVITE_SHOW = 0.26
+export const INVITE_HIDE = 0.2
+
+/**
  * Whether a plate has edges at all.
  *
  * A plate reaching all the way round the world does not: `renderWorldCopies:

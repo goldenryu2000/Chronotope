@@ -19,7 +19,8 @@ import { configureMaplibreWorker } from '../lib/maplibre-worker'
 import { cameraDuration } from '../lib/motion'
 import { measureInsets } from '../layout/measure'
 import { frame, GAP } from '../layout/safeArea'
-import { addNeatline, Doorways, repaintNeatline, type Doorway } from './doorways'
+import { Invitations, type Invite } from './invitation'
+import { addNeatline, repaintNeatline } from './neatline'
 import { EntityMarkers } from './entityMarkers'
 import { addLayerLine, layerLineId } from './layerPaint'
 import type { RegionLayer } from '../read/regionLayers'
@@ -135,21 +136,22 @@ interface Props {
    * Plates drawn inside this one, offered as a way in.
    *
    * Rectangles, names and destinations. The engine is told nothing about what
-   * a region is or which one this is (Rule 3).
+   * a region is or which one this is (Rule 3). Nothing is drawn for them until
+   * one of them is most of what the reader is looking at; see `invitation.ts`.
    */
-  doorways?: readonly Doorway[]
-  /** Where a doorway click goes. The router's push, handed in. */
-  onEnterDoorway?: (href: string) => void
+  invitations?: readonly Invite[]
+  /** Where accepting one goes. The router's push, handed in. */
+  onEnterPlate?: (href: string) => void
 }
 
 export default function MapCanvas({
   theme, camera, entities, tilesetUrl, borderYears, onReady, layers = [],
-  doorways = [], onEnterDoorway,
+  invitations = [], onEnterPlate,
 }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const map = useRef<MapLibreMap | null>(null)
   const markers = useRef<EntityMarkers | null>(null)
-  const doors = useRef<Doorways | null>(null)
+  const invites = useRef<Invitations | null>(null)
 
   const hoveredFeature = useRef<string | number | null>(null)
   /** Whether the map has drawn once, which is when the curtain lifts. */
@@ -443,7 +445,6 @@ export default function MapCanvas({
     if (!instance || !ready) return
     applyThemePaint(instance)
     repaintNeatline(instance)
-    doors.current?.repaint()
   }, [theme, ready])
 
   /*
@@ -452,10 +453,10 @@ export default function MapCanvas({
    * Through a ref so that a caller passing an inline handler does not tear the
    * frames down and rebuild them, exactly as `onReady` is handled above.
    */
-  const onEnterRef = useRef(onEnterDoorway)
+  const onEnterRef = useRef(onEnterPlate)
   useEffect(() => {
-    onEnterRef.current = onEnterDoorway
-  }, [onEnterDoorway])
+    onEnterRef.current = onEnterPlate
+  }, [onEnterPlate])
 
   // The plate's own edge, added once the style exists. A plate that reaches
   // all the way round draws none; see `addNeatline`.
@@ -465,27 +466,27 @@ export default function MapCanvas({
     addNeatline(instance, initialCamera.current.bounds)
   }, [ready])
 
-  // The manager outlives what it draws. Recreating it whenever the list
-  // changed identity -- which it does on every pack switch, since a doorway's
-  // destination carries the reader's pack -- tore the frames off the map and
-  // put them back for a change of one href.
+  // The manager outlives what it offers. Recreating it whenever the list
+  // changed identity -- which it does on every pack switch, since a
+  // destination carries the reader's pack -- would tear the captions off the
+  // map and fade them back in for a change of one href.
   useEffect(() => {
     const instance = map.current
     if (!instance || !ready) return
 
-    const entries = new Doorways(instance, (href) => onEnterRef.current?.(href))
-    doors.current = entries
+    const offers = new Invitations(instance, (href) => onEnterRef.current?.(href))
+    invites.current = offers
 
     return () => {
-      entries.destroy()
-      doors.current = null
+      offers.destroy()
+      invites.current = null
     }
   }, [ready])
 
   useEffect(() => {
     if (!ready) return
-    doors.current?.update(doorways)
-  }, [doorways, ready])
+    invites.current?.update(invitations)
+  }, [invitations, ready])
 
   useEffect(() => {
     const instance = map.current

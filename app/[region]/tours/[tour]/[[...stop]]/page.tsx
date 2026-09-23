@@ -8,7 +8,7 @@ import { db } from '@/src/db/client'
 import { tours } from '@/src/db/schema'
 import { currentArtifactUrl } from '@/src/read/currentArtifact'
 import { currentTourUrl, tourOpening } from '@/src/read/currentTour'
-import { parentAtlas } from '@/src/read/regionKin'
+import { plateTree } from '@/src/read/regionKin'
 import { layersOnRegion } from '@/src/read/regionLayers'
 import { packsOnRegion } from '@/src/read/regionPacks'
 import TourPlayer from '@/src/tours/TourPlayer'
@@ -73,16 +73,12 @@ export default async function Page(
   // A stop past the end, or a tour with no stops at all.
   if (!opening) notFound()
 
-  // The plate this one sits in, but deliberately not the plates inside it: a
-  // way out is never an interruption, and a doorway offered in the middle of
-  // someone's narration is. The player carries its own exit from the tour;
-  // this is the exit from the region.
-  const [regionUrl, tourUrl, siblings, regionLayers, parent] = await Promise.all([
+  const [regionUrl, tourUrl, siblings, regionLayers, plates] = await Promise.all([
     currentArtifactUrl('regions', region),
     currentTourUrl(tour),
     packsOnRegion(region),
     layersOnRegion(region),
-    parentAtlas(region),
+    plateTree(),
   ])
   if (!regionUrl || !tourUrl) notFound()
 
@@ -99,7 +95,11 @@ export default async function Page(
       activePack={opening.pack}
       regionSlug={region}
       layers={regionLayers}
-      parent={parent}
+      // The tree, so the title still names the map and still leads out of it.
+      // The invitation to go deeper stands itself down during a tour: a way
+      // out is never an interruption and an offer to leave mid-narration is.
+      // `Atlas` does that by reading the tour's own presence, not this prop.
+      plates={plates}
       // The address is the stop, not the pack. See Atlas's prop comment.
       writesPackUrl={false}
       initialView={{
