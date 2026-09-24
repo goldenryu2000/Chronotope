@@ -226,6 +226,62 @@ test('a cluster opens its list at the cluster, on the first frame, clear of the 
   await expect(popover).toHaveCount(0)
 })
 
+test('the map under an open cluster list does not light up as the pointer moves over the list', async ({ page }) => {
+  // Ugarit's gods share one coordinate, so the cluster opens a list rather
+  // than parting, and the list lands over Anatolia: land, with a named realm.
+  await opened(page, '/world/mythology?year=-1200')
+  await still(page)
+
+  // A mixed crowd zooms and parts on a click; Ugarit's own gods, sharing one
+  // coordinate, open a list, so follow Baal until it opens. Dispatched rather
+  // than clicked: a neighbouring pin can overlap the cluster's edge.
+  const popover = page.locator('.cluster-popover')
+  for (let i = 0; i < 3 && (await popover.count()) === 0; i += 1) {
+    await page.locator('.cluster[aria-label*="Baal"]').first().dispatchEvent('click')
+    await still(page)
+  }
+  await expect(popover).toBeVisible()
+  await still(page)
+
+  // Sweep the list, as a reader reading down it would.
+  const list = await box(popover)
+  const points: (readonly [number, number])[] = []
+  for (let row = 1; row < 10; row += 1) {
+    for (const fx of [0.25, 0.5, 0.75]) {
+      points.push([list.left + (list.right - list.left) * fx, list.top + ((list.bottom - list.top) * row) / 10])
+    }
+  }
+  // Which of those points have a named country drawn beneath the list. The
+  // map answers this regardless of what DOM sits on top of it.
+  const overLand = await page.evaluate((pts) => {
+    const map = (window as unknown as {
+      __map: { queryRenderedFeatures(p: [number, number]): { properties: { name?: string } }[] }
+    }).__map
+    return pts.filter(([x, y]) => map.queryRenderedFeatures([x, y]).some((f) => f.properties.name))
+  }, points as [number, number][])
+  expect(overLand.length, 'the list should sit over at least some named land').toBeGreaterThan(0)
+
+  for (const [px, py] of overLand) {
+    await page.mouse.move(px, py, { steps: 3 })
+    await page.waitForTimeout(60)
+    await expect(page.locator('.map__polity')).toHaveCount(0)
+  }
+  const lit = await page.evaluate(() => {
+    const map = (window as unknown as {
+      __map: { queryRenderedFeatures(o?: object): { state?: { hover?: boolean } }[] }
+    }).__map
+    return map.queryRenderedFeatures().filter((f) => f.state?.hover).length
+  })
+  expect(lit).toBe(0)
+
+  // Not vacuous: with the list gone, the same spot lights up.
+  await page.keyboard.press('Escape')
+  await expect(popover).toHaveCount(0)
+  const [px, py] = overLand[0]
+  await page.mouse.move(px + 1, py + 1, { steps: 2 })
+  await expect(page.locator('.map__polity')).toHaveCount(1)
+})
+
 test('every cluster says who is in it, so a zoom into a crowd lands on names', async ({ page }) => {
   await opened(page, '/world/mythology')
   // Many gods share their cult centre's coordinate, so no zoom separates them:

@@ -357,7 +357,16 @@ export default function MapCanvas({
       instance.getCanvas().style.cursor = ''
     }
 
-    const onMove = (event: { features?: MapGeoJSONFeature[] }) => {
+    const onMove = (event: { features?: MapGeoJSONFeature[]; originalEvent: MouseEvent }) => {
+      // Pins, clusters and the cluster list live inside the map's container,
+      // so a pointer over them still reaches the map, which reports whatever
+      // country lies underneath. What is drawn on top should hide what is
+      // behind it: only the bare canvas highlights.
+      if (event.originalEvent.target !== instance.getCanvas()) {
+        clear()
+        return
+      }
+
       const feature = event.features?.[0]
       // Feature ids come from tippecanoe's `--use-attribute-for-id=fid`, which
       // carries the boundary row's ordinal into the tiles. Without an id there
