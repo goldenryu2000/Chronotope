@@ -4,7 +4,7 @@ import { measureInsets, type Occupancy } from '../layout/measure'
 import { GAP, reveal, type Rect } from '../layout/safeArea'
 import { cameraDuration } from '../lib/motion'
 import { formatYear } from '../lib/year'
-import { clusterMove, layoutPins, type Cluster, type Placed } from './declutter'
+import { clusterCaption, clusterMove, layoutPins, type Cluster, type Placed } from './declutter'
 
 /** How far inside the clear area a revealed pin or popover comes to rest. */
 const REVEAL_MARGIN = GAP
@@ -235,14 +235,12 @@ export class EntityMarkers {
       entry.element.dataset.label = cluster.label ? 'show' : 'hide'
       entry.element.dataset.side = cluster.side
 
+      const caption = clusterCaption(cluster.members.length, cluster.place)
       entry.element.setAttribute(
         'aria-label',
-        `${cluster.members.length} entities in ${cluster.place}: ${cluster.members.map((m) => m.name).join(', ')}`,
+        `${caption}: ${cluster.members.map((m) => m.name).join(', ')}`,
       )
-      entry.element.setAttribute(
-        'title',
-        `${cluster.place} (${cluster.members.length} entities)`,
-      )
+      entry.element.setAttribute('title', caption)
       // Lit while its list is open, and while it holds whoever the panel shows:
       // the cluster is the only mark on the map for a figure picked from it.
       entry.element.dataset.active = String(
@@ -283,10 +281,11 @@ export class EntityMarkers {
     if (!this.popoverElement) return
 
     const title = this.popoverElement.querySelector('.cluster-popover__title')
-    if (title) title.textContent = cluster.place
+    if (title) title.textContent = cluster.place ?? 'Nearby'
 
     const countBadge = this.popoverElement.querySelector('.cluster-popover__count')
-    if (countBadge) countBadge.textContent = `${cluster.members.length} entities`
+    if (countBadge) countBadge.textContent = `${cluster.members.length} figures`
+    this.popoverElement.setAttribute('aria-label', clusterCaption(cluster.members.length, cluster.place))
 
     const list = this.popoverElement.querySelector('.cluster-popover__list')
     if (!list) return
@@ -323,7 +322,7 @@ export class EntityMarkers {
     const container = document.createElement('div')
     container.className = 'cluster-popover'
     container.setAttribute('role', 'dialog')
-    container.setAttribute('aria-label', `Entities in ${cluster.place}`)
+    container.setAttribute('aria-label', clusterCaption(cluster.members.length, cluster.place))
 
     container.addEventListener('click', (e) => e.stopPropagation())
 
@@ -336,11 +335,12 @@ export class EntityMarkers {
 
     const title = document.createElement('h3')
     title.className = 'cluster-popover__title'
-    title.textContent = cluster.place
+    // A place only when every member shares it; see `Cluster.place`.
+    title.textContent = cluster.place ?? 'Nearby'
 
     const countBadge = document.createElement('span')
     countBadge.className = 'cluster-popover__count'
-    countBadge.textContent = `${cluster.members.length} entities`
+    countBadge.textContent = `${cluster.members.length} figures`
 
     titleGroup.append(title, countBadge)
 

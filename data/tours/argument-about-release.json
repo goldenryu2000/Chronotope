@@ -2,7 +2,7 @@
   "id": "argument-about-release",
   "regionSlug": "india",
   "title": "The Argument About Release",
-  "subtitle": "Two thousand years of disagreeing about what freedom is.",
+  "subtitle": "Two thousand years of disagreeing about what freedom is",
   "description": "Almost every Indian school agrees that the point is to get out, and almost none of them agree about what you are getting out of, what does the getting, or whether anything is left afterwards. This walks down the subcontinent and through the argument, from the rivers of the Vedic hymns to a Kannada coast where somebody finally said the self stays separate from God forever.",
   "estimatedMinutes": 7,
   "stops": [
@@ -12,7 +12,7 @@
       "entityId": "indra",
       "camera": { "center": [77.4, 29.4], "zoom": 5.4 },
       "layers": [],
-      "title": "Before anyone wanted out",
+      "title": "Before Anyone Wanted Out",
       "locationLabel": "Sapta Sindhu, the land of seven rivers",
       "narration": "The oldest layer of the argument does not contain it. Indra drinks, fights, breaks open a mountain and lets the rivers out, and the hymns ask him for cattle, sons and rain. Nobody in them asks to be released from anything. The wish to leave the world entirely arrives later, and when it does it arrives as a scandal: the ritual system was built to make life go well, not to make it stop."
     },
@@ -32,7 +32,7 @@
       "entityId": "gautama-buddha",
       "camera": { "center": [83.5, 27.2], "zoom": 5.8 },
       "layers": [],
-      "title": "A hundred miles west, a different diagnosis",
+      "title": "A Hundred Miles West, a Different Diagnosis",
       "locationLabel": "Lumbini, in the Shakya republic",
       "narration": "The Buddha grows up a short walk from Mahavira's country and reaches almost the opposite conclusion. The problem is not matter clinging to a soul; it is that there is no soul there to cling to, and wanting one is the machinery of the suffering. Release is seeing through it. The two men were contemporaries in the same river basin, and the argument between their answers outlasted both of their kingdoms."
     },
@@ -42,7 +42,7 @@
       "entityId": "nagarjuna",
       "camera": { "center": [80.6, 16.9], "zoom": 5.6 },
       "layers": ["buddhism"],
-      "title": "Emptiness goes south",
+      "title": "Emptiness Goes South",
       "locationLabel": "Andhra, under the Satavahanas",
       "narration": "Nagarjuna takes the Buddha's refusal further than most Buddhists were comfortable with: nothing at all has an independent nature, emptiness included, and any position you can state can be taken apart. He writes it in Sanskrit, in the Deccan, and it travels the roads lit here into China, Tibet and Japan. The idea leaves India more successfully than it stays."
     },
@@ -52,7 +52,7 @@
       "entityId": "dignaga",
       "camera": { "center": [79.9, 13.2], "zoom": 6.1 },
       "layers": ["buddhism"],
-      "title": "The argument becomes a discipline",
+      "title": "The Argument Becomes a Discipline",
       "locationLabel": "Kanchipuram, in Pallava country",
       "narration": "By Dignaga's time the schools have been arguing for a thousand years and have started to argue about arguing. He rebuilds the rules: what counts as perception, what counts as inference, what a word can and cannot pick out. Everyone afterwards, Buddhist or not, has to answer him. Indian philosophy from here on is a conversation with a shared standard of proof."
     },
@@ -62,7 +62,7 @@
       "entityId": "abhinavagupta",
       "camera": { "center": [76.3, 34.2], "zoom": 6.2 },
       "layers": ["silk-road"],
-      "title": "Kashmir, where the world is not a mistake",
+      "title": "Kashmir, Where the World Is Not a Mistake",
       "locationLabel": "Kashmir, under the Lohara kings",
       "narration": "Abhinavagupta works in a valley on the road lit here, with Buddhist logicians, grammarians and tantric ritualists all within a day's walk. His Shaivism inverts the premise the tour started with: consciousness is not trapped in the world, it is playing at being the world, and recognising that is the release. Nothing has to be escaped, because nothing was ever a prison."
     },
@@ -72,7 +72,7 @@
       "entityId": "ramanuja",
       "camera": { "center": [80.2, 13.3], "zoom": 6.1 },
       "layers": ["spice-route"],
-      "title": "Not one, not two",
+      "title": "Not One, Not Two",
       "locationLabel": "Sriperumbudur, in the Chola country",
       "narration": "Ramanuja concedes that the self and God are inseparable and refuses to say they are identical. A body is not other than the person whose body it is, and it is not the same thing either. He argues it in temple towns full of Tamil devotional poetry, on a coast shipping pepper west along the route lit here, and he makes the philosophical case for loving something that is genuinely not you."
     },
@@ -82,9 +82,9 @@
       "entityId": "madhvacharya",
       "camera": { "center": [75.1, 13.5], "zoom": 6.3 },
       "layers": [],
-      "title": "Separate, and staying separate",
+      "title": "Separate, and Staying Separate",
       "locationLabel": "Pajaka, on the Kannada coast",
-      "narration": "Madhva ends the tour by giving the most uncompromising answer available. The self is different from God, permanently, and release is not merger but the clear-eyed enjoyment of that difference forever. Three positions on one question, held by three men within two hundred miles of this coastline, and the subcontinent never settled it. That is the argument, not a failure of it."
+      "narration": "Madhva ends the tour by giving the most uncompromising answer available. The self is different from God, permanently, and release is not merger but the clear-eyed enjoyment of that difference forever. Three positions on one question, held by three men who lived within four hundred miles of one another, and the subcontinent never settled it. That is the argument, not a failure of it."
     }
   ]
 }

@@ -1,16 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import type { ActiveEntity } from '../data/entitySpan'
-import { clusterMove, clusterName, COLLIDE_PX, layoutPins } from './declutter'
+import { clusterCaption, clusterMove, clusterName, COLLIDE_PX, layoutPins, sharedPlace } from './declutter'
 import { project as mercator } from '../layout/safeArea'
 
-function entity(id: string, lng: number, lat: number, tier: 'core' | 'halo' = 'core'): ActiveEntity {
+function entity(
+  id: string, lng: number, lat: number, tier: 'core' | 'halo' = 'core', place = 'Somewhere',
+): ActiveEntity {
   return {
     id,
     name: id[0].toUpperCase() + id.slice(1),
     lng,
     lat,
     tier,
-    place: 'Somewhere',
+    place,
   } as unknown as ActiveEntity
 }
 
@@ -43,7 +45,49 @@ describe('clusterName', () => {
   })
 })
 
+describe('cluster place', () => {
+  it('names the place only when every member shares it', () => {
+    const socrates = entity('socrates', 23.73, 37.98, 'core', 'Athens, Greece')
+    const plato = entity('plato', 23.73, 37.98, 'core', 'Athens')
+    const aristotle = entity('aristotle', 23.86, 40.52, 'core', 'Stagira, Macedon')
+    expect(sharedPlace([socrates, plato])).toBe('Athens')
+    // The reported case: this pair was "2 entities in Stagira".
+    expect(sharedPlace([aristotle, plato])).toBeNull()
+  })
+
+  it('says how many, and where only when it can', () => {
+    expect(clusterCaption(2, 'Athens')).toBe('2 figures in Athens')
+    expect(clusterCaption(31, null)).toBe('31 figures nearby')
+  })
+
+  it('reaches the cluster layoutPins builds', () => {
+    const { clusters } = layoutPins(
+      [entity('aristotle', 0, 0, 'core', 'Stagira'), entity('plato', 0, 1, 'core', 'Athens')],
+      project,
+    )
+    expect(clusters[0].place).toBeNull()
+  })
+})
+
 describe('layoutPins labels', () => {
+  it('gives a cluster its name before a lone pin takes the room', () => {
+    // The cluster is boxed in above, below and to the right, so its one free
+    // side is the left, which is also where Lonely's name would go. Placed
+    // first, the pin took it and four figures went unnamed.
+    const { placed, clusters } = layoutPins(
+      [
+        entity('lonely', 2, 10),
+        ...['biga', 'bigb', 'bigc', 'bigd'].map((id) => entity(id, 10, 10)),
+        entity('up', 10, 6.9),
+        entity('down', 10, 13.1),
+        entity('east', 15, 10),
+      ],
+      project,
+    )
+    expect(clusters[0]).toMatchObject({ label: true, side: 'left' })
+    expect(placed.find((p) => p.entity.id === 'lonely')).toMatchObject({ label: true, side: 'left' })
+  })
+
   it('names every cluster that has room, not only the lone pins', () => {
     const { placed, clusters } = layoutPins(
       [

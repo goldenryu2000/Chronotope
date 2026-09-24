@@ -246,6 +246,7 @@
 }
 
 .timeline__band {
+  display: flex;
   min-width: 0;
   padding: 0.2rem 0.1rem;
   border: 0;
@@ -279,10 +280,31 @@
 
 .timeline__band-label {
   display: block;
+  min-width: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
   padding-left: 0.3rem;
+}
+
+/*
+ * A narrow era's name is cut to "C…". Pointing at it, or tabbing to it, shows
+ * the whole name over its neighbours; the last one grows leftward so it stays
+ * inside the dock.
+ */
+.timeline__band:hover .timeline__band-label,
+.timeline__band:focus-visible .timeline__band-label {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  overflow: visible;
+  padding-right: 0.3rem;
+  background: var(--surface-raised);
+}
+
+.timeline__band:last-child:hover,
+.timeline__band:last-child:focus-visible {
+  justify-content: flex-end;
 }
 
 /* --- Lit layers ------------------------------------------------------- */

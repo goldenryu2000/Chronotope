@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { publishedAtlases, type AtlasIndexRegion } from '@/src/read/atlasIndex'
@@ -20,6 +21,11 @@ import './page.css'
  * a publish still shows up without a deploy.
  */
 export const revalidate = 300
+
+/** Only the canonical here. The title and share card come from the layout. */
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+}
 
 /**
  * What is coming, said plainly enough that nobody mistakes it for what is here.
@@ -178,6 +184,7 @@ function RegionBlock({
                         key={portrait.slug}
                         className="pack__face"
                         src={portrait.src}
+                        style={portrait.position ? { objectPosition: portrait.position } : undefined}
                         alt={`Depiction of ${portrait.name}`}
                         width={110}
                         height={146}
@@ -365,7 +372,7 @@ export default async function Home() {
                       {/* A plate can have one tour, and "All 1 tours" reads
                           like a placeholder nobody finished. */}
                       {region.tours.length === 1
-                        ? 'The one tour here'
+                        ? 'Open the tour'
                         : `All ${region.tours.length} tours`}
                     </Link>
                   </p>
@@ -382,6 +389,7 @@ export default async function Home() {
                             <img
                               className="tour__cover"
                               src={cover.src}
+                              style={cover.position ? { objectPosition: cover.position } : undefined}
                               alt={`Depiction of ${cover.name}`}
                               width={72}
                               height={72}

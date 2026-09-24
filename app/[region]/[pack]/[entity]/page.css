@@ -73,12 +73,10 @@
   color: inherit;
 }
 
-.entity__licence {
-  margin-left: 0.5rem;
-}
-
+/* The separator's own spaces are the only gap. A margin as well read as a
+   double space before the dot. */
 .entity__licence::before {
-  content: '· ';
+  content: ' · ';
 }
 
 .entity__name {
@@ -139,10 +137,24 @@
   padding-left: 1.25rem;
 }
 
+/* Set like the links on the credits page and the home footer: the accent,
+   underlined, so it reads as a way out and not as more body text. */
 .entity__link {
   display: inline-block;
   font-family: system-ui, sans-serif;
   margin-top: 0.5rem;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.entity__link:hover {
+  color: var(--accent-soft);
+}
+
+.entity__link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .entity__note {

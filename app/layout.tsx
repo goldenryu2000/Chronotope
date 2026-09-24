@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import InlineScript from "@/src/lib/InlineScript";
+import { openGraph, SITE_NAME, SITE_URL } from "@/src/lib/site";
 import { DEFAULT_THEME, THEMES } from "@/src/theme/themes";
 import "./globals.css";
 
@@ -16,16 +18,31 @@ const geistMono = Geist_Mono({
 /**
  * The root fallback, inherited by any route that does not set its own.
  *
- * `title.template` means a route only has to say what it is — "Philosophy" —
+ * `title.template` means a route only has to say what it is, "Philosophy",
  * and gets the suffix for free, while `default` covers the landing page.
+ *
+ * `metadataBase` is what turns the relative image and canonical paths below
+ * and in every route into the absolute URLs a share preview needs. The
+ * `opengraph-image` beside this file is the picture for any route without one.
+ *
+ * No canonical or `og:url` here: every route without its own would inherit
+ * them and claim to be the home page.
  */
+const DESCRIPTION =
+  "A historical atlas that redraws the map to match the year, with pins for the people, gods and creatures attested there at that moment.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Chronotope — an atlas of time and place",
-    template: "%s — Chronotope",
+    default: `${SITE_NAME} · an atlas of time and place`,
+    template: `%s · ${SITE_NAME}`,
   },
-  description:
-    "A historical atlas that redraws the map to match the year, with pins for the people, gods and creatures attested there at that moment.",
+  description: DESCRIPTION,
+  openGraph: openGraph({
+    title: `${SITE_NAME} · an atlas of time and place`,
+    description: DESCRIPTION,
+  }),
+  twitter: { card: "summary_large_image" },
 };
 
 /**
@@ -58,7 +75,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable}`}
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
+        <InlineScript html={THEME_BOOTSTRAP} />
       </head>
       <body>
         {/* Shown only on narrow screens; see `.screen-note` in globals.css. */}

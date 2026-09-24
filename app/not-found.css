@@ -1,0 +1,53 @@
+/*
+ * The 404's two ways out, set like the landing page's buttons. The page itself
+ * borrows legal.css, so it reads as the same plain paper as the credits.
+ */
+
+.not-found__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+/* `.legal a` colours every link with the accent; these set their own. */
+.legal .not-found__link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.3rem;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.legal .not-found__link:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.legal .not-found__link--primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--paper);
+}
+
+.legal .not-found__link--primary:hover {
+  background: color-mix(in srgb, var(--accent) 86%, var(--ink));
+  color: var(--paper);
+}
+
+.not-found__link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .not-found__link {
+    transition: none;
+  }
+}

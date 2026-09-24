@@ -54,22 +54,41 @@ a {
  * phones yet. On narrow screens a quiet strip says so, instead of letting the
  * atlas look broken with no explanation.
  *
- * Fixed to the bottom and click-through, so it never shifts a layout or blocks
- * a control, and it stays clear of the theme toggle in the top corner. At
+ * Fixed to the bottom and click-through, and solid, with the atlas's dock
+ * standing on it (`--screen-note`) rather than under it. At
  * desktop widths it is `display: none`, which also hides it from screen readers.
  */
 .screen-note {
   display: none;
 }
 
+/*
+ * The strip's height, which the atlas's dock and map controls stand on. Fixed
+ * rather than measured, so nothing has to wait for layout to know it: two
+ * lines at a phone's width, one line and some air on a tablet.
+ */
+:root {
+  --screen-note: 0px;
+}
+
 @media (width < 56rem) {
+  :root {
+    --screen-note: calc(2.9rem + env(safe-area-inset-bottom));
+  }
+
   .screen-note {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    min-height: var(--screen-note);
     position: fixed;
     inset: auto 0 0 0;
     z-index: 1000;
+    margin: 0;
     padding: 0.4rem 1rem calc(0.4rem + env(safe-area-inset-bottom));
-    background: color-mix(in srgb, var(--paper) 90%, transparent);
+    /* Solid: see-through, the dock's scrubber showed through the words. */
+    background: var(--paper);
     border-top: 1px solid var(--rule);
     color: var(--ink-soft);
     font-family: var(--font-ui);

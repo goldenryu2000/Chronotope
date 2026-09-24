@@ -334,7 +334,8 @@ export default function Timeline({ scale, entities, spans, borderChanges = [] }:
                 className="timeline__band"
                 data-current={band.id === era.id}
                 style={{ width: `${band.span * 100}%` }}
-                title={band.blurb}
+                // The name first: a narrow band shows only its first letter.
+                title={`${band.label}. ${band.blurb}`}
                 onClick={() => goTo(midpoint(band))}
               >
                 <span className="timeline__band-label">{band.label}</span>

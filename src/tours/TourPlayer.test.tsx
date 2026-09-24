@@ -49,6 +49,16 @@ describe('TourPlayer', () => {
     })
   })
 
+  it("leaves onto the atlas at the stop's pack, year and figure", async () => {
+    render(<TourPlayer {...props} stop={2} />)
+    await screen.findByText('The Turn')
+
+    expect(screen.getByRole('link', { name: 'Leave the tour' }).getAttribute('href'))
+      .toBe('/world/philosophy?year=-550&entity=laozi')
+    expect(screen.getByRole('link', { name: 'Finish' }).getAttribute('href'))
+      .toBe('/world/philosophy?year=-550&entity=laozi')
+  })
+
   it('advances to the next stop and writes the url without navigating', async () => {
     render(<TourPlayer {...props} stop={1} />)
     await screen.findByText('The First Question')

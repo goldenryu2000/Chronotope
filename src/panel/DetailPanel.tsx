@@ -170,7 +170,7 @@ export default function DetailPanel({
                   >
                     <span className="panel__elsewhere-name">{other.name}</span>
                     <span className="panel__elsewhere-place">
-                      {other.place} · {Math.round(km / 100) * 100} km away
+                      {other.place} · {(Math.round(km / 100) * 100).toLocaleString('en')} km away
                     </span>
                   </button>
                 </li>

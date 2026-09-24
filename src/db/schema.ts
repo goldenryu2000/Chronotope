@@ -297,7 +297,7 @@ export const entities = pgTable('entities', {
   wikipedia: text('wikipedia').notNull(),
   wikidata: text('wikidata').notNull(),
   image: jsonb('image').$type<{
-    file: string; credit: string; licence: string; source: string
+    file: string; credit: string; licence: string; source: string; focus?: [number, number]
   } | null>(),
 }, (t) => [
   uniqueIndex('entity_slug_per_pack').on(t.packId, t.slug),

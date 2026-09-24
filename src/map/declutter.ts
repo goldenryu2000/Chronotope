@@ -18,9 +18,19 @@ export interface Placed {
   side: LabelSide
 }
 
-/** Where a name sits around its mark, in the order they are tried. */
-export type LabelSide = 'right' | 'left' | 'above' | 'below'
-const SIDES: readonly LabelSide[] = ['right', 'left', 'above', 'below']
+/**
+ * Where a name sits around its mark, in the order they are tried.
+ *
+ * The corners come last, leaning off the mark's centre: in a crowd like the
+ * Iranian plateau at world zoom every side of a pair was taken by a neighbour's
+ * mark, and a corner was the only room left.
+ */
+export type LabelSide =
+  | 'right' | 'left' | 'above' | 'below'
+  | 'above-right' | 'below-right' | 'above-left' | 'below-left'
+const SIDES: readonly LabelSide[] = [
+  'right', 'left', 'above', 'below', 'above-right', 'below-right', 'above-left', 'below-left',
+]
 
 /** Half the pin's hit area — the radius a label must stay clear of. */
 const PIN_RADIUS_PX = 16
@@ -43,7 +53,14 @@ export interface Cluster {
   at: { x: number; y: number }
   lngLat: [number, number]
   bounds: [[number, number], [number, number]]
-  place: string
+  /**
+   * The place every member shares, or null when they do not all share one.
+   *
+   * This used to be the most common place, falling back to the first member's,
+   * which called Aristotle and Plato "2 in Stagira" and a pile of Greek and
+   * Egyptian gods "Ugarit". Naming a place is a claim about every member.
+   */
+  place: string | null
   /** What the badge's label says: who is in it, not only how many. */
   name: string
   /** False when no side has room for the name without covering another mark or name. */
@@ -121,29 +138,13 @@ export function layoutPins(
     let maxLat = group[0].entity.lat
     let sumLng = 0
     let sumLat = 0
-
-    const placeCounts = new Map<string, number>()
-    for (const member of group) {
-      const e = member.entity
+    for (const { entity: e } of group) {
       minLng = Math.min(minLng, e.lng)
       maxLng = Math.max(maxLng, e.lng)
       minLat = Math.min(minLat, e.lat)
       maxLat = Math.max(maxLat, e.lat)
       sumLng += e.lng
       sumLat += e.lat
-
-      const placeName = e.place.split(',')[0].trim()
-      placeCounts.set(placeName, (placeCounts.get(placeName) ?? 0) + 1)
-    }
-
-    // Most common place name in cluster
-    let primaryPlace = group[0].entity.place
-    let maxCount = 0
-    for (const [name, count] of placeCounts.entries()) {
-      if (count > maxCount) {
-        maxCount = count
-        primaryPlace = name
-      }
     }
 
     const lngLat: [number, number] = [sumLng / group.length, sumLat / group.length]
@@ -158,7 +159,7 @@ export function layoutPins(
       at: anchor,
       lngLat,
       bounds,
-      place: primaryPlace,
+      place: sharedPlace(group.map((m) => m.entity)),
       name: clusterName(group.map((m) => m.entity), selectedId),
       label: true,
       side: 'right',
@@ -167,6 +168,28 @@ export function layoutPins(
 
   placeLabels(placed, clusters, selectedId)
   return { placed, clusters }
+}
+
+/** The town a place starts with: "Athens" of "Athens, Greece". */
+function town(place: string): string {
+  return place.split(',')[0].trim()
+}
+
+/** The place every member shares, or null. See `Cluster.place`. */
+export function sharedPlace(members: readonly ActiveEntity[]): string | null {
+  if (members.length === 0) return null
+  const first = town(members[0].place)
+  return first && members.every((member) => town(member.place) === first) ? first : null
+}
+
+/**
+ * What a cluster says when asked: "2 figures in Athens", or "31 figures nearby".
+ *
+ * "Figures" rather than "entities", which is the engine's word and not the
+ * reader's, and rather than any one pack's noun (Rule 2).
+ */
+export function clusterCaption(count: number, place: string | null): string {
+  return place ? `${count} figures in ${place}` : `${count} figures nearby`
 }
 
 /**
@@ -198,11 +221,15 @@ export function clusterName(members: readonly ActiveEntity[], selectedId: string
  * A name used to go to the right or not at all. Two figures a few dozen pixels
  * apart on a line (Satyr just west of the Lernaean Hydra) then showed two dots
  * and one name, the other hidden because it would have covered its neighbour.
- * Each name now tries right, left, above and below, and takes the first side
+ * Each name now tries right, left, above, below and then the four corners, and
+ * takes the first side
  * that covers no other mark (it would steal that mark's clicks) and no name
  * already placed (two names over each other read as neither).
  *
- * Whoever is selected is placed first, so their name gets first choice.
+ * Whoever is selected is placed first, so their name gets first choice. Then
+ * the clusters, largest first, and only then the other pins: a lone pin names
+ * one figure and a cluster names several, and when the pins went first on the
+ * world map at opening, Thessaly's ten and both Iranian pairs had no name at all.
  */
 function placeLabels(placed: Placed[], clusters: Cluster[], selectedId: string | null): void {
   type Box = { left: number; right: number; top: number; bottom: number }
@@ -215,11 +242,17 @@ function placeLabels(placed: Placed[], clusters: Cluster[], selectedId: string |
   const boxFor = (at: Point, side: LabelSide, width: number, gap: number, stack: number): Box => {
     const middle = { top: at.y - LABEL_HEIGHT_PX / 2, bottom: at.y + LABEL_HEIGHT_PX / 2 }
     const centred = { left: at.x - width / 2, right: at.x + width / 2 }
+    const up = { top: at.y - stack - LABEL_HEIGHT_PX, bottom: at.y - stack }
+    const down = { top: at.y + stack, bottom: at.y + stack + LABEL_HEIGHT_PX }
     switch (side) {
       case 'right': return { left: at.x + gap, right: at.x + gap + width, ...middle }
       case 'left': return { left: at.x - gap - width, right: at.x - gap, ...middle }
-      case 'above': return { ...centred, top: at.y - stack - LABEL_HEIGHT_PX, bottom: at.y - stack }
-      case 'below': return { ...centred, top: at.y + stack, bottom: at.y + stack + LABEL_HEIGHT_PX }
+      case 'above': return { ...centred, ...up }
+      case 'below': return { ...centred, ...down }
+      case 'above-right': return { left: at.x, right: at.x + width, ...up }
+      case 'below-right': return { left: at.x, right: at.x + width, ...down }
+      case 'above-left': return { left: at.x - width, right: at.x, ...up }
+      case 'below-left': return { left: at.x - width, right: at.x, ...down }
     }
   }
 
@@ -252,11 +285,12 @@ function placeLabels(placed: Placed[], clusters: Cluster[], selectedId: string |
     owner.side = 'right'
   }
 
-  const selectedFirst = [...placed].sort(
-    (a, b) => Number(b.entity.id === selectedId) - Number(a.entity.id === selectedId),
-  )
-  for (const item of selectedFirst) place(item, item.entity.name, LABEL_GAP_PX, PIN_STACK_PX)
-  for (const item of clusters) place(item, item.name, CLUSTER_RADIUS_PX + LABEL_GAP_PX / 2, CLUSTER_STACK_PX)
+  const pin = (item: Placed) => place(item, item.entity.name, LABEL_GAP_PX, PIN_STACK_PX)
+  const selected = placed.find((item) => item.entity.id === selectedId)
+  if (selected) pin(selected)
+  const largestFirst = [...clusters].sort((a, b) => b.members.length - a.members.length)
+  for (const item of largestFirst) place(item, item.name, CLUSTER_RADIUS_PX + LABEL_GAP_PX / 2, CLUSTER_STACK_PX)
+  for (const item of placed) if (item !== selected) pin(item)
 }
 
 /** What clicking a cluster should do: zoom in far enough to part it, or list it. */

@@ -230,7 +230,7 @@ test('every cluster says who is in it, so a zoom into a crowd lands on names', a
   await opened(page, '/world/mythology')
   // Many gods share their cult centre's coordinate, so no zoom separates them:
   // after the zoom they are still clusters, and each must carry names.
-  const nippur = page.locator('.cluster[aria-label*="in Nippur"]').first()
+  const nippur = page.locator('.cluster[aria-label*="Enlil"]').first()
   await expect(nippur).toBeVisible()
   await nippur.click()
   await still(page)

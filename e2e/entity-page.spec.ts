@@ -24,7 +24,9 @@ test('an entity page can get back to its atlas', async ({ page }) => {
   await expect(back).toBeVisible()
 
   await back.click()
-  await expect(page).toHaveURL(/\/world\/philosophy$/)
+  // Back to the atlas, opened on Laozi at his own time rather than the default year.
+  await expect(page).toHaveURL(/\/world\/philosophy\?year=-?\d+&entity=laozi$/)
+  await expect(page.locator('.panel__name')).toHaveText('Laozi')
 })
 
 /**

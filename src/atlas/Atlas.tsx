@@ -10,6 +10,7 @@ import { PackSchema, RegionSchema, type AtlasView, type Pack, type Region } from
 import LayerMenu from '../map/LayerMenu'
 import MapCanvas, { type Camera } from '../map/MapCanvas'
 import Curtain from './Curtain'
+import { atlasQuery, readAtlasLink, type AtlasLink } from './atlasUrl'
 import type { Invite } from '../map/invitation'
 import { childrenOfPlate, parentOfPlate, plateHref, type Plate } from '../read/kin'
 import type { RegionLayer } from '../read/regionLayers'
@@ -87,6 +88,9 @@ async function fetchArtifact(url: string): Promise<unknown> {
   return response.json()
 }
 
+/** How often, at most, the address is rewritten while the year moves. In ms. */
+const URL_EVERY = 400
+
 const clamp = (value: number, low: number, high: number) =>
   Math.min(high, Math.max(low, value))
 
@@ -149,6 +153,12 @@ export function Atlas({
 
   /** Whether a pack has already opened, which decides what year the next one lands on. */
   const opened = useRef(false)
+
+  /**
+   * What the address asked for (`?year=&entity=`), read once on the atlas
+   * route and spent on the first pack. See `atlasUrl.ts`.
+   */
+  const link = useRef<AtlasLink | null>(null)
 
   // The region: fetched once for the route. Its theme and its id are settled
   // here, not on every pack switch — a switch must not re-apply a theme the
@@ -264,10 +274,24 @@ export function Atlas({
     // screen ("who else was here, *then*"), and moving the cursor to rescue an
     // empty answer would answer a different one — the empty state is the right
     // response there, and it says so in words.
-    const wanted = opened.current ? asked : openingYear(entities, asked)
+    let wanted = opened.current ? asked : openingYear(entities, asked)
+
+    // An address that names a year is asked for as it stands, with no rescue:
+    // the reader, or whoever shared it, chose it. One that names a figure opens
+    // them, and moves the year into their span if it lies outside, since the
+    // map only draws a figure inside it and the panel would otherwise stay shut.
+    const linked = opened.current ? null : link.current
+    if (linked) {
+      const subject = entities.find((entity) => entity.id === linked.entity)
+      const year = linked.year ?? subject?.from ?? wanted
+      wanted = subject ? clamp(year, subject.from, subject.to) : year
+      if (subject) select(subject.id)
+      link.current = null
+    }
+
     setYear(clamp(wanted, range.start, range.end))
     opened.current = true
-  }, [region, pack, entities, setYear])
+  }, [region, pack, entities, setYear, select])
 
   /*
    * The route's opening view, parked before anything is fetched.
@@ -284,6 +308,8 @@ export function Atlas({
       applyView(initialView)
       return
     }
+    // Only where the address is the atlas's own. On a tour it is the stop.
+    if (writesPackUrl) link.current = readAtlasLink(window.location.search)
     /*
      * An atlas opened without a view starts with nothing lit.
      *
@@ -292,14 +318,12 @@ export function Atlas({
      * the layers were the one piece of a tour that followed the reader home
      * and into the next atlas they picked, still ticked.
      *
-     * The design says leaving a tour hands the map over with the last stop's
-     * year and layers intact. "Leave the tour" is a full page load, so neither
-     * survives it today, the year included, and this does not change that.
-     * What it removes is the half-kept state in between, where one piece of a
-     * tour leaked and the others did not.
+     * Leaving a tour hands the map over through the address instead: its
+     * exit links here with the stop's year and figure (`atlasUrl.ts`). The
+     * layers are not carried, and this is what keeps them from leaking.
      */
     setLayers([])
-  }, [initialView, applyView, setLayers])
+  }, [initialView, applyView, setLayers, writesPackUrl])
 
   /*
    * A parked view for another pack switches to it first.
@@ -376,7 +400,8 @@ export function Atlas({
     if (!writesPackUrl) return
     const path = `/${regionSlug}/${active}`
     if (window.location.pathname === path) return
-    window.history.pushState({ pack: active }, '', path)
+    // The year travels with the switch; the effect below corrects the rest.
+    window.history.pushState({ pack: active }, '', path + window.location.search)
   }, [regionSlug, active, writesPackUrl])
 
   /*
@@ -429,6 +454,34 @@ export function Atlas({
     () => entities.find((entity) => entity.id === selectedId && isActive(entity, year)) ?? null,
     [entities, selectedId, year],
   )
+
+  /*
+   * The year and whoever is open follow into the address, so a reload or a
+   * shared link lands where the reader was standing.
+   *
+   * `replaceState`, not a navigation: nothing re-renders on the server and no
+   * history entry is left per year scrubbed through. Throttled, because a scrub
+   * or a play-through changes the year every frame: at most one write in each
+   * `URL_EVERY`, always of the latest state, so the last one is never lost.
+   */
+  const query = pack && packSlug === active
+    ? atlasQuery({ year, entity: selected?.id })
+    : null
+  const latestQuery = useRef(query)
+  const writeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    latestQuery.current = query
+    if (!writesPackUrl || query === null || writeTimer.current) return
+    writeTimer.current = setTimeout(() => {
+      writeTimer.current = null
+      const next = latestQuery.current
+      if (next === null || next === window.location.search) return
+      window.history.replaceState(window.history.state, '', window.location.pathname + next)
+    }, URL_EVERY)
+  }, [query, writesPackUrl])
+  useEffect(() => () => {
+    if (writeTimer.current) clearTimeout(writeTimer.current)
+  }, [])
 
   /**
    * The lit layers, with the years each covers, for the timeline.

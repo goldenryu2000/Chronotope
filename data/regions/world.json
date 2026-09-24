@@ -87,7 +87,7 @@
           "start": -3000,
           "end": -1200,
           "weight": 16,
-          "blurb": "The first written myths. Sumer, Egypt and Ugarit put gods into clay and stone, and the earliest names we can still read appear."
+          "blurb": "The first monsters on record. Humbaba guards the cedars, Tiamat's brood fights Marduk, and a serpent attacks the sun every night in Egypt."
         },
         {
           "id": "iron",
@@ -95,7 +95,7 @@
           "start": -1200,
           "end": 400,
           "weight": 20,
-          "blurb": "Homer, the Vedas and the Hebrew Bible take shape. The Mediterranean and Iranian pantheons reach the form later ages inherit."
+          "blurb": "Homer, Hesiod and the Indian epics fill the edges of the known world with cyclopes, harpies, nagas and rakshasas."
         },
         {
           "id": "late-antique",
@@ -103,7 +103,7 @@
           "start": 400,
           "end": 1000,
           "weight": 16,
-          "blurb": "Conversion and compilation. Norse, Slavic and Celtic material is written down largely by the Christians replacing it."
+          "blurb": "The Physiologus gives every animal a moral, and Christian readers start treating unicorns and phoenixes as lessons."
         },
         {
           "id": "medieval",
@@ -111,7 +111,7 @@
           "start": 1000,
           "end": 1500,
           "weight": 18,
-          "blurb": "Bestiaries, sagas and the Shahnameh. Myth is copied, systematised and moralised across Eurasia."
+          "blurb": "Bestiaries, sagas and the Shahnameh. Dragons guard gold, divs fight heroes, and the margins of maps fill with monsters."
         },
         {
           "id": "early-modern",
@@ -119,7 +119,7 @@
           "start": 1500,
           "end": 1800,
           "weight": 15,
-          "blurb": "Conquest, print and collection. European encounter records, and distorts, mythologies across the Americas, Africa and the Pacific."
+          "blurb": "Sailors bring home krakens and sea serpents, and printed natural histories file the real and the fabulous side by side."
         },
         {
           "id": "modern",
@@ -127,7 +127,7 @@
           "start": 1800,
           "end": 2026,
           "weight": 15,
-          "blurb": "Folklorists, nationalists and novelists. Myth is catalogued as heritage and simultaneously rewritten as entertainment."
+          "blurb": "Folklorists write down local creatures before they fade, and cryptozoologists go looking for yetis and bunyips in person."
         }
       ]
     }

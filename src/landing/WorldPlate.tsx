@@ -67,7 +67,14 @@ export default function WorldPlate({ frames, pins, span }: Props) {
                 style={{ left: `${left}%`, top: `${top}%`, ...timed(index, 0.5 + order * 0.35) }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="plate__face" src={pin.src} alt="" width={44} height={44} />
+                <img
+                  className="plate__face"
+                  src={pin.src}
+                  style={pin.position ? { objectPosition: pin.position } : undefined}
+                  alt=""
+                  width={44}
+                  height={44}
+                />
                 <span className="plate__name">{pin.name}</span>
               </span>
             )

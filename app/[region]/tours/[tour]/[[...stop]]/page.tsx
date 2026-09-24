@@ -6,6 +6,7 @@ import { Atlas } from '@/src/atlas/Atlas'
 import { isSlug } from '@/src/data/schemas'
 import { db } from '@/src/db/client'
 import { tours } from '@/src/db/schema'
+import { openGraph } from '@/src/lib/site'
 import { currentArtifactUrl } from '@/src/read/currentArtifact'
 import { currentTourUrl, tourOpening } from '@/src/read/currentTour'
 import { plateTree } from '@/src/read/regionKin'
@@ -55,10 +56,17 @@ const loadTour = cache(async (slug: string) => {
 export async function generateMetadata(
   props: PageProps<'/[region]/tours/[tour]/[[...stop]]'>,
 ): Promise<Metadata> {
-  const { tour } = await props.params
+  const { region, tour } = await props.params
   const row = await loadTour(tour)
   if (!row) return {}
-  return { title: row.title, description: row.description }
+  // Every stop is one tour, so they all name its first page as the original.
+  const url = `/${region}/tours/${tour}`
+  return {
+    title: row.title,
+    description: row.description,
+    alternates: { canonical: url },
+    openGraph: openGraph({ title: row.title, description: row.description, url }),
+  }
 }
 
 export default async function Page(

@@ -326,10 +326,10 @@ test('switching packs changes who is on the map, keeping the year and the place'
   await expect.poll(() => pinNames(page)).not.toEqual(before)
 
   // Shareable and reversible, without ever remounting the map.
-  await expect(page).toHaveURL(/\/world\/mythology$/)
+  await expect(page).toHaveURL(/\/world\/mythology\?year=-?\d+$/)
   await page.goBack()
   await expect(chosen).toHaveText(/Philosophy/i)
-  await expect(page).toHaveURL(/\/world\/philosophy$/)
+  await expect(page).toHaveURL(/\/world\/philosophy\?year=-?\d+$/)
 })
 
 /**

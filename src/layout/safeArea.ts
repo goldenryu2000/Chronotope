@@ -161,6 +161,53 @@ export function frame(
 }
 
 /**
+ * The camera that shows a whole plate inside the clear area.
+ *
+ * A plate's authored zoom was tuned against one screen and one dock height, and
+ * on a laptop it put the south of India under the timeline and the top of it
+ * under the pack's subtitle. The plate's own edges say what must be seen, so
+ * the zoom is whatever fits them between the overlays, and the centre is the
+ * plate's, set in the middle of the clear area rather than of the screen.
+ */
+export function fitPlate(
+  bbox: readonly [number, number, number, number],
+  viewport: Viewport,
+  insets: Insets,
+  limits: { min: number; max: number } = { min: 0, max: 24 },
+): { center: [number, number]; zoom: number } {
+  const [west, south, east, north] = bbox
+  const sw = project([west, south], 0)
+  const ne = project([east, north], 0)
+  const width = Math.max(1, viewport.width - insets.left - insets.right)
+  const height = Math.max(1, viewport.height - insets.top - insets.bottom)
+  const fit = Math.log2(Math.min(width / (ne.x - sw.x), height / (sw.y - ne.y)))
+  // The region's own zoom limits still hold: a phone gets the plate's minimum
+  // and a cropped plate rather than a camera MapLibre would refuse anyway.
+  const zoom = Math.min(limits.max, Math.max(limits.min, fit))
+  // The middle in Mercator, not in degrees: 5N and 37N are not the same size.
+  const middle = unproject({ x: (sw.x + ne.x) / 2, y: (sw.y + ne.y) / 2 }, 0)
+  return { center: frame(middle, zoom, null, viewport, insets), zoom }
+}
+
+/**
+ * What a camera shows, as `[[west, south], [east, north]]`.
+ *
+ * So the camera's travel can be widened to take in a fitted plate: MapLibre
+ * keeps the whole viewport inside `maxBounds`, and bounds sized for the plate
+ * alone would zoom straight back in past the fit.
+ */
+export function extentOf(
+  center: readonly [number, number],
+  zoom: number,
+  viewport: Viewport,
+): [[number, number], [number, number]] {
+  const c = project(center, zoom)
+  const [west, north] = unproject({ x: c.x - viewport.width / 2, y: c.y - viewport.height / 2 }, zoom)
+  const [east, south] = unproject({ x: c.x + viewport.width / 2, y: c.y + viewport.height / 2 }, zoom)
+  return [[west, south], [east, north]]
+}
+
+/**
  * The smallest camera move that brings a subject into the clear area.
  *
  * `box` is what the subject paints, relative to its coordinate: a pin's dot and

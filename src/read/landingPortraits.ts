@@ -27,6 +27,14 @@ export interface Portrait {
   lat: number
   /** Root-relative, served from `public/images`. */
   src: string
+  /** CSS `object-position` for a cropped thumbnail, when the image sets one. */
+  position?: string
+}
+
+/** The image's focal point as CSS, or nothing to leave the thumbnail's default. */
+function position(focus: unknown): { position?: string } {
+  if (!Array.isArray(focus) || focus.length !== 2) return {}
+  return { position: `${Number(focus[0])}% ${Number(focus[1])}%` }
 }
 
 /**
@@ -43,7 +51,7 @@ export async function freePortraits(regionSlug: string): Promise<Portrait[]> {
     select ${packs.slug} as pack, ${entities.slug} as slug, ${entities.name} as name,
       lower(${entities.span}) as start, upper(${entities.span}) - 1 as "end",
       ST_X(${entities.point}) as lng, ST_Y(${entities.point}) as lat,
-      ${entities.image}->>'file' as file
+      ${entities.image}->>'file' as file, ${entities.image}->'focus' as focus
     from ${entities}
     join ${packs} on ${packs.id} = ${entities.packId}
     join ${eraSets} on ${eraSets.packId} = ${packs.id}
@@ -60,16 +68,17 @@ export async function freePortraits(regionSlug: string): Promise<Portrait[]> {
     order by ${packs.slug}, lower(${entities.span}), ${entities.slug}
   `) as unknown as Array<{
     pack: string; slug: string; name: string; start: number; end: number
-    lng: number; lat: number; file: string
+    lng: number; lat: number; file: string; focus: unknown
   }>
 
-  return rows.map(({ file, ...row }) => ({
+  return rows.map(({ file, focus, ...row }) => ({
     ...row,
     start: Number(row.start),
     end: Number(row.end),
     lng: Number(row.lng),
     lat: Number(row.lat),
     src: `/images/${row.pack}/${file}`,
+    ...position(focus),
   }))
 }
 
@@ -77,6 +86,7 @@ export async function freePortraits(regionSlug: string): Promise<Portrait[]> {
 export interface TourCover {
   name: string
   src: string
+  position?: string
 }
 
 /**
@@ -87,7 +97,8 @@ export async function tourCovers(): Promise<Map<string, TourCover>> {
   const rows = await db.execute(sql`
     select distinct on (${tours.slug})
       ${tours.slug} as tour, ${entities.name} as name,
-      ${packs.slug} as pack, ${entities.image}->>'file' as file
+      ${packs.slug} as pack, ${entities.image}->>'file' as file,
+      ${entities.image}->'focus' as focus
     from ${tourStops}
     join ${tours} on ${tours.id} = ${tourStops.tourId}
     join ${entities} on ${entities.id} = ${tourStops.entityId}
@@ -95,10 +106,10 @@ export async function tourCovers(): Promise<Map<string, TourCover>> {
     where ${tours.currentVersionId} is not null
       and ${entities.image}->>'licence' in (${licenceList()})
     order by ${tours.slug}, ${tourStops.ordinal}
-  `) as unknown as Array<{ tour: string; name: string; pack: string; file: string }>
+  `) as unknown as Array<{ tour: string; name: string; pack: string; file: string; focus: unknown }>
 
   return new Map(rows.map((row) => [
     row.tour,
-    { name: row.name, src: `/images/${row.pack}/${row.file}` },
+    { name: row.name, src: `/images/${row.pack}/${row.file}`, ...position(row.focus) },
   ]))
 }

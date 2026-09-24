@@ -17,6 +17,9 @@
 .curtain[data-done='true'] {
   opacity: 0;
   pointer-events: none;
+  /* Out of the tab order and the accessibility tree once the fade is over. */
+  visibility: hidden;
+  transition: opacity 520ms ease, visibility 0s linear 520ms;
 }
 
 .curtain__inner {
@@ -74,7 +77,8 @@
  * stalled progress bar. A pulse says "working" without travelling.
  */
 @media (prefers-reduced-motion: reduce) {
-  .curtain {
+  .curtain,
+  .curtain[data-done='true'] {
     transition: none;
   }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { frame, insetsFor, MIN_SAFE, nudge, project, reveal, unproject } from './safeArea'
+import { extentOf, fitPlate, frame, insetsFor, MIN_SAFE, nudge, project, reveal, unproject } from './safeArea'
 
 const viewport = { width: 1440, height: 900 }
 const rect = (left: number, top: number, right: number, bottom: number) => ({ left, top, right, bottom })
@@ -139,5 +139,38 @@ describe('reveal', () => {
     // And the camera it lands on is one MapLibre would not clamp.
     const world = 512 * 2 ** move.zoom
     expect(c.x).toBeLessThanOrEqual(world - viewport.width / 2 + 1e-6)
+  })
+})
+
+describe('fitPlate', () => {
+  const INDIA = [66, 5, 97.6, 37.6] as const
+  const insets = { top: 120, right: 0, bottom: 260, left: 0 }
+
+  it('keeps the whole plate between the top bar and the dock', () => {
+    const { center, zoom } = fitPlate(INDIA, viewport, insets)
+    const c = project(center, zoom)
+    const toScreen = (point: [number, number]) => {
+      const p = project(point, zoom)
+      return { x: p.x - c.x + viewport.width / 2, y: p.y - c.y + viewport.height / 2 }
+    }
+    const nw = toScreen([INDIA[0], INDIA[3]])
+    const se = toScreen([INDIA[2], INDIA[1]])
+    expect(nw.y).toBeGreaterThanOrEqual(insets.top - 1e-6)
+    expect(se.y).toBeLessThanOrEqual(viewport.height - insets.bottom + 1e-6)
+    expect(nw.x).toBeGreaterThanOrEqual(-1e-6)
+    expect(se.x).toBeLessThanOrEqual(viewport.width + 1e-6)
+  })
+
+  it('holds to the zoom limits it is given', () => {
+    expect(fitPlate(INDIA, viewport, insets, { min: 4, max: 8 }).zoom).toBe(4)
+  })
+})
+
+describe('extentOf', () => {
+  it('is the box the viewport covers around a centre', () => {
+    const [[west, south], [east, north]] = extentOf([0, 0], 2, { width: 2048, height: 1024 })
+    expect(west).toBeCloseTo(-180)
+    expect(east).toBeCloseTo(180)
+    expect(south).toBeCloseTo(-north)
   })
 })

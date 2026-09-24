@@ -6,8 +6,10 @@ import { and, asc, eq, sql } from 'drizzle-orm'
 import { isSlug } from '@/src/data/schemas'
 import { db } from '@/src/db/client'
 import { entities, entityTraditions, packs, regions, traditions } from '@/src/db/schema'
+import { openGraph } from '@/src/lib/site'
 import { formatYear } from '@/src/lib/year'
 import ImageCredit from '@/src/panel/ImageCredit'
+import { entityPages } from '@/src/read/entityPages'
 import './page.css'
 
 interface EntityRecord {
@@ -116,20 +118,10 @@ const loadEntity = cache(async (
  * changing.
  */
 export async function generateStaticParams() {
-  // Not a cross product any more. A region draws the figures inside its own
-  // edges, so a second plate multiplying every entity by every region would
-  // prerender hundreds of pages the atlas never links and whose back link
-  // leads to a map without them. The bbox test is the same one the atlas and
-  // `loadEntity` apply, and on `world` it selects everything, so the world's
-  // pages are unchanged.
-  const rows = await db.execute(sql`
-    select r.slug as region, p.slug as pack, e.slug as entity
-    from entities e
-    join packs p on p.id = e.pack_id
-    join regions r on e.point && r.bbox
-  `) as unknown as Array<{ region: string; pack: string; entity: string }>
-
-  return rows.map((row) => ({ region: row.region, pack: row.pack, entity: row.entity }))
+  // Only the triples whose region actually contains the entity; see
+  // `entityPages` for why this is not a cross product. The sitemap lists the
+  // same set.
+  return entityPages()
 }
 
 export async function generateMetadata(
@@ -139,11 +131,25 @@ export async function generateMetadata(
   const record = await loadEntity(region, pack, entity)
   if (!record) return {}
 
+  const url = `/${region}/${pack}/${entity}`
   return {
-    // No suffix here — the root layout's `title.template` appends
-    // "— Chronotope", and spelling it out again would double it.
+    // No suffix here. The root layout's `title.template` appends
+    // " · Chronotope", and spelling it out again would double it.
     title: record.name,
     description: record.blurb,
+    alternates: { canonical: url },
+    openGraph: openGraph({
+      title: record.name,
+      description: record.blurb,
+      url,
+      // The depiction when there is one, made absolute by `metadataBase`.
+      // Without one, `images` stays unset and the site's own picture applies.
+      images: record.image
+        ? [{ url: `/images/${record.packSlug}/${record.image.file}`, alt: `Depiction of ${record.name}` }]
+        : undefined,
+    }),
+    // A portrait is square and small. The large card would crop it to a strip.
+    ...(record.image ? { twitter: { card: 'summary' } } : {}),
   }
 }
 
@@ -162,7 +168,7 @@ export default async function Page(props: PageProps<'/[region]/[pack]/[entity]'>
         * rather than saying "back", because someone who arrived from a search
         * result never saw the map and "back" would not tell them where to.
         */}
-      <Link className="entity__back" href={`/${region}/${pack}`}>
+      <Link className="entity__back" href={`/${region}/${pack}?year=${record.start}&entity=${entity}`}>
         <span className="entity__back-arrow" aria-hidden="true" />
         {record.packTitle}
       </Link>

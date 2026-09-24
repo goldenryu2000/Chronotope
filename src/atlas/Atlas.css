@@ -206,8 +206,9 @@
 .atlas__dock {
   position: absolute;
   /* High enough that the timeline clears MapLibre's attribution line, which
-     sits in the bottom-left corner under the dock's left end. */
-  bottom: 2.4rem;
+     sits in the bottom-left corner under the dock's left end. And above the
+     narrow-screen note in globals.css, which is zero where there is none. */
+  bottom: calc(2.4rem + var(--screen-note, 0px));
   left: 50%;
   transform: translateX(-50%);
   z-index: 5;
@@ -307,6 +308,52 @@
 
 .atlas .map__error {
   top: calc(var(--top-inset) + var(--gutter));
+}
+
+/*
+ * A phone: the two corners take the top row to themselves and the title and
+ * switcher drop below it. Side by side they were four pills over each other.
+ * The front door keeps its arrow and its name for screen readers; the name of
+ * the map one step out stays, since that is the way out a reader wants.
+ */
+@media (width <= 37.5rem) {
+  .atlas__trail,
+  .atlas__chrome {
+    top: 0.75rem;
+  }
+
+  .atlas__trail {
+    left: 0.75rem;
+  }
+
+  .atlas__chrome {
+    right: 0.75rem;
+    gap: 0.35rem;
+  }
+
+  .atlas__header {
+    top: 3.3rem;
+    width: calc(100% - 1.5rem);
+  }
+
+  .atlas__home,
+  .atlas__tours {
+    padding: 0.4rem 0.6rem;
+    letter-spacing: 0.1em;
+  }
+
+  .atlas__home:not(.atlas__home--up) {
+    padding: 0.4rem 0.55rem 0.4rem 0.65rem;
+  }
+
+  .atlas__home:not(.atlas__home--up) .atlas__home-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 
 @media (width <= 34rem) {

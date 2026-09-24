@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { type Tour, TourSchema } from '../data/schemas'
+import { atlasHref } from '../atlas/atlasUrl'
 import { useAtlas } from '../state/store'
 import './Tours.css'
 
@@ -122,14 +123,18 @@ export default function TourPlayer({ tourUrl, slug, regionSlug, stop, stops }: P
   )
 
   /*
-   * Where leaving goes: the map, on the pack the last stop was showing.
+   * Where leaving goes: the map, on the pack, the year and the figure the stop
+   * was showing, which is what "keep the map where it stands" promises.
    *
    * A plain anchor rather than `next/link`. Leaving crosses a route boundary
    * and remounts the atlas either way, and this is the same address the
    * Escape key sends the reader to, so one mechanism serves both rather than
    * two that could drift.
    */
-  const exitHref = `/${regionSlug}/${current?.pack ?? ''}`
+  const exitHref = atlasHref(regionSlug, current?.pack ?? '', {
+    year: current?.year,
+    entity: current?.entityId ?? undefined,
+  })
 
   useEffect(() => {
     if (!playing || isLast) return

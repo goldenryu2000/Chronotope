@@ -6,6 +6,7 @@ import { cache } from 'react'
 import { isSlug } from '@/src/data/schemas'
 import { db } from '@/src/db/client'
 import { regions } from '@/src/db/schema'
+import { openGraph } from '@/src/lib/site'
 import { toursOnRegion } from '@/src/read/currentTour'
 import './tours.css'
 
@@ -38,10 +39,26 @@ export async function generateMetadata(
   const { region } = await props.params
   const row = await loadRegion(region)
   if (!row) return {}
+  const title = `Guided tours · ${row.title}`
+  const description = `Walks through ${inProse(row.title)}, one stop at a time.`
+  const url = `/${region}/tours`
   return {
-    title: `Guided tours — ${row.title}`,
-    description: `Walks through ${row.title}, one stop at a time.`,
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: openGraph({ title, description, url }),
   }
+}
+
+/**
+ * A region's title as it reads mid-sentence.
+ *
+ * Titles are headings, and "World" is a common noun: in a sentence it wants
+ * its article, where "India" wants nothing. This is grammar about one word,
+ * not a region picked out by slug.
+ */
+function inProse(title: string): string {
+  return title === 'World' ? 'the world' : title
 }
 
 export default async function Page(props: PageProps<'/[region]/tours'>) {
@@ -56,7 +73,7 @@ export default async function Page(props: PageProps<'/[region]/tours'>) {
         <Link className="tours-index__back" href="/">Chronotope</Link>
         <h1 className="tours-index__title">Guided tours</h1>
         <p className="tours-index__lede">
-          Each one is a route through {row.title}, read a stop at a time. The map moves with
+          Each one is a route through {inProse(row.title)}, read a stop at a time. The map moves with
           the narration, and you can leave at any point and keep the map where it stands.
         </p>
       </header>

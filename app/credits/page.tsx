@@ -54,7 +54,7 @@ export default function Credits() {
         </p>
         <p>
           Built with Next.js and React (MIT), and MapLibre GL JS and PMTiles (BSD-3-Clause). Set
-          in Geist (SIL Open Font License 1.1).
+          in Geist and EB Garamond (SIL Open Font License 1.1).
         </p>
 
         <h2 className="legal__heading">Something wrong?</h2>

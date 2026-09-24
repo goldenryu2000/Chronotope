@@ -27,7 +27,9 @@ interface Props {
  */
 export default function Curtain({ done = false }: Props) {
   return (
-    <div className="curtain" data-done={done} role="status" aria-live="polite">
+    // Hidden from assistive tech once lifted: a faded status still read out
+    // "Opening the atlas" over a map that had long since opened.
+    <div className="curtain" data-done={done} role="status" aria-live="polite" aria-hidden={done || undefined}>
       <div className="curtain__inner">
         <p className="curtain__title">Chronotope</p>
         <div className="curtain__track" aria-hidden="true">

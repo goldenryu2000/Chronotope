@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm'
 import { Atlas } from '@/src/atlas/Atlas'
 import { isSlug } from '@/src/data/schemas'
 import { db } from '@/src/db/client'
+import { openGraph } from '@/src/lib/site'
 import { packs, regions } from '@/src/db/schema'
 import { currentArtifactUrl } from '@/src/read/currentArtifact'
 import { plateTree } from '@/src/read/regionKin'
@@ -69,10 +70,14 @@ export async function generateMetadata(
   // The page 404s in this case; the root layout's default title covers it.
   if (!titles) return {}
 
+  const title = `${titles.pack.title} · ${titles.region.title}`
+  const url = `/${region}/${pack}`
   return {
-    // The layout supplies the "— Chronotope" suffix via `title.template`.
-    title: `${titles.pack.title} — ${titles.region.title}`,
+    // The layout supplies the " · Chronotope" suffix via `title.template`.
+    title,
     description: titles.pack.subtitle,
+    alternates: { canonical: url },
+    openGraph: openGraph({ title, description: titles.pack.subtitle, url }),
   }
 }
 

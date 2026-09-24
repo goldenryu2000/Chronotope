@@ -13,12 +13,12 @@ import { Protocol } from 'pmtiles'
 import { useEffect, useRef, useState } from 'react'
 import type { FeatureCollection } from 'geojson'
 import { activeAt, type ActiveEntity } from '../data/entitySpan'
-import { cameraBounds, type BBox, type Viewport } from '../lib/bbox'
+import { CAMERA_PAD, cameraBounds, hasEdges, type BBox, type Viewport } from '../lib/bbox'
 import { LayerSchema } from '../data/schemas'
 import { configureMaplibreWorker } from '../lib/maplibre-worker'
 import { cameraDuration } from '../lib/motion'
 import { measureInsets } from '../layout/measure'
-import { frame, GAP } from '../layout/safeArea'
+import { extentOf, fitPlate, frame, GAP, type Insets } from '../layout/safeArea'
 import { Invitations, type Invite } from './invitation'
 import { addNeatline, repaintNeatline } from './neatline'
 import { EntityMarkers } from './entityMarkers'
@@ -82,6 +82,41 @@ function sizeOf(element: HTMLElement | null): Viewport {
     width: width > 0 ? width : window.innerWidth,
     height: height > 0 ? height : window.innerHeight,
   }
+}
+
+/**
+ * Where a plate opens, and how far its camera may travel from there.
+ *
+ * A plate with edges is shown whole, fitted between the top bar and the dock,
+ * and the travel is widened to take in that fit: MapLibre keeps the viewport
+ * inside `maxBounds`, so bounds sized for the plate alone would zoom back in
+ * past it and put the south under the timeline again. A plate that reaches all
+ * the way round has no edges to fit, so it opens where its region says.
+ */
+function plateCamera(
+  camera: Camera, viewport: Viewport, insets: Insets,
+): { center: [number, number]; zoom: number; maxBounds?: [[number, number], [number, number]] } {
+  const bounds = cameraBounds(camera.bounds, viewport)
+  if (!hasEdges(camera.bounds) || !bounds) {
+    return { center: camera.center, zoom: camera.zoom, maxBounds: bounds }
+  }
+
+  const fit = fitPlate(camera.bounds, viewport, insets, { min: camera.minZoom, max: camera.maxZoom })
+  const [[west, south], [east, north]] = extentOf(fit.center, fit.zoom, viewport)
+  // Grown by the same share `cameraBounds` allows, so a fitted plate can still
+  // be nudged a little in every direction.
+  const padX = (east - west) * CAMERA_PAD
+  const padY = (north - south) * CAMERA_PAD
+  const low: [number, number] = [
+    Math.max(-180, Math.min(bounds[0][0], west - padX)),
+    Math.max(-85.051129, Math.min(bounds[0][1], south - padY)),
+  ]
+  const high: [number, number] = [
+    Math.min(180, Math.max(bounds[1][0], east + padX)),
+    Math.min(85.051129, Math.max(bounds[1][1], north + padY)),
+  ]
+  // MapLibre refuses a box the whole way round; see `cameraBounds`.
+  return { ...fit, maxBounds: high[0] - low[0] >= 360 ? undefined : [low, high] }
 }
 
 interface Hovered {
@@ -154,6 +189,8 @@ export default function MapCanvas({
   const invites = useRef<Invitations | null>(null)
 
   const hoveredFeature = useRef<string | number | null>(null)
+  /** Whether the camera is still where the plate opened, untouched by reader or view. */
+  const untouched = useRef(true)
   /** Whether the map has drawn once, which is when the curtain lifts. */
   const painted = useRef(false)
 
@@ -195,6 +232,9 @@ export default function MapCanvas({
     if (!container.current) return
 
     const start = initialCamera.current
+    // The dock may not have rendered yet; the fit is taken again once it has.
+    const { insets } = measureInsets()
+    const opening = plateCamera(start, sizeOf(container.current), insets)
 
     const instance = new MapLibre({
       container: container.current,
@@ -202,8 +242,8 @@ export default function MapCanvas({
       // is already one era. Building it unfiltered and correcting it in the
       // year effect below would flash every border of six thousand years.
       style: buildStyle(initialTileset.current, mappedYear(openingYear.current, initialYears.current)),
-      center: start.center,
-      zoom: start.zoom,
+      center: opening.center,
+      zoom: opening.zoom,
       // 0 is as far out as MapLibre goes — the world is 512px there. A phone
       // viewport is narrower than that, so it can never show the full 360°;
       // a region asking for less than 0 gets 0 anyway.
@@ -220,8 +260,8 @@ export default function MapCanvas({
       // the container rather than the plate alone, because MapLibre keeps the
       // whole viewport inside these bounds and would otherwise zoom in until
       // only a slice of the plate showed. Undefined for a plate that is the
-      // whole world -- see `cameraBounds`.
-      maxBounds: cameraBounds(start.bounds, sizeOf(container.current)),
+      // whole world -- see `cameraBounds` -- and widened to hold the fit.
+      maxBounds: opening.maxBounds,
       attributionControl: false,
     })
 
@@ -237,6 +277,10 @@ export default function MapCanvas({
 
     map.current = instance
 
+    // A reader's own move ends the opening fit; see the refit below.
+    instance.on('movestart', (event) => {
+      if (event.originalEvent) untouched.current = false
+    })
     instance.on('load', () => setReady(true))
     instance.once('idle', () => {
       painted.current = true
@@ -282,7 +326,8 @@ export default function MapCanvas({
     if (!instance) return
 
     const apply = () => {
-      const bounds = cameraBounds(initialCamera.current.bounds, sizeOf(container.current))
+      const { insets } = measureInsets()
+      const bounds = plateCamera(initialCamera.current, sizeOf(container.current), insets).maxBounds
       instance.setMaxBounds(bounds ?? null)
     }
     instance.on('resize', apply)
@@ -525,6 +570,7 @@ export default function MapCanvas({
     // The panel stays open on the contemporary, so its column is reserved.
     // This was a hard-coded guess of every overlay's size, which the tour card
     // and a taller timeline had both outgrown.
+    untouched.current = false
     const { insets } = measureInsets({ right: true })
     instance.fitBounds(
       [
@@ -547,6 +593,29 @@ export default function MapCanvas({
     focusOn(null)
   }, [focusPair, ready, focusOn])
 
+  /*
+   * The opening fit, taken again once the pack is in.
+   *
+   * The map is usually built before the pack lands, and the timeline is built
+   * from the pack, so the first fit measured a screen with no dock and put the
+   * south of the plate under it. Once, behind the curtain, and only if nothing
+   * has moved the camera since: a tour stop's view or the reader's own drag
+   * always wins.
+   */
+  const hasEntities = entities.length > 0
+  const refitted = useRef(false)
+  useEffect(() => {
+    const instance = map.current
+    if (!instance || !ready || !hasEntities || refitted.current) return
+    refitted.current = true
+    if (!untouched.current) return
+
+    const { insets } = measureInsets()
+    const next = plateCamera(initialCamera.current, sizeOf(container.current), insets)
+    instance.setMaxBounds(next.maxBounds ?? null)
+    instance.jumpTo({ center: next.center, zoom: next.zoom })
+  }, [ready, hasEntities])
+
   const cameraTarget = useAtlas((state) => state.cameraTarget)
   const flyToTarget = useAtlas((state) => state.flyToTarget)
 
@@ -554,6 +623,7 @@ export default function MapCanvas({
     const instance = map.current
     if (!instance || !ready || !cameraTarget) return
 
+    untouched.current = false
     // A view that selects someone opens the panel, which has not rendered yet.
     const { viewport, insets } = measureInsets({ right: Boolean(cameraTarget.subject) })
     const center = frame(

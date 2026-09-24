@@ -74,6 +74,14 @@ export const EntitySchema = z
         licence: LicenceSchema,
         /** The file's page, linked from the caption. Attribution licences require it. */
         source: z.url({ protocol: /^https$/, hostname: z.regexes.domain }),
+        /**
+         * Where the subject sits, as [x, y] percentages of the picture. Small
+         * square and portrait thumbnails crop, and a fixed guess at where a
+         * face is cuts the head off anything framed differently. Absent means
+         * the thumbnail's own default. The panel shows the whole picture and
+         * does not read it.
+         */
+        focus: z.tuple([z.number().min(0).max(100), z.number().min(0).max(100)]).optional(),
       })
       .optional(),
   })
