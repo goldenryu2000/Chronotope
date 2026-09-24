@@ -132,6 +132,28 @@ describe('layoutPins labels', () => {
     for (const pin of placed) expect(pin.label, pin.entity.id).toBe(true)
   })
 
+  it('shortens a boxed-in trio to its lead name rather than leave it unnamed (Humbaba on the world map)', () => {
+    // The world creatures map at opening, measured: Humbaba, Lamassu and the
+    // Mermaid share Mesopotamia and Syria, with Chimera to the west, Simurgh
+    // and Div with Manticore to the east, and the Egyptian and Greek crowds
+    // below and beyond. "Humbaba, Lamassu, Mermaid" fits on no side.
+    const { clusters } = layoutPins(
+      [
+        entity('humbaba', 0, 0), entity('lamassu', 0.5, 0.3), entity('mermaid', -0.4, -0.5),
+        entity('chimera', -4.9, -0.2),
+        entity('simurgh', 7.7, -0.1),
+        entity('div', 4.2, 1), entity('manticore', 4.3, 1.1),
+        ...['ammit', 'apep', 'bennu', 'phoenix', 'sphinx'].map((id) => entity(id, -4.3, 4.3)),
+        ...['centaur', 'cerberus', 'harpy'].map((id) => entity(id, -8.9, -0.8)),
+      ],
+      project,
+    )
+    const trio = clusters.find((c) => c.members.some((m) => m.id === 'humbaba'))!
+    expect(trio).toMatchObject({ label: true, name: 'Humbaba +2' })
+    // Only the one that had no room is shortened.
+    expect(clusters.find((c) => c.members.some((m) => m.id === 'div'))!.name).toBe('Div, Manticore')
+  })
+
   it('never lays one name over another, and hides a name only when every side is taken', () => {
     // A pin boxed in on all four sides by others close enough to cover each side.
     const { placed } = layoutPins(

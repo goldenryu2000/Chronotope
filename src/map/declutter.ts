@@ -202,8 +202,16 @@ export function clusterCaption(count: number, place: string | null): string {
  * most worth leading with, and a count. Up to three are named in full: a trio
  * labelled "Lernaean Hydra +2" left Satyr with no name anywhere on the map. Whoever is selected leads, so the mark
  * says who the panel is showing; otherwise core figures lead halo ones.
+ *
+ * `compact` gives the short form at any size, for a crowd with no room for
+ * every name: "Humbaba +2" said something where "Humbaba, Lamassu, Mermaid"
+ * had no side to sit on and said nothing.
  */
-export function clusterName(members: readonly ActiveEntity[], selectedId: string | null): string {
+export function clusterName(
+  members: readonly ActiveEntity[],
+  selectedId: string | null,
+  compact = false,
+): string {
   const rank = (entity: ActiveEntity) =>
     entity.id === selectedId ? 0 : entity.tier === 'core' ? 1 : 2
   const ordered = members
@@ -211,7 +219,7 @@ export function clusterName(members: readonly ActiveEntity[], selectedId: string
     .sort((a, b) => rank(a.entity) - rank(b.entity) || a.index - b.index)
     .map(({ entity }) => entity)
 
-  if (ordered.length <= 3) return ordered.map((entity) => entity.name).join(', ')
+  if (!compact && ordered.length <= 3) return ordered.map((entity) => entity.name).join(', ')
   return `${ordered[0].name} +${ordered.length - 1}`
 }
 
@@ -225,6 +233,9 @@ export function clusterName(members: readonly ActiveEntity[], selectedId: string
  * takes the first side
  * that covers no other mark (it would steal that mark's clicks) and no name
  * already placed (two names over each other read as neither).
+ *
+ * A cluster whose full list of names fits nowhere tries its short form
+ * ("Humbaba +2") on every side before it goes unnamed.
  *
  * Whoever is selected is placed first, so their name gets first choice. Then
  * the clusters, largest first, and only then the other pins: a lone pin names
@@ -270,26 +281,35 @@ function placeLabels(placed: Placed[], clusters: Cluster[], selectedId: string |
         other.right > box.left && other.left < box.right && other.bottom > box.top && other.top < box.bottom,
     )
 
-  const place = (owner: Placed | Cluster, text: string, gap: number, stack: number) => {
-    const width = text.length * LABEL_CHAR_PX
-    for (const side of SIDES) {
-      const box = boxFor(owner.at, side, width, gap, stack)
-      if (free(owner, box)) {
-        owner.label = true
-        owner.side = side
-        names.push(box)
-        return
+  /** Places the first text that fits on any side, and returns it, or null. */
+  const place = (owner: Placed | Cluster, texts: readonly string[], gap: number, stack: number) => {
+    for (const text of texts) {
+      const width = text.length * LABEL_CHAR_PX
+      for (const side of SIDES) {
+        const box = boxFor(owner.at, side, width, gap, stack)
+        if (free(owner, box)) {
+          owner.label = true
+          owner.side = side
+          names.push(box)
+          return text
+        }
       }
     }
     owner.label = false
     owner.side = 'right'
+    return null
   }
 
-  const pin = (item: Placed) => place(item, item.entity.name, LABEL_GAP_PX, PIN_STACK_PX)
+  const pin = (item: Placed) => place(item, [item.entity.name], LABEL_GAP_PX, PIN_STACK_PX)
   const selected = placed.find((item) => item.entity.id === selectedId)
   if (selected) pin(selected)
   const largestFirst = [...clusters].sort((a, b) => b.members.length - a.members.length)
-  for (const item of largestFirst) place(item, item.name, CLUSTER_RADIUS_PX + LABEL_GAP_PX / 2, CLUSTER_STACK_PX)
+  for (const item of largestFirst) {
+    const short = clusterName(item.members, selectedId, true)
+    const texts = short === item.name ? [item.name] : [item.name, short]
+    const fitted = place(item, texts, CLUSTER_RADIUS_PX + LABEL_GAP_PX / 2, CLUSTER_STACK_PX)
+    if (fitted) item.name = fitted
+  }
   for (const item of placed) if (item !== selected) pin(item)
 }
 
